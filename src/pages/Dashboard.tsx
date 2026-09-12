@@ -86,32 +86,50 @@ export const Dashboard = () => {
   );
 };
 
-const ContinueLearningCard = ({ course }: { course: Course }) => (
-  <motion.div 
-    whileHover={{ y: -4 }}
-    className="group flex flex-col gap-7 overflow-hidden rounded-[32px] border border-slate-100 bg-white p-6 transition-all hover:shadow-xl sm:flex-row"
-  >
-    <div className="relative aspect-video w-full overflow-hidden rounded-[24px] sm:w-56">
-      <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
-      <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
-        <div className="rounded-full bg-white p-3 text-indigo-600 shadow-xl">
-          <PlayCircle className="h-8 w-8" />
+const ContinueLearningCard = ({ course }: { course: Course }) => {
+  const cardContent = (
+    <>
+      <div className="relative aspect-video w-full overflow-hidden rounded-[24px] sm:w-56">
+        <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="rounded-full bg-white p-3 text-indigo-600 shadow-xl">
+            <PlayCircle className="h-8 w-8" />
+          </div>
         </div>
       </div>
-    </div>
-    <div className="flex flex-1 flex-col justify-center py-2">
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600">
-        <span>{course.category}</span>
-        <span className="h-1 w-1 rounded-full bg-slate-300"></span>
-        <span>40% Done</span>
+      <div className="flex flex-1 flex-col justify-center py-2">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600">
+          <span>{course.category}</span>
+          <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+          <span>40% Done</span>
+        </div>
+        <h3 className="mt-6 text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight">{course.title}</h3>
+        <div className="mt-4 h-2 w-full rounded-full bg-slate-100">
+          <div className="h-full w-[40%] rounded-full bg-indigo-500 shadow-sm shadow-indigo-200"></div>
+        </div>
       </div>
-      <h3 className="mt-6 text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight">{course.title}</h3>
-      <div className="mt-4 h-2 w-full rounded-full bg-slate-100">
-        <div className="h-full w-[40%] rounded-full bg-indigo-500 shadow-sm shadow-indigo-200"></div>
-      </div>
-    </div>
-  </motion.div>
-);
+    </>
+  );
+
+  return course.link ? (
+    <motion.a
+      href={course.link}
+      target="_blank"
+      rel="noreferrer"
+      whileHover={{ y: -4 }}
+      className="group flex flex-col gap-7 overflow-hidden rounded-[32px] border border-slate-100 bg-white p-6 transition-all hover:shadow-xl sm:flex-row"
+    >
+      {cardContent}
+    </motion.a>
+  ) : (
+    <motion.div 
+      whileHover={{ y: -4 }}
+      className="group flex flex-col gap-7 overflow-hidden rounded-[32px] border border-slate-100 bg-white p-6 transition-all hover:shadow-xl sm:flex-row"
+    >
+      {cardContent}
+    </motion.div>
+  );
+};
 
 const TiltCard = ({ children, glowClassName }: { children: ReactNode; glowClassName: string }) => (
   <div className={`relative overflow-hidden rounded-[32px] ${glowClassName}`}>
@@ -124,10 +142,12 @@ const DSABeginnerCard = ({ onOpen }: { onOpen: () => void }) => (
     whileHover={{ y: -8 }}
     className="group overflow-hidden rounded-[32px] border border-slate-100 bg-white transition-all hover:shadow-2xl"
   >
-    <div className="relative aspect-[16/7] overflow-hidden">
+    <div className="relative aspect-[16/10] overflow-hidden">
+    
       <img
         src="https://images.unsplash.com/photo-1629904853893-c2c8981a1dc5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         alt="DSA Beginner Sheet"
+         
         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-black/20" />
@@ -141,7 +161,7 @@ const DSABeginnerCard = ({ onOpen }: { onOpen: () => void }) => (
 
     <div className="p-8">
       <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400">
-        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> 4 HOURS</span>
+        <span className="flex items-center gap-1.5"><Clock className="h- w-4" /> 4 HOURS</span>
         <span className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-yellow-400 text-yellow-400" /> 4.9</span>
       </div>
 
@@ -174,34 +194,53 @@ const DSABeginnerCard = ({ onOpen }: { onOpen: () => void }) => (
   </motion.div>
 );
 
-const CourseCard = ({ course }: { course: Course }) => (
-  <motion.div 
-    whileHover={{ y: -8 }}
-    className="group overflow-hidden rounded-[32px] border border-slate-100 bg-white transition-all hover:shadow-2xl"
-  >
-    <div className="relative aspect-[16/10] overflow-hidden">
-      <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
-      <div className="absolute left-4 top-4 rounded-xl bg-white/90 px-3 py-1.5 text-[10px] font-black text-slate-900 backdrop-blur-sm shadow-lg">
-        {course.level.toUpperCase()}
-      </div>
-    </div>
-    <div className="p-8">
-      <div className="flex items-center justify-between text-[11px] font-black text-slate-400 uppercase tracking-widest">
-        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {course.duration}</span>
-        <span className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-yellow-400 text-yellow-400" /> {course.rating}</span>
-      </div>
-      <h3 className="mt-4 line-clamp-2 text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug h-14">
-        {course.title}
-      </h3>
-      <div className="mt-8 flex items-center justify-between border-t border-slate-50 pt-6">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-             <Users className="h-4 w-4 text-slate-400" />
-          </div>
-          <span className="text-xs font-bold text-slate-500">{course.students.toLocaleString()} students</span>
+const CourseCard = ({ course }: { course: Course }) => {
+  const cardContent = (
+    <>
+      <div className="relative aspect-[16/10] overflow-hidden">
+        <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <div className="absolute left-4 top-4 rounded-xl bg-white/90 px-3 py-1.5 text-[10px] font-black text-slate-900 backdrop-blur-sm shadow-lg">
+          {course.level.toUpperCase()}
         </div>
-        <div className="text-2xl font-black text-slate-900">₹{course.price}</div>
       </div>
-    </div>
-  </motion.div>
-);
+      <div className="p-8">
+        <div className="flex items-center justify-between text-[11px] font-black text-slate-400 uppercase tracking-widest">
+          <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {course.duration}</span>
+          <span className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-yellow-400 text-yellow-400" /> {course.rating}</span>
+        </div>
+        <h3 className="mt-4 line-clamp-2 text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug h-14">
+          {course.title}
+        </h3>
+  
+        <div className="mt-24 flex items-center justify-between border-t border-slate-50 pt-6">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+               <Users className="h-4 w-4 text-slate-400" />
+            </div>
+            <span className="text-xs font-bold text-slate-500">{course.students.toLocaleString()} students</span>
+          </div>
+          <div className="text-2xl font-black text-slate-900 ">₹{course.price}</div>
+        </div>
+      </div>
+    </>
+  );
+
+  return course.link ? (
+    <motion.a
+      href={course.link}
+      target="_blank"
+      rel="noreferrer"
+      whileHover={{ y: -8 }}
+      className="group block overflow-hidden rounded-[32px] border border-slate-100 bg-white transition-all hover:shadow-2xl"
+    >
+      {cardContent}
+    </motion.a>
+  ) : (
+    <motion.div 
+      whileHover={{ y: -8 }}
+      className="group overflow-hidden rounded-[32px] border border-slate-100 bg-white transition-all hover:shadow-2xl"
+    >
+      {cardContent}
+    </motion.div>
+  );
+};

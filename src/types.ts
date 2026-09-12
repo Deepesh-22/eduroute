@@ -11,6 +11,7 @@ export interface Course {
   students: number;
   price: number;
   modules: any[];
+  link?: string;
 }
 
 export interface User {

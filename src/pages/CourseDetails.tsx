@@ -109,7 +109,18 @@ export const CourseDetails = () => {
 
         <aside className="rounded-3xl border border-slate-200 p-6 bg-white h-fit">
           <div className="text-3xl font-black text-slate-900">{isLocalCourse ? 'Free' : `$${course.price}`}</div>
-          <button className="mt-5 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white">Enroll Now</button>
+          {course.link ? (
+            <a
+              href={course.link}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 block w-full rounded-xl bg-indigo-600 py-3 text-center text-sm font-bold text-white"
+            >
+              Open Course Link
+            </a>
+          ) : (
+            <button className="mt-5 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white">Enroll Now</button>
+          )}
         </aside>
       </div>
     </div>
