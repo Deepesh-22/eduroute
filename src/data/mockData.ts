@@ -70,7 +70,8 @@ export const COURSES: Course[] = [
     rating: 4.7,
     students: 9800,
     price: 3999,
-    modules: []
+    modules: [],
+    link: 'https://www.thedesignership.com/courses/ux-ui-design-course'
   },
   {
     id: '4',
@@ -84,7 +85,8 @@ export const COURSES: Course[] = [
     rating: 4.8,
     students: 18500,
     price: 6999,
-    modules: []
+    modules: [],
+    link:'https://www.geeksforgeeks.org/data-science/data-science-with-python-tutorial/'
   }
 ];
 

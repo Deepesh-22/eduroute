@@ -69,15 +69,27 @@ export const BrowseCourses = () => {
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {filteredCourses.map((course) => (
           <motion.div key={course._id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="group overflow-hidden rounded-[24px] border bg-white">
-            <Link to={`/course/${course._id}`}>
-              <div className="p-6 space-y-4">
-                <div className="text-xs font-bold text-indigo-600 uppercase">{course.level}</div>
-                <h3 className="text-xl font-bold text-slate-900">{course.title}</h3>
-                <p className="text-sm text-slate-500">{course.description}</p>
-                <div className="text-xs text-slate-500 flex items-center gap-2"><Clock className="h-4 w-4" /> {course.duration}</div>
-                <button className="w-full rounded-xl bg-slate-900 text-white px-4 py-2 font-bold">View Course</button>
-              </div>
-            </Link>
+            {course.link ? (
+              <a href={course.link} target="_blank" rel="noreferrer" className="block h-full">
+                <div className="p-6 space-y-4">
+                  <div className="text-xs font-bold text-indigo-600 uppercase">{course.level}</div>
+                  <h3 className="text-xl font-bold text-slate-900">{course.title}</h3>
+                  <p className="text-sm text-slate-500">{course.description}</p>
+                  <div className="text-xs text-slate-500 flex items-center gap-2"><Clock className="h-4 w-4" /> {course.duration}</div>
+                  <button className="w-full rounded-xl bg-slate-900 text-white px-4 py-2 font-bold">Open Link</button>
+                </div>
+              </a>
+            ) : (
+              <Link to={`/course/${course._id}`} className="block h-full">
+                <div className="p-6 space-y-4">
+                  <div className="text-xs font-bold text-indigo-600 uppercase">{course.level}</div>
+                  <h3 className="text-xl font-bold text-slate-900">{course.title}</h3>
+                  <p className="text-sm text-slate-500">{course.description}</p>
+                  <div className="text-xs text-slate-500 flex items-center gap-2"><Clock className="h-4 w-4" /> {course.duration}</div>
+                  <button className="w-full rounded-xl bg-slate-900 text-white px-4 py-2 font-bold">View Course</button>
+                </div>
+              </Link>
+            )}
           </motion.div>
         ))}
       </div>
