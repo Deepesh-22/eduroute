@@ -14,6 +14,14 @@ const SEARCH_TRIGGER_PATTERNS = [
   /\b(capital of|population of|currency of|ceo of|founder of)\b/i,
 ];
 
+// Prefer models most free/developer accounts can access first
+const GROQ_MODEL_CANDIDATES = [
+  'llama-3.1-8b-instant',
+  'llama-3.3-70b-versatile',
+  'openai/gpt-oss-20b',
+  'openai/gpt-oss-120b',
+];
+
 function env(name) {
   try {
     return (typeof process !== 'undefined' && process.env && process.env[name]) || '';
@@ -50,10 +58,7 @@ function localFallbackReply({ messages, language, reason }) {
   );
 }
 
-async function callGroq({ apiKey, model, messages, temperature }) {
-  if (!apiKey || !String(apiKey).trim()) {
-    throw new Error('GROQ_API_KEY is empty at runtime');
-  }
+async function callGroqOnce({ apiKey, model, messages, temperature }) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -61,24 +66,55 @@ async function callGroq({ apiKey, model, messages, temperature }) {
       Authorization: 'Bearer ' + apiKey,
     },
     body: JSON.stringify({
-      model: model || 'llama-3.3-70b-versatile',
-      messages,
+      model: model,
+      messages: messages,
       temperature: temperature == null ? 0.6 : temperature,
     }),
   });
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error('Groq error ' + response.status + ': ' + errText.slice(0, 300));
+    const err = new Error('Groq error ' + response.status + ': ' + errText.slice(0, 300));
+    err.status = response.status;
+    err.body = errText;
+    throw err;
   }
   const data = await response.json();
   return data.choices?.[0]?.message?.content || 'Buddy could not generate a response.';
+}
+
+async function callGroq({ apiKey, model, messages, temperature }) {
+  if (!apiKey || !String(apiKey).trim()) {
+    throw new Error('GROQ_API_KEY is empty at runtime');
+  }
+
+  const preferred = (model || env('GROQ_MODEL') || 'llama-3.1-8b-instant').trim();
+  const candidates = [];
+  if (preferred) candidates.push(preferred);
+  GROQ_MODEL_CANDIDATES.forEach(function (m) {
+    if (candidates.indexOf(m) === -1) candidates.push(m);
+  });
+
+  let lastError = null;
+  for (let i = 0; i < candidates.length; i++) {
+    const m = candidates[i];
+    try {
+      return await callGroqOnce({ apiKey: apiKey, model: m, messages: messages, temperature: temperature });
+    } catch (e) {
+      lastError = e;
+      const msg = String(e.message || e);
+      const notFound = e.status === 404 || /model_not_found|does not exist|do not have access/i.test(msg);
+      if (!notFound) throw e;
+      console.warn('Groq model unavailable, trying next:', m, msg.slice(0, 120));
+    }
+  }
+  throw lastError || new Error('All Groq models failed');
 }
 
 async function callOpenAI({ apiKey, model, messages, temperature }) {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
-    body: JSON.stringify({ model: model || 'gpt-4o-mini', messages, temperature }),
+    body: JSON.stringify({ model: model || 'gpt-4o-mini', messages: messages, temperature: temperature }),
   });
   if (!response.ok) throw new Error('OpenAI error: ' + (await response.text()));
   const data = await response.json();
@@ -86,7 +122,9 @@ async function callOpenAI({ apiKey, model, messages, temperature }) {
 }
 
 async function callGemini({ apiKey, model, messages, temperature }) {
-  const prompt = messages.map((m) => m.role.toUpperCase() + ': ' + m.content).join('\n');
+  const prompt = messages.map(function (m) {
+    return m.role.toUpperCase() + ': ' + m.content;
+  }).join('\n');
   const response = await fetch(
     'https://generativelanguage.googleapis.com/v1beta/models/' +
       (model || 'gemini-1.5-flash') +
@@ -95,7 +133,7 @@ async function callGemini({ apiKey, model, messages, temperature }) {
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature } }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: temperature } }),
     }
   );
   if (!response.ok) throw new Error('Gemini error: ' + (await response.text()));
