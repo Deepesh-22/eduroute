@@ -1,18 +1,22 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { getAuthUser } from '../utils/rbacAuth';
+import { getAuthUser, clearAuthSession } from '../utils/rbacAuth';
 import { getStoredUserProfile } from '../utils/userProfile';
 import {
   LayoutDashboard,
   Map,
   ClipboardCheck,
-  MessageSquare,
+  Sparkles,
   Trophy,
   Gift,
   Briefcase,
   TrendingUp,
   LogOut,
   Menu,
-  X
+  X,
+  Search,
+  Bell,
+  GraduationCap,
+  Shield,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -21,7 +25,7 @@ const NAVIGATION = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { name: 'Roadmaps', path: '/roadmaps', icon: Map },
   { name: 'Assessments', path: '/assessments', icon: ClipboardCheck },
-  { name: 'AI Buddy', path: '/buddy', icon: MessageSquare },
+  { name: 'AI Buddy', path: '/buddy', icon: Sparkles },
   { name: 'Leaderboard', path: '/leaderboard', icon: Trophy },
   { name: 'Rewards', path: '/rewards', icon: Gift },
   { name: 'Internships', path: '/internships', icon: Briefcase },
@@ -31,6 +35,8 @@ const NAVIGATION = [
 export const MainLayout = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const handleLogout = () => {
     clearAuthSession();
     setIsMobileMenuOpen(false);
@@ -40,134 +46,168 @@ export const MainLayout = () => {
   const profileIdentity = useMemo(() => {
     const authUser = getAuthUser();
     const storedProfile = getStoredUserProfile();
-
     const name = authUser?.name || storedProfile?.name || 'Learner';
     const photo = storedProfile?.avatar || '';
-
     return {
       name,
       photo,
       initial: name.trim().charAt(0).toUpperCase() || 'L',
+      role: authUser?.role === 'admin' ? 'Admin' : 'Learner',
     };
   }, []);
 
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(path + '/');
+
   return (
-    <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex w-72 flex-col border-r border-[var(--border-default)] bg-[var(--surface-nav)] backdrop-blur-xl">
-        <div className="p-6 border-b border-[var(--border-default)] flex items-center justify-between gap-2">
-          <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">E</div>
-            <span className="text-xl font-bold text-[var(--text-primary)]">EDUROUTE</span>
-          </Link>
-          <Link to="/profile" className="group" aria-label="Open profile dashboard">
-            <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-indigo-600 text-white flex items-center justify-center font-bold shadow-sm group-hover:scale-105">
-              {profileIdentity.photo ? <img src={profileIdentity.photo} alt={profileIdentity.name} className="h-full w-full object-cover" /> : profileIdentity.initial}
+    <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <aside
+        className="hidden lg:flex flex-col border-r border-[var(--border-default)] bg-[var(--surface-sidebar)]"
+        style={{ width: 'var(--sidebar-width)', minWidth: 'var(--sidebar-width)' }}
+      >
+        <div className="flex h-16 items-center gap-2.5 px-5 border-b border-[var(--border-default)]">
+          <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white shadow-sm">
+              <GraduationCap className="h-5 w-5" />
             </div>
+            <span className="text-[15px] font-bold tracking-tight text-[var(--text-primary)] truncate">EDUROUTE</span>
           </Link>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
           {NAVIGATION.map((item) => {
-            const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+            const active = isActive(item.path);
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all ${
-                  isActive
-                    ? 'active-nav bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-                    : 'text-[var(--text-secondary)] hover:bg-white/60'
-                }`}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.name}
+              <Link key={item.path} to={item.path} className={`er-nav-item ${active ? 'active' : ''}`}>
+                <item.icon className="h-[18px] w-[18px] shrink-0" />
+                <span>{item.name}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-[var(--border-default)] space-y-2">
-          <Link
-            to="/admin-login"
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-[var(--text-secondary)] hover:bg-white/60 transition-all"
-          >
-            <span className="h-5 w-5 inline-flex items-center justify-center font-black">A</span>
-            Admin
+        <div className="border-t border-[var(--border-default)] p-3 space-y-1">
+          <Link to="/profile" className="flex items-center gap-3 rounded-[var(--radius-md)] px-2.5 py-2 hover:bg-[var(--surface-muted)] transition-colors">
+            <div className="h-9 w-9 overflow-hidden rounded-full bg-[var(--accent)] text-white flex items-center justify-center text-sm font-bold shrink-0">
+              {profileIdentity.photo ? (
+                <img src={profileIdentity.photo} alt="" className="h-full w-full object-cover" />
+              ) : (
+                profileIdentity.initial
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{profileIdentity.name}</div>
+              <div className="text-[11px] text-[var(--text-muted)]">{profileIdentity.role}</div>
+            </div>
           </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 transition-all"
-          >
-            <LogOut className="h-5 w-5" />
+          <Link to="/admin-login" className="er-nav-item text-xs">
+            <Shield className="h-4 w-4" />
+            Admin Panel
+          </Link>
+          <button type="button" onClick={handleLogout} className="er-nav-item w-full text-left">
+            <LogOut className="h-4 w-4" />
             Logout
           </button>
         </div>
       </aside>
 
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-[var(--surface-nav)] border-b border-[var(--border-default)] px-4 py-3 z-40 flex items-center justify-between">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg">E</div>
-          <span className="text-lg font-bold text-[var(--text-primary)]">EDUROUTE</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <ThemeToggle className="h-9 w-[70px]" />
-          <Link to="/profile" className="h-9 w-9 overflow-hidden rounded-full border border-[var(--border-default)] bg-indigo-600 text-white flex items-center justify-center font-bold" aria-label="Open profile dashboard">
-            {profileIdentity.photo ? <img src={profileIdentity.photo} alt={profileIdentity.name} className="h-full w-full object-cover" /> : profileIdentity.initial}
-          </Link>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header
+          className="flex shrink-0 items-center gap-3 border-b border-[var(--border-default)] bg-[var(--surface-nav)] px-4 md:px-6"
+          style={{ height: 'var(--topbar-height)' }}
+        >
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 hover:bg-white/70 rounded-xl transition-colors"
+            type="button"
+            className="lg:hidden flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Open menu"
           >
-            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            <Menu className="h-5 w-5" />
           </button>
-        </div>
-      </div>
 
-      {/* Desktop floating Theme Toggle (draggable) */}
-      <div className="hidden lg:block">
-        <ThemeToggle movable />
-      </div>
+          <div className="relative flex-1 max-w-xl">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search courses, topics, or skills..."
+              className="er-input h-9 pl-9 pr-12 text-sm"
+              aria-label="Search"
+            />
+            <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-[var(--border-default)] bg-[var(--surface-muted)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)] sm:inline">
+              ⌘K
+            </kbd>
+          </div>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 bg-[var(--surface-nav)] z-30 pt-16 overflow-y-auto">
-          <nav className="p-4 space-y-2">
-            {NAVIGATION.map((item) => {
-              const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all ${
-                    isActive
-                      ? 'active-nav bg-indigo-600 text-white'
-                      : 'text-[var(--text-secondary)] hover:bg-white/70'
-                  }`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-            <Link
-              to="/admin-login"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-[var(--text-secondary)] hover:bg-white/70 transition-all`}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              className="relative flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]"
+              aria-label="Notifications"
             >
-              <span className="h-5 w-5 inline-flex items-center justify-center font-black">A</span>
-              Admin
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--danger)]" />
+            </button>
+            <ThemeToggle className="h-9 w-[68px]" />
+            <Link
+              to="/profile"
+              className="hidden sm:flex h-9 w-9 overflow-hidden rounded-full bg-[var(--accent)] text-white items-center justify-center text-sm font-bold border border-[var(--border-default)]"
+              aria-label="Profile"
+            >
+              {profileIdentity.photo ? (
+                <img src={profileIdentity.photo} alt="" className="h-full w-full object-cover" />
+              ) : (
+                profileIdentity.initial
+              )}
             </Link>
-          </nav>
-        </div>
-      )}
+            <div className="hidden md:block min-w-0">
+              <div className="text-sm font-semibold text-[var(--text-primary)] truncate max-w-[120px]">{profileIdentity.name}</div>
+            </div>
+          </div>
+        </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto lg:pt-0 pt-16">
-        <Outlet />
-      </main>
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)} aria-hidden />
+            <div className="absolute inset-y-0 left-0 flex w-[min(18rem,85vw)] flex-col bg-[var(--surface-sidebar)] shadow-xl">
+              <div className="flex h-16 items-center justify-between px-4 border-b border-[var(--border-default)]">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white">
+                    <GraduationCap className="h-4 w-4" />
+                  </div>
+                  <span className="font-bold">EDUROUTE</span>
+                </div>
+                <button type="button" onClick={() => setIsMobileMenuOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)]" aria-label="Close menu">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
+                {NAVIGATION.map((item) => (
+                  <Link key={item.path} to={item.path} onClick={() => setIsMobileMenuOpen(false)} className={`er-nav-item ${isActive(item.path) ? 'active' : ''}`}>
+                    <item.icon className="h-[18px] w-[18px]" />
+                    {item.name}
+                  </Link>
+                ))}
+              </nav>
+              <div className="border-t border-[var(--border-default)] p-3 space-y-1">
+                <Link to="/admin-login" onClick={() => setIsMobileMenuOpen(false)} className="er-nav-item">
+                  <Shield className="h-4 w-4" />
+                  Admin Panel
+                </Link>
+                <button type="button" onClick={handleLogout} className="er-nav-item w-full text-left">
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };
