@@ -1,7 +1,7 @@
 import type { BuddyLanguage, BuddyProgress } from '../types/buddy';
 
 const BASE = '/api';
-const BUDDY_LOCAL_STORAGE_KEY = 'buddy-local-cache-v1';
+const buddyStorageKey = (userId: string) => `buddy-local-cache-v1:${userId}`;
 
 type BuddyHistoryEntry = { role: string; text: string };
 type BuddyStore = { progress: BuddyProgress; history: BuddyHistoryEntry[] };
@@ -15,13 +15,13 @@ const defaultProgress: BuddyProgress = {
   preferredLanguage: 'english',
 };
 
-function readBuddyStore(): BuddyStore {
+function readBuddyStore(userId: string): BuddyStore {
   if (typeof window === 'undefined') {
     return { progress: defaultProgress, history: [] };
   }
 
   try {
-    const raw = window.localStorage.getItem(BUDDY_LOCAL_STORAGE_KEY);
+    const raw = window.localStorage.getItem(buddyStorageKey(userId));
     if (!raw) return { progress: defaultProgress, history: [] };
     const parsed = JSON.parse(raw) as Partial<BuddyStore>;
     return {
@@ -33,9 +33,9 @@ function readBuddyStore(): BuddyStore {
   }
 }
 
-function writeBuddyStore(store: BuddyStore) {
+function writeBuddyStore(userId: string, store: BuddyStore) {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(BUDDY_LOCAL_STORAGE_KEY, JSON.stringify(store));
+  window.localStorage.setItem(buddyStorageKey(userId), JSON.stringify(store));
 }
 
 function localFallbackReply(message: string, language: BuddyLanguage) {
@@ -65,15 +65,25 @@ export async function fetchBuddyProgress(userId: string): Promise<{ progress: Bu
       throw new Error(data.error || 'Unable to fetch Buddy progress.');
     }
 
-    writeBuddyStore({ progress: data.progress, history: data.history || [] });
+    writeBuddyStore(userId, { progress: data.progress, history: data.history || [] });
     return data;
   } catch {
-    const local = readBuddyStore();
+    const local = readBuddyStore(userId);
     return local;
   }
 }
 
-export async function sendBuddyMessage(params: { userId: string; message: string; language: BuddyLanguage }) {
+export async function sendBuddyMessage(params: {
+  userId: string;
+  message: string;
+  language: BuddyLanguage;
+  context?: {
+    level?: number;
+    points?: number;
+    missingSkills?: string[];
+    weeklyChallenge?: string;
+  };
+}) {
   try {
     const response = await fetch(`${BASE}/buddy-chat`, {
       method: 'POST',
@@ -86,8 +96,8 @@ export async function sendBuddyMessage(params: { userId: string; message: string
       throw new Error(data.error || 'Unable to send message to Buddy.');
     }
 
-    const local = readBuddyStore();
-    writeBuddyStore({
+    const local = readBuddyStore(params.userId);
+    writeBuddyStore(params.userId, {
       progress: {
         ...local.progress,
         points: data.gamification?.points || local.progress.points,
@@ -99,11 +109,11 @@ export async function sendBuddyMessage(params: { userId: string; message: string
 
     return data;
   } catch {
-    const local = readBuddyStore();
+    const local = readBuddyStore(params.userId);
     const reply = localFallbackReply(params.message, params.language);
     const gamification = buildLocalGamification(local.progress);
 
-    writeBuddyStore({
+    writeBuddyStore(params.userId, {
       progress: {
         ...local.progress,
         points: gamification.points,
@@ -130,13 +140,13 @@ export async function saveSkillGap(params: { userId: string; missingSkills: stri
       throw new Error(data.error || 'Unable to save skill-gap analysis.');
     }
 
-    const local = readBuddyStore();
-    writeBuddyStore({ progress: data.progress, history: local.history });
+    const local = readBuddyStore(params.userId);
+    writeBuddyStore(params.userId, { progress: data.progress, history: local.history });
     return data;
   } catch {
-    const local = readBuddyStore();
+    const local = readBuddyStore(params.userId);
     const progress = { ...local.progress, missingSkills: params.missingSkills };
-    writeBuddyStore({ progress, history: local.history });
+    writeBuddyStore(params.userId, { progress, history: local.history });
     return { ok: true, progress };
   }
 }

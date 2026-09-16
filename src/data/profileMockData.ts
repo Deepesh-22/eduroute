@@ -28,6 +28,19 @@ export interface RecentActivityItem {
   xpEarned: number;
 }
 
+export interface ProfileCourse {
+  id: string;
+  title: string;
+  progressPercent: number;
+  enrolled: boolean;
+}
+
+export interface ProfileRoadmap {
+  id: string;
+  name: string;
+  pointsEarned: number;
+}
+
 export interface ProfileDashboardData {
   username: string;
   fullName: string;
@@ -58,6 +71,12 @@ export interface ProfileDashboardData {
   badges: ProfileBadge[];
   activityHeatmap: ActivityCell[];
   recentActivity: RecentActivityItem[];
+  scores?: {
+    assessmentAttempts: number;
+    assessmentScore: number;
+  };
+  courses?: ProfileCourse[];
+  roadmaps?: ProfileRoadmap[];
 }
 
 const createHeatmapData = (days = 98): ActivityCell[] => {

@@ -11,8 +11,8 @@ import {
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { getProfileDashboardData } from '../../services/profileDashboardApi';
 import { PROFILE_DASHBOARD_MOCK, type ProfileDashboardData } from '../../data/profileMockData';
-import { getAuthUser } from '../../utils/rbacAuth';
-import { getStoredUserProfile } from '../../utils/userProfile';
+import { getAuthToken, getAuthUser, saveAuthSession } from '../../utils/rbacAuth';
+import { getStoredUserProfile, saveUserProfile } from '../../utils/userProfile';
 
 const difficultyColors = {
   easy: '#22c55e',
@@ -31,18 +31,24 @@ const statsMeta = [
 
 export const ProfileDashboard = () => {
   const [profileData, setProfileData] = useState<ProfileDashboardData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editBio, setEditBio] = useState('');
 
   useEffect(() => {
     const authUser = getAuthUser();
     const storedProfile = getStoredUserProfile();
     const userName = authUser?.name || storedProfile?.name;
     const userEmail = authUser?.email || storedProfile?.email;
-    const userAvatar = storedProfile?.avatar;
+    const userAvatar = authUser?.avatar || storedProfile?.avatar;
+    const userBio = storedProfile?.roleBio;
     const userIdentity = userName
       ? {
           fullName: userName,
           username: userEmail?.split('@')[0] || userName.toLowerCase().replace(/\s+/g, ''),
           profilePhoto: userAvatar,
+          roleBio: userBio || 'Student learner',
         }
       : null;
 
@@ -82,6 +88,47 @@ export const ProfileDashboard = () => {
 
   const avatarFallback = profileData.username.charAt(0).toUpperCase();
 
+  const openEditor = () => {
+    setEditName(profileData.fullName);
+    setEditEmail(getStoredUserProfile()?.email || getAuthUser()?.email || '');
+    setEditBio(profileData.roleBio);
+    setIsEditing(true);
+  };
+
+  const saveProfile = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = editName.trim();
+    const email = editEmail.trim();
+    if (!name || !email) return;
+
+    const storedProfile = getStoredUserProfile();
+    const avatar = getAuthUser()?.avatar || storedProfile?.avatar;
+    const roleBio = editBio.trim() || 'Student learner';
+
+    saveUserProfile({
+      name,
+      email,
+      avatar,
+      roleBio,
+      enrolledCourses: storedProfile?.enrolledCourses,
+    });
+
+    const authUser = getAuthUser();
+    const authToken = getAuthToken();
+    if (authUser && authToken) {
+      saveAuthSession(authToken, { ...authUser, name, email });
+    }
+
+    setProfileData((current) => current ? {
+      ...current,
+      fullName: name,
+      username: email.split('@')[0] || name.toLowerCase().replace(/\s+/g, ''),
+      profilePhoto: avatar,
+      roleBio,
+    } : current);
+    setIsEditing(false);
+  };
+
   return (
     <div className="min-h-screen bg-[#070a17] p-4 text-slate-100 md:p-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -101,7 +148,7 @@ export const ProfileDashboard = () => {
                 <p className="mt-1 text-sm text-slate-300">{profileData.roleBio}</p>
               </div>
             </div>
-            <button className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-300/30 bg-indigo-500/20 px-5 py-3 text-sm font-bold text-indigo-100 hover:bg-indigo-400/30">
+            <button type="button" onClick={openEditor} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-300/30 bg-indigo-500/20 px-5 py-3 text-sm font-bold text-indigo-100 hover:bg-indigo-400/30">
               <PenLine className="h-4 w-4" /> Edit Profile
             </button>
           </div>
@@ -120,6 +167,31 @@ export const ProfileDashboard = () => {
             <p className="mt-2 text-xs text-slate-400">{progressPercent}% to {levelTitles[Math.min(levelTitles.length - 1, profileData.xp.level)]}.</p>
           </div>
         </section>
+
+        {isEditing && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-profile-title">
+            <form onSubmit={saveProfile} className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+              <div className="mb-6 flex items-center justify-between">
+                <h2 id="edit-profile-title" className="text-xl font-black text-white">Edit Profile</h2>
+                <button type="button" onClick={() => setIsEditing(false)} className="text-sm font-semibold text-slate-400 hover:text-white">Close</button>
+              </div>
+              <label className="block text-sm font-semibold text-slate-300">
+                Name
+                <input value={editName} onChange={(event) => setEditName(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#11162b] px-4 py-3 text-white outline-none focus:border-indigo-400" required />
+              </label>
+              <label className="mt-4 block text-sm font-semibold text-slate-300">
+                Email
+                <input type="email" value={editEmail} onChange={(event) => setEditEmail(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#11162b] px-4 py-3 text-white outline-none focus:border-indigo-400" required />
+              </label>
+              <label className="mt-4 block text-sm font-semibold text-slate-300">
+                Bio
+                <textarea value={editBio} onChange={(event) => setEditBio(event.target.value)} rows={3} className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-[#11162b] px-4 py-3 text-white outline-none focus:border-indigo-400" />
+              </label>
+              <p className="mt-3 text-xs text-slate-500">Your profile image is connected to your Google account.</p>
+              <button type="submit" className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-500">Save Changes</button>
+            </form>
+          </div>
+        )}
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {statsMeta.map((item) => {
@@ -234,6 +306,24 @@ export const ProfileDashboard = () => {
             </div>
           </section>
         </div>
+
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <article className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Courses</p>
+            <p className="mt-2 text-3xl font-black text-white">{profileData.courses?.filter((course) => course.enrolled).length ?? 0}</p>
+            <p className="mt-1 text-sm text-slate-400">Enrolled courses from your account</p>
+          </article>
+          <article className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Roadmaps</p>
+            <p className="mt-2 text-3xl font-black text-white">{profileData.roadmaps?.length ?? 0}</p>
+            <p className="mt-1 text-sm text-slate-400">Available learning paths</p>
+          </article>
+          <article className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Assessments</p>
+            <p className="mt-2 text-3xl font-black text-white">{profileData.scores?.assessmentAttempts ?? 0}</p>
+            <p className="mt-1 text-sm text-slate-400">Attempts recorded on your account</p>
+          </article>
+        </section>
 
         <section className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
           <h2 className="mb-4 text-lg font-bold">Recent Activity</h2>

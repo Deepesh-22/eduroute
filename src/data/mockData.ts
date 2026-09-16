@@ -60,8 +60,8 @@ export const COURSES: Course[] = [
   },
   {
     id: '3',
-    title: 'UI/UX Design Masterclass',
-    description: 'Design beautiful and functional user interfaces',
+    title: 'Full Web Development',
+    description: 'Learn to build complete web applications from scratch',
     instructor: 'Emma Davis',
     thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&auto=format&fit=crop&q=80',
     duration: '10 hours',
@@ -69,9 +69,9 @@ export const COURSES: Course[] = [
     category: 'Design',
     rating: 4.7,
     students: 9800,
-    price: 3999,
+    price: 5999,
     modules: [],
-    link: 'https://www.thedesignership.com/courses/ux-ui-design-course'
+    link: 'https://www.apnacollege.in/course/delta-9'
   },
   {
     id: '4',
@@ -84,9 +84,9 @@ export const COURSES: Course[] = [
     category: 'Data Science',
     rating: 4.8,
     students: 18500,
-    price: 6999,
+    price: 3499,
     modules: [],
-    link:'https://www.geeksforgeeks.org/data-science/data-science-with-python-tutorial/'
+    link:'https://www.udemy.com/course/the-data-science-course-complete-data-science-bootcamp/?srsltid=AfmBOorii4IeL2KPU8vMT21zgZHa1tIsyKVaUvxAeSY0chWML3OD5maz&couponCode=25BBPMXNVD35'
   }
 ];
 

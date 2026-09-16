@@ -69,12 +69,12 @@ Buddy now has graceful fallback behavior so the UI remains usable even when exte
 
 Set these variables in **Netlify Site Settings → Environment Variables**:
 
-### Required
-- `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` = MySQL connection settings
+### Required for Buddy AI
+- `MONGODB_URI` = MongoDB connection string used by the Buddy progress and chat functions
 - `OPENAI_API_KEY` (if using OpenAI)
 
 ### Optional
-- `MYSQL_URL` may be used instead of the individual MySQL settings
+- `MONGODB_DB_NAME` (default: `eduroute`)
 - `AI_PROVIDER` = `openai` (default) or `gemini`
 - `OPENAI_MODEL` (default: `gpt-4o-mini`)
 - `GEMINI_API_KEY` (required only if `AI_PROVIDER=gemini`)
@@ -117,7 +117,7 @@ netlify dev
 - `/api/admin-roadmaps`
 - `/api/courses`
 
-   - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` = MySQL connection settings
+   - `MONGODB_URI` and optional `MONGODB_DB_NAME` for Buddy progress and chat persistence
 
 ## API Summary
 

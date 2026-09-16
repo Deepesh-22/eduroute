@@ -20,10 +20,14 @@ exports.handler = async (event) => {
 
   try {
     const payload = JSON.parse(event.body || '{}');
-    const { userId, message, language = 'english' } = payload;
+    const { userId, message, language = 'english', context = {} } = payload;
 
-    if (!userId || !message) {
+    if (!userId || typeof message !== 'string' || !message.trim()) {
       return json(400, { ok: false, error: 'userId and message are required.' });
+    }
+
+    if (message.length > 2000) {
+      return json(413, { ok: false, error: 'Please keep your message under 2000 characters.' });
     }
 
     await connectDatabase();
@@ -40,7 +44,17 @@ exports.handler = async (event) => {
       .slice(-12)
       .map((entry) => ({ role: entry.role === 'assistant' ? 'assistant' : 'user', content: entry.text }));
 
-    const aiReply = await generateBuddyReply({ messages: recentMessages, language });
+    const aiReply = await generateBuddyReply({
+      messages: recentMessages,
+      language,
+      studentContext: {
+        level: profile.level,
+        points: profile.points,
+        missingSkills: profile.missingSkills,
+        weeklyChallenges: profile.weeklyChallenges,
+        ...context,
+      },
+    });
 
     const pointsEarned = 5;
     const newPoints = (profile.points || 0) + pointsEarned;

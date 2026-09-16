@@ -31,6 +31,11 @@ const NAVIGATION = [
 export const MainLayout = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const handleLogout = () => {
+    clearAuthSession();
+    setIsMobileMenuOpen(false);
+    window.location.href = '/login';
+  };
 
   const profileIdentity = useMemo(() => {
     const authUser = getAuthUser();
@@ -91,7 +96,7 @@ export const MainLayout = () => {
             Admin
           </Link>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 transition-all"
           >
             <LogOut className="h-5 w-5" />
@@ -130,7 +135,7 @@ export const MainLayout = () => {
         <div className="lg:hidden fixed inset-0 bg-[var(--surface-nav)] z-30 pt-16 overflow-y-auto">
           <nav className="p-4 space-y-2">
             {NAVIGATION.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
               return (
                 <Link
                   key={item.path}

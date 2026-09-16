@@ -1,7 +1,8 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Award, ChevronLeft, Clock, FileText, Globe, Play, Video } from 'lucide-react';
 import { COURSES } from '../data/mockData';
 import { getManagedCourses } from '../utils/courseManagerStorage';
+import { getCurrentUser, updateEnrollment } from '../utils/userProfile';
 
 const toCourseSummary = (courseId: string) => {
   const localCourse = getManagedCourses().find((course) => course.id === courseId);
@@ -31,6 +32,7 @@ const toCourseSummary = (courseId: string) => {
 
 export const CourseDetails = () => {
   const { id = '' } = useParams();
+  const navigate = useNavigate();
 
   const localCourse = toCourseSummary(id);
   const mockCourse = COURSES.find((course) => course.id === id);
@@ -41,6 +43,7 @@ export const CourseDetails = () => {
   }
 
   const isLocalCourse = Boolean(localCourse);
+  const isEnrolled = getCurrentUser().enrolledCourses.includes(id);
   const moduleLessons = mockCourse?.modules.flatMap((module) => module.lessons) || [];
 
   return (
@@ -53,7 +56,7 @@ export const CourseDetails = () => {
             <Link to="/browse" className="mb-6 inline-flex items-center text-sm font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">
               <ChevronLeft className="mr-2 h-4 w-4" /> Back to Explore
             </Link>
-            <h1 className="text-5xl font-black text-white md:text-6xl max-w-4xl leading-tight">{course.title}</h1>
+            <h1 className="text-5xl font-black text-white md:text-6xl max-w-4xl leading-tight ">{course.title}</h1>
             <div className="mt-8 flex flex-wrap gap-6 text-[11px] font-black uppercase tracking-[0.2em] text-white/90">
               <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-indigo-400" /> {course.duration}</span>
               <span className="flex items-center gap-2"><Globe className="h-4 w-4 text-indigo-400" /> English / Hinglish</span>
@@ -65,13 +68,13 @@ export const CourseDetails = () => {
 
       <div className="mx-auto mt-12 max-w-7xl px-8 grid grid-cols-1 gap-10 lg:grid-cols-[2fr_1fr]">
         <section>
-          <h2 className="text-2xl font-black text-slate-900">About this course</h2>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white">About this course</h2>
           <p className="mt-4 text-slate-600">{course.description}</p>
 
-          <h3 className="mt-10 text-xl font-black text-slate-900">Course curriculum</h3>
+          <h3 className="mt-10 text-xl font-black text-slate-900 dark:text-white">Course curriculum</h3>
           <div className="mt-4 space-y-3">
             {isLocalCourse && course.lessons.length === 0 && (
-              <div className="rounded-2xl border border-slate-200 p-6 text-slate-500">No resources added yet.</div>
+              <div className="rounded-2xl border border-slate-200 p-6 text-slate-500 ">No resources added yet.</div>
             )}
 
             {isLocalCourse && course.lessons.map((lesson) => (
@@ -85,7 +88,7 @@ export const CourseDetails = () => {
                 <div className="flex items-center gap-3">
                   {lesson.type === 'video' ? <Video className="h-4 w-4 text-indigo-600" /> : <FileText className="h-4 w-4 text-cyan-600" />}
                   <div>
-                    <p className="font-semibold text-slate-900">{lesson.title}</p>
+                    <p className="font-semibold text-slate-900 ">{lesson.title}</p>
                     <p className="text-xs text-slate-500">{lesson.topic}</p>
                   </div>
                 </div>
@@ -98,7 +101,7 @@ export const CourseDetails = () => {
                 <div className="flex items-center gap-3">
                   <Play className="h-4 w-4 text-indigo-600" />
                   <div>
-                    <p className="font-semibold text-slate-900">{lesson.title}</p>
+                    <p className="font-semibold text-slate-900 dark:text-white">{lesson.title}</p>
                     <p className="text-xs text-slate-500">{lesson.duration}</p>
                   </div>
                 </div>
@@ -108,7 +111,7 @@ export const CourseDetails = () => {
         </section>
 
         <aside className="rounded-3xl border border-slate-200 p-6 bg-white h-fit">
-          <div className="text-3xl font-black text-slate-900">{isLocalCourse ? 'Free' : `$${course.price}`}</div>
+          <div className="text-3xl font-black text-slate-900">{isLocalCourse ? 'Free' : `₹${course.price}`}</div>
           {course.link ? (
             <a
               href={course.link}
@@ -119,7 +122,16 @@ export const CourseDetails = () => {
               Open Course Link
             </a>
           ) : (
-            <button className="mt-5 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white">Enroll Now</button>
+            <button
+              type="button"
+              onClick={() => {
+                updateEnrollment(id);
+                navigate('/courses');
+              }}
+              className="mt-5 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white"
+            >
+              {isEnrolled ? 'Continue Learning' : 'Enroll Now'}
+            </button>
           )}
         </aside>
       </div>

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Gift, Lock, CheckCircle2, ShoppingBag, Sparkles, ArrowRight, Star, Volume2, VolumeX } from 'lucide-react';
 import { useUISound } from '../../contexts/SoundContext';
@@ -169,9 +170,9 @@ export const Rewards = () => {
             Completing modules gives you 50 pts, finishing roadmaps earns you 500 pts, 
             and scoring high on assessments can net you up to 200 pts per test.
          </p>
-         <button className="px-12 py-5 bg-white text-indigo-900 rounded-[30px] font-black hover:bg-indigo-50 transition-all shadow-2xl">
+        <Link to="/browse" className="inline-block px-12 py-5 bg-white text-indigo-900 rounded-[30px] font-black hover:bg-indigo-50 transition-all shadow-2xl">
             Start Learning Now
-         </button>
+        </Link>
       </div>
     </div>
   );

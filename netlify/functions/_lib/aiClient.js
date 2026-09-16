@@ -1,7 +1,10 @@
-const ROADMAP_FALLBACK = `For roadmaps, structure answers as:\n1) Beginner (3-4 milestones)\n2) Intermediate (3-4 milestones)\n3) Pro (3-4 milestones)\nInclude skills, one practical project, and one weekly challenge.`;
+const ROADMAP_FALLBACK = `For roadmaps, give a short ordered plan with milestones, one practical project, useful resources, and a measurable weekly challenge.`;
 
-function localFallbackReply({ messages, language }) {
+function localFallbackReply({ messages, language, studentContext = {} }) {
   const lastMessage = messages[messages.length - 1]?.content || 'learning guidance';
+  const missingSkills = studentContext.missingSkills?.length
+    ? studentContext.missingSkills.join(', ')
+    : 'no gaps recorded yet';
   const intro = language === 'hindi'
     ? 'मैं Buddy हूँ। अभी limited mode में हूँ, लेकिन आपकी पूरी help करूंगा।'
     : language === 'hinglish'
@@ -11,6 +14,8 @@ function localFallbackReply({ messages, language }) {
   return `${intro}
 
 Based on: "${lastMessage}"
+
+Your current focus: ${missingSkills}.
 
 Beginner → Intermediate → Pro Plan:
 1) Beginner: strengthen fundamentals + 1 mini project.
@@ -64,7 +69,7 @@ async function callGemini({ apiKey, model, messages, temperature }) {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Buddy could not generate a response.';
 }
 
-async function generateBuddyReply({ messages, language = 'english' }) {
+async function generateBuddyReply({ messages, language = 'english', studentContext = {} }) {
   const provider = (process.env.AI_PROVIDER || 'openai').toLowerCase();
   const temperature = 0.6;
   const languageDirective = {
@@ -75,7 +80,23 @@ async function generateBuddyReply({ messages, language = 'english' }) {
 
   const systemMessage = {
     role: 'system',
-    content: `You are Buddy, EDUROUTE's friendly student mentor AI. Help with: learning roadmaps, skill-gap analysis, internship guidance, resume and portfolio suggestions, weekly motivation, and event recommendations. ${ROADMAP_FALLBACK} ${languageDirective} Keep responses safe, non-harmful, and education focused. Refuse harmful/unrelated requests politely.`,
+    content: `You are Buddy, EDUROUTE's friendly student mentor AI. Your job is to turn a student's question into a clear next action. Help with learning roadmaps, skill-gap analysis, internship guidance, resume and portfolio suggestions, weekly motivation, and event recommendations.
+
+  Student context:
+  - Level: ${studentContext.level || 1}
+  - XP: ${studentContext.points || 0}
+  - Missing or selected focus skills: ${(studentContext.missingSkills || []).join(', ') || 'none recorded'}
+  - Weekly challenge: ${(studentContext.weeklyChallenges || [])[0] || studentContext.weeklyChallenge || 'none set'}
+
+  Behavior rules:
+  - Answer the user's actual question first; do not repeat a generic roadmap unless requested.
+  - Personalize recommendations to the student context and state assumptions when details are missing.
+  - Prefer concrete steps, realistic time estimates, examples, and one small action they can complete today.
+  - For career recommendations, never invent live openings or events. Explain how to verify current details.
+  - Keep most replies under 350 words. Use headings and bullets when they improve scanning.
+  - ${ROADMAP_FALLBACK}
+  - ${languageDirective}
+  - Keep responses safe, non-harmful, and education focused. Refuse harmful or unrelated requests politely.`,
   };
 
   try {
@@ -97,10 +118,10 @@ async function generateBuddyReply({ messages, language = 'english' }) {
       });
     }
 
-    return localFallbackReply({ messages, language });
+    return localFallbackReply({ messages, language, studentContext });
   } catch (error) {
     console.error('AI provider failed, using fallback response', error);
-    return localFallbackReply({ messages, language });
+    return localFallbackReply({ messages, language, studentContext });
   }
 }
 

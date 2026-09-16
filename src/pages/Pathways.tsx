@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Layers, Database, ArrowRight, CheckCircle2, Map } from 'lucide-react';
 import { PATHS, COURSES } from '../data/mockData';
 import { LearningPath } from '../types';
@@ -62,9 +63,9 @@ const PathCard = ({ path }: { path: LearningPath }) => {
             </div>
           ))}
         </div>
-        <button className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4 font-bold text-white transition-all hover:bg-indigo-600">
+        <Link to={`/course/${path.courses[0]}`} className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4 text-center font-bold text-white transition-all hover:bg-indigo-600">
           Start Pathway <ArrowRight className="h-5 w-5" />
-        </button>
+        </Link>
       </div>
     </motion.div>
   );

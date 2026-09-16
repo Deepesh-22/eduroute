@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   MessageSquare, 
   Users, 
@@ -19,6 +20,7 @@ const SKILLS = [
 ];
 
 export const SoftSkills = () => {
+  const navigate = useNavigate();
   return (
     <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto">
       <header className="mb-12">
@@ -33,7 +35,7 @@ export const SoftSkills = () => {
           <motion.div
             key={skill.id}
             whileHover={{ y: -8 }}
-            className="bg-white rounded-[32px] border border-slate-100 p-8 shadow-sm hover:shadow-xl transition-all group"
+            className="bg-white rounded-4xl border border-slate-100 p-8 shadow-sm hover:shadow-xl transition-all group"
           >
             <div className={`w-14 h-14 ${skill.bg} ${skill.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                <skill.icon className="h-7 w-7" />
@@ -68,7 +70,7 @@ export const SoftSkills = () => {
                   <CheckCircle2 className="h-4 w-4 text-green-400" /> AI Practice
                </div>
             </div>
-            <button className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-900 hover:bg-indigo-700 transition-all flex items-center gap-2">
+            <button onClick={() => navigate('/buddy')} className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-900 hover:bg-indigo-700 transition-all flex items-center gap-2">
                Start Module <ChevronRight className="h-5 w-5" />
             </button>
          </div>
