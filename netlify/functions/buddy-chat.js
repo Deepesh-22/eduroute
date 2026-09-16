@@ -1,5 +1,4 @@
-const { connectDatabase, UserProgress } = require('./_lib/database');
-const { generateBuddyReply } = require('./_lib/aiClient');
+import { generateBuddyReply } from './_lib/aiClient.js';
 
 function json(statusCode, body) {
   return {
@@ -14,7 +13,11 @@ function json(statusCode, body) {
   };
 }
 
-exports.handler = async (event) => {
+/**
+ * Netlify Function (ESM) — named export `handler` required when package.json has "type": "module"
+ * and functions use node_bundler = esbuild.
+ */
+export async function handler(event) {
   if (event.httpMethod === 'OPTIONS') return json(200, { ok: true });
   if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'Method not allowed' });
 
@@ -26,19 +29,32 @@ exports.handler = async (event) => {
       return json(400, { ok: false, error: 'userId and message are required.' });
     }
 
-    await connectDatabase();
+    let profile = null;
+    let points = 0;
+    let level = 1;
+    let recentMessages = [{ role: 'user', content: message }];
 
-    const profile = await UserProgress.findOneAndUpdate(
-      { userId },
-      { $setOnInsert: { userId, weeklyChallenges: ['Build 1 mini project this week'] } },
-      { upsert: true, new: true }
-    );
-
-    profile.chatHistory.push({ role: 'user', text: message });
-
-    const recentMessages = profile.chatHistory
-      .slice(-12)
-      .map((entry) => ({ role: entry.role === 'assistant' ? 'assistant' : 'user', content: entry.text }));
+    try {
+      const { connectDatabase, UserProgress } = await import('./_lib/database.js');
+      await connectDatabase();
+      profile = await UserProgress.findOneAndUpdate(
+        { userId },
+        { $setOnInsert: { userId, weeklyChallenges: ['Build 1 mini project this week'] } },
+        { upsert: true, new: true }
+      );
+      profile.chatHistory = profile.chatHistory || [];
+      profile.chatHistory.push({ role: 'user', text: message });
+      recentMessages = profile.chatHistory
+        .slice(-12)
+        .map((entry) => ({
+          role: entry.role === 'assistant' ? 'assistant' : 'user',
+          content: entry.text,
+        }));
+      points = profile.points || 0;
+      level = profile.level || 1;
+    } catch (dbErr) {
+      console.warn('Buddy DB unavailable, answering without persistence:', dbErr.message);
+    }
 
     const { reply: aiReply, usedWebSearch = false, sources = [] } = await generateBuddyReply({
       messages: recentMessages,
@@ -46,19 +62,23 @@ exports.handler = async (event) => {
     });
 
     const pointsEarned = usedWebSearch ? 8 : 5;
-    const newPoints = (profile.points || 0) + pointsEarned;
+    const newPoints = points + pointsEarned;
     const newLevel = Math.max(1, Math.floor(newPoints / 100) + 1);
 
-    profile.points = newPoints;
-    profile.level = newLevel;
-    profile.preferredLanguage = language;
-    profile.chatHistory.push({ role: 'assistant', text: aiReply });
-
-    if (profile.chatHistory.length > 50) {
-      profile.chatHistory = profile.chatHistory.slice(-50);
+    if (profile) {
+      try {
+        profile.points = newPoints;
+        profile.level = newLevel;
+        profile.preferredLanguage = language;
+        profile.chatHistory.push({ role: 'assistant', text: aiReply });
+        if (profile.chatHistory.length > 50) {
+          profile.chatHistory = profile.chatHistory.slice(-50);
+        }
+        await profile.save();
+      } catch (saveErr) {
+        console.warn('Buddy progress save failed:', saveErr.message);
+      }
     }
-
-    await profile.save();
 
     return json(200, {
       ok: true,
@@ -75,4 +95,4 @@ exports.handler = async (event) => {
     console.error('buddy-chat error', error);
     return json(500, { ok: false, error: error.message || 'Failed to process Buddy chat.' });
   }
-};
+}
