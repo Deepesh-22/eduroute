@@ -79,11 +79,7 @@ const GlobalThemeButton = () => {
 
   if (isDashboardArea) return null;
 
-  return (
-    <div className="fixed right-5 top-5 z-[80]">
-      <ThemeToggle />
-    </div>
-  );
+  return <ThemeToggle movable />;
 };
 
 export function App() {
