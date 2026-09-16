@@ -14,6 +14,15 @@ const SEARCH_TRIGGER_PATTERNS = [
   /\b(capital of|population of|currency of|ceo of|founder of)\b/i,
 ];
 
+function env(name) {
+  // Bracket access avoids esbuild inlining empty values at build time
+  try {
+    return (typeof process !== 'undefined' && process.env && process.env[name]) || '';
+  } catch {
+    return '';
+  }
+}
+
 function needsWebSearch(userMessage = '') {
   if (!userMessage || userMessage.trim().length < 5) return false;
   const pureGuidance =
@@ -24,7 +33,7 @@ function needsWebSearch(userMessage = '') {
   return SEARCH_TRIGGER_PATTERNS.some((p) => p.test(userMessage));
 }
 
-function localFallbackReply({ messages, language }) {
+function localFallbackReply({ messages, language, reason }) {
   const lastMessage = messages[messages.length - 1]?.content || 'learning guidance';
   const intro =
     language === 'hindi'
@@ -32,7 +41,8 @@ function localFallbackReply({ messages, language }) {
       : language === 'hinglish'
         ? 'Main Buddy hoon. Abhi limited mode hai, but main full guidance dunga.'
         : 'I am Buddy in limited mode, but I can still guide you effectively.';
-  return `${intro}\n\nBased on: "${lastMessage}"\n\nBeginner → Intermediate → Pro Plan:\n1) Beginner: strengthen fundamentals + 1 mini project.\n2) Intermediate: framework mastery + API integration + portfolio update.\n3) Pro: system design, testing, interview prep, and internship applications.\n\nWeekly challenge: complete one project milestone and one mock interview.`;
+  const hint = reason ? `\n\n(Debug: ${reason})` : '';
+  return `${intro}\n\nBased on: "${lastMessage}"\n\nBeginner → Intermediate → Pro Plan:\n1) Beginner: strengthen fundamentals + 1 mini project.\n2) Intermediate: framework mastery + API integration + portfolio update.\n3) Pro: system design, testing, interview prep, and internship applications.\n\nWeekly challenge: complete one project milestone and one mock interview.${hint}`;
 }
 
 async function callOpenAI({ apiKey, model, messages, temperature }) {
@@ -62,6 +72,9 @@ async function callGemini({ apiKey, model, messages, temperature }) {
 }
 
 async function callGroq({ apiKey, model, messages, temperature }) {
+  if (!apiKey || !String(apiKey).trim()) {
+    throw new Error('GROQ_API_KEY is empty at runtime');
+  }
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -74,7 +87,10 @@ async function callGroq({ apiKey, model, messages, temperature }) {
       temperature: temperature ?? 0.6,
     }),
   });
-  if (!response.ok) throw new Error(`Groq error: ${await response.text()}`);
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Groq error ${response.status}: ${errText.slice(0, 300)}`);
+  }
   const data = await response.json();
   return data.choices?.[0]?.message?.content || 'Buddy could not generate a response.';
 }
@@ -169,16 +185,16 @@ async function searchWithDuckDuckGo(query) {
 }
 
 async function performWebSearch(query) {
-  const provider = (process.env.SEARCH_PROVIDER || 'auto').toLowerCase();
+  const provider = (env('SEARCH_PROVIDER') || 'auto').toLowerCase();
   try {
-    if ((provider === 'tavily' || provider === 'auto') && process.env.TAVILY_API_KEY) {
-      return await searchWithTavily(query, process.env.TAVILY_API_KEY);
+    if ((provider === 'tavily' || provider === 'auto') && env('TAVILY_API_KEY')) {
+      return await searchWithTavily(query, env('TAVILY_API_KEY'));
     }
-    if ((provider === 'serper' || provider === 'auto') && process.env.SERPER_API_KEY) {
-      return await searchWithSerper(query, process.env.SERPER_API_KEY);
+    if ((provider === 'serper' || provider === 'auto') && env('SERPER_API_KEY')) {
+      return await searchWithSerper(query, env('SERPER_API_KEY'));
     }
-    if ((provider === 'brave' || provider === 'auto') && process.env.BRAVE_API_KEY) {
-      return await searchWithBrave(query, process.env.BRAVE_API_KEY);
+    if ((provider === 'brave' || provider === 'auto') && env('BRAVE_API_KEY')) {
+      return await searchWithBrave(query, env('BRAVE_API_KEY'));
     }
     const wiki = await searchWithWikipedia(query);
     if (wiki.results?.length || wiki.answer) return wiki;
@@ -254,7 +270,10 @@ function buildAnswerFromSearch(searchData, language) {
 }
 
 async function generateBuddyReply({ messages, language = 'english' }) {
-  const provider = (process.env.AI_PROVIDER || 'groq').toLowerCase();
+  const provider = (env('AI_PROVIDER') || 'groq').toLowerCase();
+  const groqKey = env('GROQ_API_KEY');
+  const openaiKey = env('OPENAI_API_KEY');
+  const geminiKey = env('GEMINI_API_KEY');
   const temperature = 0.5;
   const languageDirective = {
     english: 'Reply in English only.',
@@ -286,22 +305,26 @@ async function generateBuddyReply({ messages, language = 'english' }) {
 
   try {
     let reply;
-    if ((provider === 'groq' || provider === 'groq-ai') && process.env.GROQ_API_KEY) {
-      reply = await callGroq({ apiKey: process.env.GROQ_API_KEY, model: process.env.GROQ_MODEL, messages: [systemMessage, ...messages], temperature });
-    } else if (provider === 'gemini' && process.env.GEMINI_API_KEY) {
-      reply = await callGemini({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL, messages: [systemMessage, ...messages], temperature });
-    } else if (provider === 'openai' && process.env.OPENAI_API_KEY) {
-      reply = await callOpenAI({ apiKey: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL, messages: [systemMessage, ...messages], temperature });
-    } else if (process.env.GROQ_API_KEY) {
-      reply = await callGroq({ apiKey: process.env.GROQ_API_KEY, model: process.env.GROQ_MODEL, messages: [systemMessage, ...messages], temperature });
-    } else if (process.env.OPENAI_API_KEY) {
-      reply = await callOpenAI({ apiKey: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL, messages: [systemMessage, ...messages], temperature });
-    } else if (process.env.GEMINI_API_KEY) {
-      reply = await callGemini({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL, messages: [systemMessage, ...messages], temperature });
+    if ((provider === 'groq' || provider === 'groq-ai') && groqKey) {
+      reply = await callGroq({ apiKey: groqKey, model: env('GROQ_MODEL'), messages: [systemMessage, ...messages], temperature });
+    } else if (provider === 'gemini' && geminiKey) {
+      reply = await callGemini({ apiKey: geminiKey, model: env('GEMINI_MODEL'), messages: [systemMessage, ...messages], temperature });
+    } else if (provider === 'openai' && openaiKey) {
+      reply = await callOpenAI({ apiKey: openaiKey, model: env('OPENAI_MODEL'), messages: [systemMessage, ...messages], temperature });
+    } else if (groqKey) {
+      reply = await callGroq({ apiKey: groqKey, model: env('GROQ_MODEL'), messages: [systemMessage, ...messages], temperature });
+    } else if (openaiKey) {
+      reply = await callOpenAI({ apiKey: openaiKey, model: env('OPENAI_MODEL'), messages: [systemMessage, ...messages], temperature });
+    } else if (geminiKey) {
+      reply = await callGemini({ apiKey: geminiKey, model: env('GEMINI_MODEL'), messages: [systemMessage, ...messages], temperature });
     } else if (searchData && usedWebSearch) {
       reply = buildAnswerFromSearch(searchData, language);
     } else {
-      reply = localFallbackReply({ messages, language });
+      reply = localFallbackReply({
+        messages,
+        language,
+        reason: `No AI key found (provider=${provider}, groqKey=${groqKey ? 'set' : 'missing'})`,
+      });
     }
     return { reply, usedWebSearch, sources };
   } catch (error) {
@@ -309,7 +332,15 @@ async function generateBuddyReply({ messages, language = 'english' }) {
     if (searchData && usedWebSearch) {
       return { reply: buildAnswerFromSearch(searchData, language), usedWebSearch, sources };
     }
-    return { reply: localFallbackReply({ messages, language }), usedWebSearch, sources };
+    return {
+      reply: localFallbackReply({
+        messages,
+        language,
+        reason: error.message || 'AI provider failed',
+      }),
+      usedWebSearch,
+      sources,
+    };
   }
 }
 
