@@ -1,306 +1,178 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
-
-/* =========================================================
-   TAILWIND DARK MODE
-   Uses .dark class added by ThemeContext
-========================================================= */
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* =========================================================
-   LIGHT THEME VARIABLES
-========================================================= */
+/* EDUROUTE DESIGN TOKENS — premium EdTech SaaS */
 
 :root {
   color-scheme: light;
-
-  --bg-primary: #f8fafc;
-  --bg-secondary: #eef2ff;
-
-  --surface-nav: rgba(255, 255, 255, 0.95);
-  --surface-card: rgba(255, 255, 255, 0.76);
-  --surface-input: #ffffff;
-
+  --bg-primary: #f4f6fb;
+  --bg-secondary: #eef1f8;
+  --bg-elevated: #ffffff;
+  --surface-nav: #ffffff;
+  --surface-sidebar: #ffffff;
+  --surface-card: #ffffff;
+  --surface-card-hover: #f8fafc;
+  --surface-input: #f1f5f9;
+  --surface-muted: #f1f5f9;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
-
-  --border-default: rgba(148, 163, 184, 0.26);
-
-  --shadow-soft: 0 14px 36px rgba(15, 23, 42, 0.12);
-
-  --accent-gradient: linear-gradient(
-    120deg,
-    #4f46e5,
-    #7c3aed,
-    #2563eb
-  );
-
-  --accent-neon:
-    0 0 0 1px rgba(99, 102, 241, 0.34),
-    0 0 24px rgba(99, 102, 241, 0.28);
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #f8fafc;
+  --border-default: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --border-strong: #cbd5e1;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-soft: rgba(99, 102, 241, 0.12);
+  --accent-text: #4f46e5;
+  --success: #10b981;
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.12);
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --info: #3b82f6;
+  --info-soft: rgba(59, 130, 246, 0.12);
+  --purple: #8b5cf6;
+  --purple-soft: rgba(139, 92, 246, 0.12);
+  --gold: #eab308;
+  --gold-soft: rgba(234, 179, 8, 0.12);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --sidebar-width: 15.5rem;
+  --topbar-height: 4rem;
 }
-
-/* =========================================================
-   DARK THEME VARIABLES
-========================================================= */
 
 html[data-theme="dark"] {
   color-scheme: dark;
-
-  --bg-primary: #020617;
+  --bg-primary: #0b1120;
   --bg-secondary: #0f172a;
-
-  --surface-nav: rgba(15, 23, 42, 0.88);
-  --surface-card: rgba(30, 41, 59, 0.62);
-  --surface-input: rgba(15, 23, 42, 0.95);
-
+  --bg-elevated: #111827;
+  --surface-nav: #0f172a;
+  --surface-sidebar: #0c1222;
+  --surface-card: #131c31;
+  --surface-card-hover: #182338;
+  --surface-input: #1a2438;
+  --surface-muted: #1a2438;
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
-
-  --border-default: rgba(148, 163, 184, 0.2);
-
-  --shadow-soft:
-    0 22px 50px rgba(0, 0, 0, 0.55);
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+  --border-default: rgba(148, 163, 184, 0.14);
+  --border-subtle: rgba(148, 163, 184, 0.08);
+  --border-strong: rgba(148, 163, 184, 0.22);
+  --accent: #818cf8;
+  --accent-hover: #6366f1;
+  --accent-soft: rgba(99, 102, 241, 0.18);
+  --accent-text: #a5b4fc;
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 24, 0.14);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.14);
+  --purple: #a78bfa;
+  --purple-soft: rgba(167, 139, 250, 0.14);
+  --gold: #facc15;
+  --gold-soft: rgba(250, 204, 21, 0.14);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
-/* =========================================================
-   PAGE BACKGROUND
-========================================================= */
-
-html {
-  min-height: 100%;
-  background: var(--bg-primary);
-}
-
+html { min-height: 100%; background: var(--bg-primary); }
 body {
   margin: 0;
   min-height: 100vh;
-
   @apply antialiased;
-
-  background:
-    radial-gradient(
-      circle at 10% 10%,
-      var(--bg-secondary),
-      var(--bg-primary)
-    );
-
+  background: var(--bg-primary);
   color: var(--text-primary);
-
-  font-family:
-    "Inter",
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-
-  line-height: 1.6;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+* { box-sizing: border-box; }
+::selection { background: var(--accent-soft); color: var(--text-primary); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-html[data-theme="dark"],
-html[data-theme="dark"] body,
-html[data-theme="dark"] #root {
-  background-color: #020617;
+.er-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
 }
-
-.glass-panel {
-  @apply border border-slate-200/80 bg-white/80 backdrop-blur-xl shadow-[0_18px_40px_rgba(15,23,42,0.08)];
+.er-card-hover:hover {
+  background: var(--surface-card-hover);
+  border-color: var(--border-strong);
 }
-
-.premium-border {
-  box-shadow:
-    inset 0 0 0 1px rgba(99, 102, 241, 0.18),
-    0 0 0 1px rgba(255, 255, 255, 0.12);
+.er-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  border-radius: var(--radius-md); font-weight: 600; font-size: 0.875rem;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+  cursor: pointer; border: none;
 }
-
-html[data-theme="dark"] .glass-panel {
-  @apply border border-slate-700/80 bg-slate-900/60 shadow-[0_22px_50px_rgba(0,0,0,0.45)];
+.er-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.er-btn-primary { background: var(--accent); color: #fff; }
+.er-btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.er-btn-ghost {
+  background: transparent; color: var(--text-secondary); border: 1px solid var(--border-default);
 }
-
-html[data-theme="dark"] .premium-border {
-  box-shadow:
-    inset 0 0 0 1px rgba(99, 102, 241, 0.28),
-    0 0 0 1px rgba(148, 163, 184, 0.08);
+.er-btn-ghost:hover:not(:disabled) { background: var(--surface-muted); color: var(--text-primary); }
+.er-input {
+  width: 100%; background: var(--surface-input); border: 1px solid var(--border-default);
+  border-radius: var(--radius-md); color: var(--text-primary);
+  padding: 0.625rem 0.875rem; font-size: 0.875rem; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-
-/* =========================================================
-   SMOOTH THEME TRANSITION
-
-   Do NOT use transition on *
-   because it causes the white fading/flash effect.
-========================================================= */
-
-html,
-body {
-  transition:
-    background-color 200ms ease,
-    color 200ms ease;
+.er-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.er-input::placeholder { color: var(--text-muted); }
+.er-badge {
+  display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 999px;
+  padding: 0.2rem 0.6rem; font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
 }
+.er-progress {
+  height: 0.375rem; border-radius: 999px; background: var(--surface-muted); overflow: hidden;
+}
+.er-progress > span {
+  display: block; height: 100%; border-radius: 999px; background: var(--accent);
+  transition: width 0.3s ease;
+}
+.er-nav-item {
+  display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 500;
+  color: var(--text-secondary); transition: background 0.15s, color 0.15s; text-decoration: none;
+}
+.er-nav-item:hover { background: var(--surface-muted); color: var(--text-primary); }
+.er-nav-item.active {
+  background: var(--accent); color: #fff; font-weight: 600;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+.er-page {
+  padding: 1.25rem 1.25rem 2rem; max-width: 1400px; margin: 0 auto; width: 100%;
+}
+@media (min-width: 768px) {
+  .er-page { padding: 1.5rem 1.75rem 2.5rem; }
+}
+.er-section-title {
+  font-size: 1.125rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em;
+}
+.er-link { font-size: 0.8125rem; font-weight: 600; color: var(--accent-text); text-decoration: none; }
+.er-link:hover { text-decoration: underline; }
 
-button,
-input,
-textarea,
-select,
-.glass,
+/* Theme toggle compatibility */
 .theme-toggle {
-  transition:
-    background-color 200ms ease,
-    color 200ms ease,
-    border-color 200ms ease,
-    box-shadow 200ms ease,
-    transform 200ms ease,
-    opacity 200ms ease;
-}
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-button {
-  @apply rounded-xl font-semibold;
-
-  box-shadow:
-    0 8px 20px rgba(15, 23, 42, 0.08);
-}
-
-button:hover {
-  transform: translateY(-1px);
-
-  box-shadow:
-    0 12px 24px rgba(15, 23, 42, 0.12);
-}
-
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid rgba(99, 102, 241, 0.35);
-  outline-offset: 2px;
-}
-
-/* =========================================================
-   GLASS
-========================================================= */
-
-.glass {
-  @apply border border-white/20 bg-white/70 backdrop-blur-xl;
-
-  box-shadow:
-    0 14px 40px rgba(15, 23, 42, 0.08);
-}
-
-html[data-theme="dark"] .glass {
-  background: rgba(30, 41, 59, 0.62) !important;
-
-  border-color:
-    rgba(148, 163, 184, 0.2) !important;
-
-  box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.4);
-}
-
-/* =========================================================
-   THEME TOGGLE
-========================================================= */
-
-.theme-toggle {
-  background: var(--accent-gradient);
-
-  box-shadow:
-    var(--accent-neon);
-}
-
-/* =========================================================
-   GRADIENT TEXT
-========================================================= */
-
-.text-gradient {
-  @apply bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent;
-}
-
-/* =========================================================
-   SCROLLBAR
-========================================================= */
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-html[data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: #334155;
-}
-
-html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
-
-/* =========================================================
-   BLOB ANIMATION
-========================================================= */
-
-@keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-}
-
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
-
-/* =========================================================
-   DARK MODE - EXTRA SAFETY FOR OTHER PAGES
-========================================================= */
-
-html[data-theme="dark"] input,
-html[data-theme="dark"] textarea,
-html[data-theme="dark"] select {
-  background-color: #0f172a;
-  color: #e2e8f0;
-  border-color: rgba(148, 163, 184, 0.25);
-}
-
-html[data-theme="dark"] input::placeholder,
-html[data-theme="dark"] textarea::placeholder {
-  color: #64748b;
-}
-
-html[data-theme="dark"] ::selection {
-  background: rgba(99, 102, 241, 0.45);
-  color: #ffffff;
+  background: linear-gradient(120deg, #4f46e5, #7c3aed, #2563eb);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.34), 0 0 16px rgba(99, 102, 241, 0.2);
 }
