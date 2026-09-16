@@ -40,9 +40,12 @@ exports.handler = async (event) => {
       .slice(-12)
       .map((entry) => ({ role: entry.role === 'assistant' ? 'assistant' : 'user', content: entry.text }));
 
-    const aiReply = await generateBuddyReply({ messages: recentMessages, language });
+    const { reply: aiReply, usedWebSearch = false, sources = [] } = await generateBuddyReply({
+      messages: recentMessages,
+      language,
+    });
 
-    const pointsEarned = 5;
+    const pointsEarned = usedWebSearch ? 8 : 5;
     const newPoints = (profile.points || 0) + pointsEarned;
     const newLevel = Math.max(1, Math.floor(newPoints / 100) + 1);
 
@@ -60,6 +63,8 @@ exports.handler = async (event) => {
     return json(200, {
       ok: true,
       reply: aiReply,
+      usedWebSearch,
+      sources,
       gamification: {
         points: newPoints,
         level: newLevel,

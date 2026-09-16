@@ -5,6 +5,8 @@ export interface BuddyMessage {
   role: 'user' | 'ai';
   text: string;
   timestamp: string;
+  usedWebSearch?: boolean;
+  sources?: Array<{ title: string; url: string }>;
 }
 
 export interface BuddyProgress {
