@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 let cachedConnection = null;
 
@@ -68,9 +68,4 @@ async function connectDatabase() {
   return cachedConnection;
 }
 
-module.exports = {
-  connectDatabase,
-  Roadmap,
-  UserProgress,
-  Course,
-};
+export { connectDatabase, Roadmap, UserProgress, Course };

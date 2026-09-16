@@ -120,9 +120,9 @@ export const MainLayout = () => {
         </div>
       </div>
 
-      {/* Desktop Top-right Theme Toggle */}
-      <div className="fixed right-5 top-5 z-30 hidden lg:block">
-        <ThemeToggle />
+      {/* Desktop floating Theme Toggle (draggable) */}
+      <div className="hidden lg:block">
+        <ThemeToggle movable />
       </div>
 
       {/* Mobile Menu */}
@@ -150,7 +150,7 @@ export const MainLayout = () => {
             <Link
               to="/admin-login"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-[var(--text-secondary)] hover:bg-white/70 transition-all"
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-[var(--text-secondary)] hover:bg-white/70 transition-all`}
             >
               <span className="h-5 w-5 inline-flex items-center justify-center font-black">A</span>
               Admin
