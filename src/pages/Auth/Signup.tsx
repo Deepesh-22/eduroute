@@ -105,6 +105,7 @@ export const Signup = () => {
               id: `google-${googleProfile.email}`,
               name: googleProfile.name,
               email: googleProfile.email,
+              avatar: googleProfile.avatar,
               role: 'student',
               verificationStatus: 'verified',
             });

@@ -23,16 +23,17 @@ export async function handler(event) {
 
   try {
     const payload = JSON.parse(event.body || '{}');
-    const { userId, message, language = 'english' } = payload;
+    const { userId, message, language = 'english', context = {} } = payload;
 
-    if (!userId || !message) {
+    if (!userId || typeof message !== 'string' || !message.trim()) {
       return json(400, { ok: false, error: 'userId and message are required.' });
     }
 
-    let profile = null;
-    let points = 0;
-    let level = 1;
-    let recentMessages = [{ role: 'user', content: message }];
+    if (message.length > 2000) {
+      return json(413, { ok: false, error: 'Please keep your message under 2000 characters.' });
+    }
+
+    await connectDatabase();
 
     try {
       const { connectDatabase, UserProgress } = await import('./_lib/database.js');
@@ -56,9 +57,16 @@ export async function handler(event) {
       console.warn('Buddy DB unavailable, answering without persistence:', dbErr.message);
     }
 
-    const { reply: aiReply, usedWebSearch = false, sources = [] } = await generateBuddyReply({
+    const aiReply = await generateBuddyReply({
       messages: recentMessages,
       language,
+      studentContext: {
+        level: profile.level,
+        points: profile.points,
+        missingSkills: profile.missingSkills,
+        weeklyChallenges: profile.weeklyChallenges,
+        ...context,
+      },
     });
 
     const pointsEarned = usedWebSearch ? 8 : 5;

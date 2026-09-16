@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
 import { 
   Calendar, 
   MapPin, 
@@ -38,6 +39,10 @@ const EVENTS = [
 ];
 
 export const Events = () => {
+  const [category, setCategory] = useState('All');
+  const [query, setQuery] = useState('');
+  const [registered, setRegistered] = useState<string[]>([]);
+  const visibleEvents = useMemo(() => EVENTS.filter((event) => (category === 'All' || event.category === category) && `${event.title} ${event.location} ${event.date}`.toLowerCase().includes(query.trim().toLowerCase())), [category, query]);
   return (
     <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto">
       <header className="mb-12">
@@ -57,7 +62,7 @@ export const Events = () => {
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
           alt="Featured Event"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
         <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full">
            <div className="flex items-center gap-2 mb-4">
               <span className="px-4 py-1.5 bg-indigo-600 text-white rounded-full text-xs font-bold uppercase tracking-widest">Featured Event</span>
@@ -74,14 +79,16 @@ export const Events = () => {
 
       <div className="mb-10 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex gap-2">
-           <button className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 transition-all">All Events</button>
-           <button className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all">Workshops</button>
-           <button className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all">Meetups</button>
+           <button onClick={() => setCategory('All')} className="px-6 py-3 rounded-2xl font-bold bg-indigo-600 text-white">All Events</button>
+           <button onClick={() => setCategory('Workshop')} className="px-6 py-3 rounded-2xl font-bold bg-white border border-slate-200 text-slate-600">Workshops</button>
+           <button onClick={() => setCategory('Meetup')} className="px-6 py-3 rounded-2xl font-bold bg-white border border-slate-200 text-slate-600">Meetups</button>
         </div>
         <div className="relative">
            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
            <input 
-             type="text" 
+             value={query}
+             onChange={(event) => setQuery(event.target.value)}
+             type="search" 
              placeholder="Search city or month..."
              className="pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm w-full md:w-64"
            />
@@ -89,11 +96,11 @@ export const Events = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {EVENTS.map((event) => (
+        {visibleEvents.map((event) => (
           <motion.div
             key={event.id}
             whileHover={{ y: -8 }}
-            className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all"
+            className="bg-white rounded-4xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all"
           >
             <div className="h-48 relative overflow-hidden">
                <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
@@ -112,8 +119,8 @@ export const Events = () => {
                      <Users className="h-4 w-4 text-slate-400" /> {event.attendees} attending
                   </div>
                </div>
-               <button className="w-full py-4 bg-slate-50 text-slate-900 rounded-2xl font-bold group-hover:bg-indigo-600 group-hover:text-white transition-all flex items-center justify-center gap-2">
-                  Register Now <ArrowRight className="h-4 w-4" />
+              <button onClick={() => setRegistered((current) => current.includes(event.id) ? current.filter((id) => id !== event.id) : [...current, event.id])} className="w-full py-4 bg-slate-50 text-slate-900 rounded-2xl font-bold group-hover:bg-indigo-600 group-hover:text-white transition-all flex items-center justify-center gap-2">
+                {registered.includes(event.id) ? 'Registered' : 'Register Now'} <ArrowRight className="h-4 w-4" />
                </button>
             </div>
           </motion.div>

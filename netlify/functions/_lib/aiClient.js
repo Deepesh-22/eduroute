@@ -1,18 +1,17 @@
-const ROADMAP_FALLBACK = `For roadmaps, structure answers as:\n1) Beginner (3-4 milestones)\n2) Intermediate (3-4 milestones)\n3) Pro (3-4 milestones)\nInclude skills, one practical project, and one weekly challenge.`;
+const ROADMAP_FALLBACK = `For roadmaps, give a short ordered plan with milestones, one practical project, useful resources, and a measurable weekly challenge.`;
 
-const SEARCH_TRIGGER_PATTERNS = [
-  /\b(internship|internships|hiring|job|jobs|vacancy|vacancies|placement|placements)\b/i,
-  /\b(hackathon|hackathons|event|events|meetup|conference|webinar)\b/i,
-  /\b(latest|recent|current|today|this week|this month|202[4-9]|2026|2025)\b/i,
-  /\b(salary|stipend|package|ctc|compensation)\b/i,
-  /\b(company|companies|startup|startups|faang|product company)\b/i,
-  /\b(news|announcement|release|launched|update about)\b/i,
-  /\b(how much|what is the fee|deadline|last date|registration)\b/i,
-  /\b(recommend|suggest).*(course|tool|platform|resource|internship|event)/i,
-  /\b(who is|who's|who was|who are|what is|what's|when is|when was|where is)\b/i,
-  /\b(prime minister|president|cm of|chief minister|minister of|governor of)\b/i,
-  /\b(capital of|population of|currency of|ceo of|founder of)\b/i,
-];
+function localFallbackReply({ messages, language, studentContext = {} }) {
+  const lastMessage = messages[messages.length - 1]?.content || 'learning guidance';
+  const missingSkills = studentContext.missingSkills?.length
+    ? studentContext.missingSkills.join(', ')
+    : 'no gaps recorded yet';
+  const intro = language === 'hindi'
+    ? 'मैं Buddy हूँ। अभी limited mode में हूँ, लेकिन आपकी पूरी help करूंगा।'
+    : language === 'hinglish'
+      ? 'Main Buddy hoon. Abhi limited mode hai, but main full guidance dunga.'
+      : 'I am Buddy in limited mode, but I can still guide you effectively.';
+
+  return `${intro}
 
 function env(name) {
   // Bracket access avoids esbuild inlining empty values at build time
@@ -23,15 +22,12 @@ function env(name) {
   }
 }
 
-function needsWebSearch(userMessage = '') {
-  if (!userMessage || userMessage.trim().length < 5) return false;
-  const pureGuidance =
-    /^(create|give|make|show|explain|teach|help me with|motivate)\b.*\b(roadmap|plan|skill gap|motivation|resume|portfolio|study plan)\b/i;
-  if (pureGuidance.test(userMessage.trim()) && !SEARCH_TRIGGER_PATTERNS.some((p) => p.test(userMessage))) {
-    return false;
-  }
-  return SEARCH_TRIGGER_PATTERNS.some((p) => p.test(userMessage));
-}
+Your current focus: ${missingSkills}.
+
+Beginner → Intermediate → Pro Plan:
+1) Beginner: strengthen fundamentals + 1 mini project.
+2) Intermediate: framework mastery + API integration + portfolio update.
+3) Pro: system design, testing, interview prep, and internship applications.
 
 function localFallbackReply({ messages, language, reason }) {
   const lastMessage = messages[messages.length - 1]?.content || 'learning guidance';
@@ -269,12 +265,9 @@ function buildAnswerFromSearch(searchData, language) {
   return `${header}\n\n${summary}${sources ? `\n\nSources:\n${sources}` : ''}`;
 }
 
-async function generateBuddyReply({ messages, language = 'english' }) {
-  const provider = (env('AI_PROVIDER') || 'groq').toLowerCase();
-  const groqKey = env('GROQ_API_KEY');
-  const openaiKey = env('OPENAI_API_KEY');
-  const geminiKey = env('GEMINI_API_KEY');
-  const temperature = 0.5;
+async function generateBuddyReply({ messages, language = 'english', studentContext = {} }) {
+  const provider = (process.env.AI_PROVIDER || 'openai').toLowerCase();
+  const temperature = 0.6;
   const languageDirective = {
     english: 'Reply in English only.',
     hindi: 'Reply in Hindi only (Devanagari script).',
@@ -300,7 +293,23 @@ async function generateBuddyReply({ messages, language = 'english' }) {
 
   const systemMessage = {
     role: 'system',
-    content: `You are Buddy, EDUROUTE's friendly student mentor AI. Help with learning roadmaps, skill-gap analysis, internships, resume tips, motivation, events, factual questions, and general wellness guidance (e.g. study-friendly meal ideas). For diet/health topics, give practical general information only and remind users to consult a doctor or dietitian for personal medical advice. Prefer clear structured answers. ${ROADMAP_FALLBACK} ${languageDirective} When live search results are present, answer the user's question directly using them first. Keep responses safe and education focused.${searchContext}`,
+    content: `You are Buddy, EDUROUTE's friendly student mentor AI. Your job is to turn a student's question into a clear next action. Help with learning roadmaps, skill-gap analysis, internship guidance, resume and portfolio suggestions, weekly motivation, and event recommendations.
+
+  Student context:
+  - Level: ${studentContext.level || 1}
+  - XP: ${studentContext.points || 0}
+  - Missing or selected focus skills: ${(studentContext.missingSkills || []).join(', ') || 'none recorded'}
+  - Weekly challenge: ${(studentContext.weeklyChallenges || [])[0] || studentContext.weeklyChallenge || 'none set'}
+
+  Behavior rules:
+  - Answer the user's actual question first; do not repeat a generic roadmap unless requested.
+  - Personalize recommendations to the student context and state assumptions when details are missing.
+  - Prefer concrete steps, realistic time estimates, examples, and one small action they can complete today.
+  - For career recommendations, never invent live openings or events. Explain how to verify current details.
+  - Keep most replies under 350 words. Use headings and bullets when they improve scanning.
+  - ${ROADMAP_FALLBACK}
+  - ${languageDirective}
+  - Keep responses safe, non-harmful, and education focused. Refuse harmful or unrelated requests politely.`,
   };
 
   try {
@@ -326,21 +335,20 @@ async function generateBuddyReply({ messages, language = 'english' }) {
         reason: `No AI key found (provider=${provider}, groqKey=${groqKey ? 'set' : 'missing'})`,
       });
     }
-    return { reply, usedWebSearch, sources };
-  } catch (error) {
-    console.error('AI provider failed', error);
-    if (searchData && usedWebSearch) {
-      return { reply: buildAnswerFromSearch(searchData, language), usedWebSearch, sources };
+
+    if (process.env.OPENAI_API_KEY) {
+      return await callOpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        model: process.env.OPENAI_MODEL,
+        messages: [systemMessage, ...messages],
+        temperature,
+      });
     }
-    return {
-      reply: localFallbackReply({
-        messages,
-        language,
-        reason: error.message || 'AI provider failed',
-      }),
-      usedWebSearch,
-      sources,
-    };
+
+    return localFallbackReply({ messages, language, studentContext });
+  } catch (error) {
+    console.error('AI provider failed, using fallback response', error);
+    return localFallbackReply({ messages, language, studentContext });
   }
 }
 

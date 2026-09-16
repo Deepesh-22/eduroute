@@ -42,7 +42,7 @@ export const CompanyDetail = () => {
       <div className="max-w-5xl mx-auto px-4 md:px-8 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
          <div className="lg:col-span-2 space-y-12">
             <section>
-               <h2 className="text-2xl font-bold text-slate-900 mb-4">About the Company</h2>
+               <h2 className="text-2xl font-bold text-slate-900  mb-4 ">About the Company</h2>
                <p className="text-slate-600 leading-relaxed text-lg">
                   TechFlow Systems is a leading AI-first engineering company building next-generation cloud infrastructure. 
                   We believe in radical transparency and autonomous teams. Our mission is to accelerate the world's 
@@ -67,7 +67,7 @@ export const CompanyDetail = () => {
             </section>
 
             <section>
-               <h2 className="text-2xl font-bold text-slate-900 mb-6">Open Internship Roles</h2>
+               <h2 className="text-2xl font-bold text-slate-900 mb-6 dark:text-white">Open Internship Roles</h2>
                <div className="space-y-4">
                   {['Senior Frontend Intern', 'DevOps Specialist', 'QA Engineer'].map(role => (
                     <div key={role} className="p-6 bg-white rounded-3xl border border-slate-100 flex items-center justify-between group hover:border-indigo-100 transition-all">

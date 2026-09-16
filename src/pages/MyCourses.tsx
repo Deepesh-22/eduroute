@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
 import { PlayCircle, Clock, BookOpen, ChevronRight } from 'lucide-react';
-import { COURSES, MOCK_USER } from '../data/mockData';
+import { Link } from 'react-router-dom';
+import { COURSES } from '../data/mockData';
 import { Course } from '../types';
+import { getCurrentUser } from '../utils/userProfile';
 
 export const MyCourses = () => {
-  const enrolledCourses = COURSES.filter(c => MOCK_USER.enrolledCourses.includes(c.id));
+  const enrolledCourses = COURSES.filter((course) => getCurrentUser().enrolledCourses.includes(course.id));
 
   return (
     <div className="flex-1 p-4 md:p-8">
@@ -23,7 +25,9 @@ export const MyCourses = () => {
 };
 
 const EnrolledCourseCard = ({ course }: { course: Course }) => {
-  const progress = Math.floor(Math.random() * 80) + 10; // Mock progress
+  const lessonCount = course.modules.reduce((count, module) => count + module.lessons.length, 0);
+  const completedCount = course.modules.reduce((count, module) => count + module.lessons.filter((lesson: { completed?: boolean }) => lesson.completed).length, 0);
+  const progress = lessonCount ? Math.round((completedCount / lessonCount) * 100) : 0;
 
   return (
     <motion.div 
@@ -64,12 +68,12 @@ const EnrolledCourseCard = ({ course }: { course: Course }) => {
         </div>
       </div>
       <div className="flex flex-col justify-center border-l border-slate-50 p-6 md:w-48">
-        <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition-all hover:bg-indigo-600">
+        <Link to={`/course/${course.id}`} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition-all hover:bg-indigo-600">
           Resume <ChevronRight className="h-4 w-4" />
-        </button>
-        <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-bold text-slate-600 hover:bg-slate-50">
+        </Link>
+        <Link to={`/course/${course.id}`} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-bold text-slate-600 hover:bg-slate-50">
           <BookOpen className="h-4 w-4" /> Syllabus
-        </button>
+        </Link>
       </div>
     </motion.div>
   );

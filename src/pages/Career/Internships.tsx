@@ -11,8 +11,9 @@ import {
   Zap
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 
-const INTERNSHIPS = [
+export const INTERNSHIPS = [
   {
     id: '1',
     role: 'Frontend Developer Intern',
@@ -25,7 +26,9 @@ const INTERNSHIPS = [
     logo: 'https://api.dicebear.com/7.x/initials/svg?seed=TF',
     tags: ['React', 'TypeScript', 'Tailwind'],
     verified: true,
-    fastTrack: true
+    fastTrack: true,
+    employeeCount: '500-1000 Employees',
+    companylink: 'https://techflow.ai',
   },
   {
     id: '2',
@@ -39,7 +42,9 @@ const INTERNSHIPS = [
     logo: 'https://api.dicebear.com/7.x/initials/svg?seed=DS',
     tags: ['Node.js', 'PostgreSQL', 'Docker'],
     verified: true,
-    fastTrack: false
+    fastTrack: false,
+    employeeCount: '200-500 Employees',
+    companylink: 'https://datascale.ai',
   },
   {
     id: '3',
@@ -53,11 +58,22 @@ const INTERNSHIPS = [
     logo: 'https://api.dicebear.com/7.x/initials/svg?seed=CP',
     tags: ['Figma', 'Prototyping', 'User Research'],
     verified: false,
-    fastTrack: false
+    fastTrack: false,
+    employeeCount: '50-200 Employees',
+    companylink: 'https://creativepulse.com',
   }
 ];
 
 export const Internships = () => {
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'frontend' | 'backend' | 'remote'>('all');
+  const filteredInternships = useMemo(() => INTERNSHIPS.filter((job) => {
+    const searchable = `${job.role} ${job.company} ${job.location} ${job.tags.join(' ')}`.toLowerCase();
+    const matchesQuery = searchable.includes(query.trim().toLowerCase());
+    const matchesFilter = filter === 'all' || (filter === 'frontend' && job.role.toLowerCase().includes('frontend')) || (filter === 'backend' && job.role.toLowerCase().includes('backend')) || (filter === 'remote' && job.location.toLowerCase().includes('remote'));
+    return matchesQuery && matchesFilter;
+  }), [filter, query]);
+
   return (
     <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto">
       <header className="mb-12">
@@ -73,6 +89,8 @@ export const Internships = () => {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
           <input 
             type="text" 
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
             placeholder="Search roles or companies..."
             className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
           />
@@ -81,14 +99,15 @@ export const Internships = () => {
           <button className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 shrink-0">
             <Filter className="h-4 w-4" /> Filters
           </button>
-          <button className="px-5 py-3 bg-indigo-50 text-indigo-600 rounded-xl font-bold shrink-0">Frontend</button>
-          <button className="px-5 py-3 bg-slate-50 text-slate-600 rounded-xl font-bold shrink-0">Backend</button>
-          <button className="px-5 py-3 bg-slate-50 text-slate-600 rounded-xl font-bold shrink-0">Remote Only</button>
+          <button onClick={() => setFilter('frontend')} className={`px-5 py-3 rounded-xl font-bold shrink-0 ${filter === 'frontend' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-600'}`}>Frontend</button>
+          <button onClick={() => setFilter('backend')} className={`px-5 py-3 rounded-xl font-bold shrink-0 ${filter === 'backend' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-600'}`}>Backend</button>
+          <button onClick={() => setFilter('remote')} className={`px-5 py-3 rounded-xl font-bold shrink-0 ${filter === 'remote' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-600'}`}>Remote Only</button>
+          <button onClick={() => setFilter('all')} className="px-5 py-3 rounded-xl bg-slate-50 text-slate-600 font-bold shrink-0">All</button>
         </div>
       </div>
 
       <div className="space-y-6">
-        {INTERNSHIPS.map((job) => (
+        {filteredInternships.map((job) => (
           <motion.div
             key={job.id}
             whileHover={{ y: -4 }}
@@ -143,9 +162,9 @@ export const Internships = () => {
                     <div className="text-xs font-bold text-slate-400 uppercase">Posted</div>
                     <div className="text-sm font-bold text-slate-700">{job.posted}</div>
                  </div>
-                 <button className="w-full lg:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-lg group-hover:shadow-indigo-100">
+                  <Link to={`/companies/${job.id}`} className="w-full lg:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-lg group-hover:shadow-indigo-100">
                     Apply Now <ArrowUpRight className="h-4 w-4" />
-                 </button>
+                  </Link>
               </div>
             </div>
           </motion.div>
@@ -153,9 +172,7 @@ export const Internships = () => {
       </div>
 
       <div className="mt-12 text-center">
-         <button className="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">
-            Load More Opportunities
-         </button>
+        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Showing {filteredInternships.length} opportunities</p>
       </div>
     </div>
   );

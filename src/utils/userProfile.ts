@@ -4,6 +4,8 @@ export interface StoredUserProfile {
   name: string;
   email: string;
   avatar?: string;
+  roleBio?: string;
+  enrolledCourses?: string[];
 }
 
 const USER_PROFILE_KEY = 'eduroute:user-profile';
@@ -52,6 +54,8 @@ export const getStoredUserProfile = (): StoredUserProfile | null => {
       name: parsed.name,
       email: parsed.email,
       avatar: parsed.avatar,
+      roleBio: parsed.roleBio,
+      enrolledCourses: parsed.enrolledCourses,
     };
   } catch {
     return null;
@@ -71,7 +75,26 @@ export const getCurrentUser = () => {
     email: storedUser.email,
     avatar:
       storedUser.avatar || createAvatar(storedUser.name),
+    enrolledCourses: storedUser.enrolledCourses || MOCK_USER.enrolledCourses,
   };
+};
+
+export const updateEnrollment = (courseId: string) => {
+  const currentUser = getCurrentUser();
+  const storedUser = getStoredUserProfile();
+  const enrolledCourses = currentUser.enrolledCourses.includes(courseId)
+    ? currentUser.enrolledCourses
+    : [...currentUser.enrolledCourses, courseId];
+
+  saveUserProfile({
+    name: currentUser.name,
+    email: currentUser.email,
+    avatar: currentUser.avatar,
+    roleBio: storedUser?.roleBio,
+    enrolledCourses,
+  });
+
+  return enrolledCourses;
 };
 
 export const getDisplayFirstName = () => {
