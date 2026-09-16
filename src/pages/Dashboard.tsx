@@ -1,55 +1,252 @@
-import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { PlayCircle, Clock, Star, Users, Trophy, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {
+  Play,
+  Clock,
+  ArrowRight,
+  ShieldCheck,
+  BookOpen,
+  Flame,
+  Star,
+  Trophy,
+  TrendingUp,
+} from 'lucide-react';
 import { COURSES } from '../data/mockData';
 import { Course } from '../types';
 import { getCurrentUser, getDisplayFirstName } from '../utils/userProfile';
 
+const PATH_PROGRESS = 45;
+
+function courseProgress(course: Course): number {
+  const lessons = course.modules?.flatMap((m) => m.lessons) ?? [];
+  if (!lessons.length) return 40;
+  const done = lessons.filter((l) => l.completed).length;
+  return Math.round((done / lessons.length) * 100) || 40;
+}
+
 export const Dashboard = () => {
-  const navigate = useNavigate();
   const currentUser = getCurrentUser();
-  const enrolledCourses = COURSES.filter((course) => currentUser.enrolledCourses.includes(course.id));
-  const recommendedCourses = COURSES.filter((course) => !currentUser.enrolledCourses.includes(course.id));
+  const firstName = getDisplayFirstName();
+  const enrolledCourses = COURSES.filter((c) => currentUser.enrolledCourses.includes(c.id));
+  const recommendedCourses = COURSES.filter((c) => !currentUser.enrolledCourses.includes(c.id)).slice(0, 4);
+
+  const stats = [
+    {
+      label: 'Completed Courses',
+      value: String(Math.max(0, currentUser.completedLessons.length)),
+      delta: '+3 this month',
+      icon: BookOpen,
+      iconBg: 'var(--success-soft)',
+      iconColor: 'var(--success)',
+    },
+    {
+      label: 'Learning Streak',
+      value: '7 days',
+      delta: '+2',
+      icon: Flame,
+      iconBg: 'var(--purple-soft)',
+      iconColor: 'var(--purple)',
+    },
+    {
+      label: 'Total Points',
+      value: currentUser.points.toLocaleString(),
+      delta: '+320',
+      icon: Star,
+      iconBg: 'var(--gold-soft)',
+      iconColor: 'var(--gold)',
+    },
+    {
+      label: 'Rank',
+      value: `#${currentUser.rank === 'Gold' ? '12' : '24'}`,
+      delta: 'in your batch',
+      icon: Trophy,
+      iconBg: 'var(--info-soft)',
+      iconColor: 'var(--info)',
+    },
+  ];
+
+  const recMeta = [
+    { badge: 'FREE', badgeClass: 'bg-[var(--success-soft)] text-[var(--success)]', weeks: '8 weeks', level: 'Intermediate' },
+    { badge: 'BEGINNER', badgeClass: 'bg-[var(--info-soft)] text-[var(--info)]', weeks: '6 weeks', level: 'Beginner' },
+    { badge: 'INTERMEDIATE', badgeClass: 'bg-[var(--purple-soft)] text-[var(--purple)]', weeks: '5 weeks', level: 'Intermediate' },
+    { badge: 'POPULAR', badgeClass: 'bg-[var(--warning-soft)] text-[var(--warning)]', weeks: '6 weeks', level: 'Intermediate' },
+  ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-8">
-      <header className="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Welcome back, {getDisplayFirstName()}!</h1>
-          <p className="mt-2 font-medium text-slate-500 dark:text-slate-300">You've completed 45% of your current path. Keep it up!</p>
-        </div>
-        <div className="flex items-center gap-4 rounded-[28px] border border-amber-200 bg-amber-50 p-6">
-          <div className="rounded-2xl bg-amber-100 p-3 text-amber-600"><ShieldCheck className="h-6 w-6" /></div>
-          <div><div className="text-sm font-black text-amber-900">Verify College ID</div><p className="text-xs font-bold text-amber-700">Unlock 50% discount on certifications</p></div>
-          <Link to="/verify-college" className="ml-4 rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white shadow-lg shadow-amber-200 hover:bg-amber-700">Verify</Link>
-        </div>
-      </header>
+    <div className="er-page space-y-6 md:space-y-8">
+      <section className="er-card relative overflow-hidden p-5 md:p-6">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-90"
+          style={{
+            background:
+              'linear-gradient(105deg, rgba(99,102,241,0.18) 0%, transparent 45%), linear-gradient(to right, transparent 50%, rgba(139,92,246,0.12) 100%)',
+          }}
+        />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-[var(--text-secondary)]">
+              Welcome back,{' '}
+              <span className="text-[var(--text-primary)] font-semibold">{firstName}!</span>
+            </p>
+            <h1 className="mt-1 text-2xl md:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+              Keep building your path
+            </h1>
+            <p className="mt-2 text-sm text-[var(--text-secondary)] max-w-lg">
+              You&apos;ve completed {PATH_PROGRESS}% of your current path. Keep it up!
+            </p>
+            <div className="mt-4 max-w-md">
+              <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
+                <span className="text-[var(--text-muted)]">Path progress</span>
+                <span className="text-[var(--accent-text)]">{PATH_PROGRESS}%</span>
+              </div>
+              <div className="er-progress">
+                <span style={{ width: `${PATH_PROGRESS}%` }} />
+              </div>
+            </div>
+          </div>
 
-      <section className="mb-12">
-        <div className="mb-8 flex items-center justify-between"><h2 className="text-2xl font-black text-slate-900 dark:text-white">Continue Learning</h2><Link to="/courses" className="text-sm font-bold text-indigo-600 hover:text-indigo-700">View all</Link></div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">{enrolledCourses.map((course) => <ContinueLearningCard key={course.id} course={course} />)}</div>
+          <Link
+            to="/verify-college"
+            className="relative shrink-0 flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-card)] px-4 py-3.5 shadow-[var(--shadow-sm)] hover:border-[var(--border-strong)] transition-colors max-w-sm"
+          >
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
+            >
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">Verify College ID</div>
+              <p className="text-xs text-[var(--text-secondary)]">Unlock 50% discount on certifications</p>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+          </Link>
+        </div>
       </section>
 
-      <section className="mb-12">
-        <div className="mb-8 flex items-center justify-between"><h2 className="text-2xl font-black text-slate-900 dark:text-white">Recommended for You</h2><Link to="/browse" className="text-sm font-bold text-indigo-600 hover:text-indigo-700">Explore</Link></div>
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"><DSABeginnerCard onOpen={() => navigate('/dsa-sheet')} />{recommendedCourses.map((course) => <CourseCard key={course.id} course={course} />)}</div>
+      <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className="er-card p-4 md:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl"
+                style={{ background: s.iconBg, color: s.iconColor }}
+              >
+                <s.icon className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-3 text-xs font-medium text-[var(--text-muted)]">{s.label}</div>
+            <div className="mt-0.5 flex items-baseline gap-2">
+              <span className="text-xl md:text-2xl font-bold tracking-tight text-[var(--text-primary)]">{s.value}</span>
+              <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-[var(--success)]">
+                <TrendingUp className="h-3 w-3" />
+                {s.delta}
+              </span>
+            </div>
+          </div>
+        ))}
       </section>
 
-      <section><div className="rounded-[40px] bg-indigo-600 p-10 text-white shadow-2xl shadow-indigo-200"><div className="flex flex-col items-center justify-between gap-12 md:flex-row"><div className="space-y-6"><h2 className="text-3xl font-black">Weekly Goal Progress</h2><div className="flex gap-6"><div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20"><Trophy className="h-8 w-8" /></div><div><div className="text-sm font-bold uppercase tracking-widest opacity-80">Points earned</div><div className="text-3xl font-black">340 / 500</div></div></div><div className="h-3 w-full max-w-sm rounded-full bg-white/20"><div className="h-full w-[68%] rounded-full bg-white" /></div></div><Link to="/assessments" className="flex items-center gap-3 rounded-3xl bg-white px-10 py-5 font-black text-indigo-600 shadow-xl transition-transform hover:scale-105 active:scale-95">Set New Goal <ArrowRight className="h-6 w-6" /></Link></div></div></section>
+      <section>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="er-section-title flex items-center gap-2">
+            Continue Learning
+            <ArrowRight className="h-4 w-4 text-[var(--text-muted)]" />
+          </h2>
+          <Link to="/courses" className="er-link">View all →</Link>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {enrolledCourses.length === 0 ? (
+            <div className="er-card col-span-full p-8 text-center text-sm text-[var(--text-secondary)]">
+              No courses in progress yet.{' '}
+              <Link to="/browse" className="er-link">Browse courses</Link>
+            </div>
+          ) : (
+            enrolledCourses.map((course) => {
+              const pct = courseProgress(course);
+              return (
+                <Link
+                  key={course.id}
+                  to={`/course/${course.id}`}
+                  className="er-card er-card-hover group flex gap-4 p-3 md:p-4 transition-colors"
+                >
+                  <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-muted)] sm:h-28 sm:w-36">
+                    <img src={course.thumbnail} alt="" className="h-full w-full object-cover" />
+                    <span className="er-badge absolute left-2 top-2 bg-[var(--accent)] text-white border-0">In Progress</span>
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/25 transition-colors">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
+                        <Play className="h-4 w-4 fill-current" />
+                      </span>
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1 flex flex-col justify-center py-0.5">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      {course.category} · {pct}% done
+                    </div>
+                    <h3 className="mt-1 text-sm md:text-base font-semibold text-[var(--text-primary)] line-clamp-1">{course.title}</h3>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)] line-clamp-2">{course.description}</p>
+                    <div className="mt-3 er-progress">
+                      <span style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="mt-1.5 text-[11px] font-semibold text-[var(--accent-text)]">{pct}%</div>
+                  </div>
+                </Link>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="er-section-title flex items-center gap-2">
+            <SparkleIcon />
+            Recommended for You
+          </h2>
+          <Link to="/browse" className="er-link">Explore all →</Link>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {(recommendedCourses.length ? recommendedCourses : COURSES.slice(0, 4)).map((course, i) => {
+            const meta = recMeta[i % recMeta.length];
+            return (
+              <Link
+                key={course.id}
+                to={`/course/${course.id}`}
+                className="er-card er-card-hover group overflow-hidden transition-colors"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden bg-[var(--surface-muted)]">
+                  <img
+                    src={course.thumbnail}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                  <span className={`er-badge absolute left-2.5 top-2.5 ${meta.badgeClass}`}>{meta.badge}</span>
+                </div>
+                <div className="p-3.5">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] line-clamp-1">{course.title}</h3>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)] line-clamp-2">{course.description}</p>
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-[var(--text-muted)]">
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {meta.weeks}
+                    </span>
+                    <span className="font-medium">{meta.level}</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 };
 
-const ContinueLearningCard = ({ course }: { course: Course }) => {
-  const content = <><div className="relative aspect-video w-full overflow-hidden rounded-3xl sm:w-56"><img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" /><div className="absolute inset-0 flex items-center justify-center bg-black/20"><PlayCircle className="h-12 w-12 text-white" /></div></div><div className="flex flex-1 flex-col justify-center py-2"><div className="text-[10px] font-black uppercase tracking-widest text-indigo-600">{course.category} <span className="mx-2 text-slate-300">•</span> 40% Done</div><h3 className="mt-6 text-xl font-bold text-slate-900">{course.title}</h3><div className="mt-4 h-2 w-full rounded-full bg-slate-100"><div className="h-full w-[40%] rounded-full bg-indigo-500" /></div></div></>;
-  const className = 'group flex flex-col gap-7 overflow-hidden rounded-4xl border border-slate-100 bg-white p-6 transition-all hover:shadow-xl sm:flex-row';
-  return course.link ? <motion.a href={course.link} target="_blank" rel="noreferrer" whileHover={{ y: -4 }} className={className}>{content}</motion.a> : <motion.div whileHover={{ y: -4 }} className={className}><Link to={`/course/${course.id}`} className="contents">{content}</Link></motion.div>;
-};
+function SparkleIcon() {
+  return (
+    <svg className="h-4 w-4 text-[var(--accent)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5L12 2z" />
+    </svg>
+  );
+}
 
-const DSABeginnerCard = ({ onOpen }: { onOpen: () => void }) => <motion.div whileHover={{ y: -8 }} className="group overflow-hidden rounded-4xl border border-slate-100 bg-white transition-all hover:shadow-2xl"><div className="relative aspect-16/10 overflow-hidden"><img src="https://images.unsplash.com/photo-1629904853893-c2c8981a1dc5?q=80&w=1170&auto=format&fit=crop" alt="DSA Beginner Sheet" className="h-full w-full object-cover" /><div className="absolute left-4 top-4 rounded-xl bg-white/90 px-3 py-1.5 text-[10px] font-black text-emerald-700">FREE</div></div><div className="p-8"><div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400"><span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> 4 HOURS</span><span><Star className="inline h-4 w-4 fill-yellow-400 text-yellow-400" /> 4.9</span></div><h3 className="mt-4 text-xl font-bold text-slate-900">DSA Beginner Sheet</h3><p className="mt-4 text-sm font-medium text-slate-500">Start your DSA journey with structured problems and guided practice.</p><button type="button" onClick={onOpen} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-white">Open Sheet <ArrowRight className="h-4 w-4" /></button></div></motion.div>;
-
-const CourseCard = ({ course }: { course: Course }) => {
-  const content = <><div className="relative aspect-16/10 overflow-hidden"><img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" /><div className="absolute left-4 top-4 rounded-xl bg-white/90 px-3 py-1.5 text-[10px] font-black text-slate-900">{course.level.toUpperCase()}</div></div><div className="p-8"><div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400"><span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {course.duration}</span><span><Star className="inline h-4 w-4 fill-yellow-400 text-yellow-400" /> {course.rating}</span></div><h3 className="mt-4 text-xl font-bold text-slate-900">{course.title}</h3><div className="mt-12 flex items-center justify-between border-t border-slate-50 pt-6"><span className="flex items-center gap-2 text-xs font-bold text-slate-500"><Users className="h-4 w-4" /> {course.students.toLocaleString()} students</span><span className="text-2xl font-black text-slate-900">₹{course.price}</span></div></div></>;
-  const className = 'group overflow-hidden rounded-4xl border border-slate-100 bg-white transition-all hover:shadow-2xl';
-  return course.link ? <motion.a href={course.link} target="_blank" rel="noreferrer" whileHover={{ y: -8 }} className={className}>{content}</motion.a> : <motion.div whileHover={{ y: -8 }} className={className}><Link to={`/course/${course.id}`} className="contents">{content}</Link></motion.div>;
-};
+export default Dashboard;
