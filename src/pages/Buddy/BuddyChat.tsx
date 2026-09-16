@@ -34,6 +34,7 @@ export const BuddyChat = () => {
   const [lastFailedMessage, setLastFailedMessage] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -48,7 +49,9 @@ export const BuddyChat = () => {
   }, [currentUserId]);
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages, isTyping]);
 
   const missingSkills = useMemo(() => SKILL_CHECK_QUESTIONS.filter((question) => skillAnswers[question.key] === false).map((question) => question.key.toUpperCase()), [skillAnswers]);
@@ -72,6 +75,7 @@ export const BuddyChat = () => {
       setError(sendError instanceof Error ? sendError.message : 'Buddy is temporarily unavailable.');
     } finally {
       setIsTyping(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 

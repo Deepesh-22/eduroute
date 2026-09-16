@@ -39,25 +39,84 @@ function writeBuddyStore(userId: string, store: BuddyStore) {
 }
 
 function localFallbackReply(message: string, language: BuddyLanguage) {
-  const intro = language === 'hindi'
-    ? 'मैं Buddy हूँ। अभी limited mode में हूँ, लेकिन आपकी पूरी help करूंगा।'
-    : language === 'hinglish'
-      ? 'Main Buddy hoon. Abhi limited mode hai, but main full guidance dunga.'
-      : 'I am Buddy in limited mode, but I can still guide you effectively.';
+  const intro =
+    language === 'hindi'
+      ? 'मैं Buddy हूँ। अभी limited mode में हूँ, लेकिन आपकी पूरी help करूंगा।'
+      : language === 'hinglish'
+        ? 'Main Buddy hoon. Abhi limited mode hai, but main full guidance dunga.'
+        : 'I am Buddy in limited mode, but I can still guide you effectively.';
 
   return `${intro}\n\nBased on: "${message}"\n\nBeginner → Intermediate → Pro Plan:\n1) Beginner: strengthen fundamentals + 1 mini project.\n2) Intermediate: framework mastery + API integration + portfolio update.\n3) Pro: system design, testing, interview prep, and internship applications.\n\nWeekly challenge: complete one project milestone and one mock interview.`;
 }
 
-function buildLocalGamification(previous?: BuddyProgress) {
-  const points = (previous?.points || 0) + 5;
+function needsClientSearch(message: string) {
+  return /\b(who is|who's|who was|what is|what's|when is|prime minister|president|capital of|current|latest|internship|hackathon)\b/i.test(
+    message
+  );
+}
+
+function refineClientQuery(message: string) {
+  const lower = message.toLowerCase();
+  if (/prime\s*minister.*india|pm of india|india.*prime\s*minister/i.test(lower)) {
+    return 'Narendra Modi Prime Minister of India';
+  }
+  return message.trim();
+}
+
+/** Free Wikipedia search from the browser when API is down */
+async function clientLiveSearch(message: string, language: BuddyLanguage) {
+  const query = refineClientQuery(message);
+  const searchUrl =
+    `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}` +
+    `&format=json&srlimit=3&origin=*`;
+
+  const searchRes = await fetch(searchUrl);
+  if (!searchRes.ok) throw new Error('Wikipedia search failed');
+  const searchData = await searchRes.json();
+  const hits = searchData?.query?.search || [];
+  if (!hits.length) throw new Error('No results');
+
+  const topTitle = hits[0].title as string;
+  const sumRes = await fetch(
+    `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topTitle)}`
+  );
+  if (!sumRes.ok) throw new Error('Wikipedia summary failed');
+  const sum = await sumRes.json();
+  const extract = (sum.extract || '').trim();
+  if (!extract) throw new Error('Empty extract');
+
+  const pageUrl =
+    sum?.content_urls?.desktop?.page ||
+    `https://en.wikipedia.org/wiki/${encodeURIComponent(topTitle.replace(/ /g, '_'))}`;
+
+  const header =
+    language === 'hindi'
+      ? 'लाइव जानकारी के आधार पर:'
+      : language === 'hinglish'
+        ? 'Live info ke basis pe:'
+        : 'Based on live information:';
+
+  const reply = `${header}\n\n${extract}\n\nSources:\n1. ${topTitle} — ${pageUrl}`;
+
   return {
-    points,
-    level: Math.max(1, Math.floor(points / 100) + 1),
-    pointsEarned: 5,
+    reply,
+    usedWebSearch: true,
+    sources: [{ title: topTitle, url: pageUrl }],
   };
 }
 
-export async function fetchBuddyProgress(userId: string): Promise<{ progress: BuddyProgress; history: Array<{ role: string; text: string }> }> {
+function buildLocalGamification(previous?: BuddyProgress, extra = 5) {
+  const points = (previous?.points || 0) + extra;
+  return {
+    points,
+    level: Math.max(1, Math.floor(points / 100) + 1),
+    pointsEarned: extra,
+  };
+}
+
+export async function fetchBuddyProgress(
+  userId: string
+): Promise<{ progress: BuddyProgress; history: Array<{ role: string; text: string }> }> {
   try {
     const response = await fetch(`${BASE}/buddy-progress?userId=${encodeURIComponent(userId)}`);
     const data = await response.json();
@@ -104,7 +163,11 @@ export async function sendBuddyMessage(params: {
         level: data.gamification?.level || local.progress.level,
         preferredLanguage: params.language,
       },
-      history: [...local.history, { role: 'user', text: params.message }, { role: 'assistant', text: data.reply }].slice(-20),
+      history: [
+        ...local.history,
+        { role: 'user', text: params.message },
+        { role: 'assistant', text: data.reply },
+      ].slice(-20),
     });
 
     return data;
@@ -120,10 +183,14 @@ export async function sendBuddyMessage(params: {
         level: gamification.level,
         preferredLanguage: params.language,
       },
-      history: [...local.history, { role: 'user', text: params.message }, { role: 'assistant', text: reply }].slice(-20),
+      history: [
+        ...local.history,
+        { role: 'user', text: params.message },
+        { role: 'assistant', text: reply },
+      ].slice(-20),
     });
 
-    return { ok: true, reply, gamification };
+    return { ok: true, reply, usedWebSearch, sources, gamification };
   }
 }
 
