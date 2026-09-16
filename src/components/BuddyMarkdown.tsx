@@ -16,13 +16,13 @@ function inlineFormat(text: string): ReactNode[] {
     const token = match[0];
     if (token.startsWith('**') && token.endsWith('**')) {
       nodes.push(
-        <strong key={key++} className="font-bold text-slate-900">
+        <strong key={key++} className="font-bold text-slate-900 dark:text-slate-50">
           {token.slice(2, -2)}
         </strong>
       );
     } else if (token.startsWith('`') && token.endsWith('`')) {
       nodes.push(
-        <code key={key++} className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[12px] text-indigo-700">
+        <code key={key++} className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[12px] text-indigo-700 dark:bg-slate-800 dark:text-indigo-300">
           {token.slice(1, -1)}
         </code>
       );
@@ -57,12 +57,12 @@ function renderTable(rows: string[][], keyBase: number) {
   const header = rows[0];
   const body = rows.slice(1);
   return (
-    <div key={`tbl-${keyBase}`} className="my-3 overflow-x-auto rounded-xl border border-slate-200">
+    <div key={`tbl-${keyBase}`} className="my-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
       <table className="min-w-full border-collapse text-left text-sm">
-        <thead className="bg-slate-50">
+        <thead className="bg-slate-50 dark:bg-slate-800/80">
           <tr>
             {header.map((cell, i) => (
-              <th key={i} className="border-b border-slate-200 px-3 py-2 font-bold text-slate-800">
+              <th key={i} className="border-b border-slate-200 px-3 py-2 font-bold text-slate-800 dark:border-slate-700 dark:text-slate-100">
                 {inlineFormat(cell)}
               </th>
             ))}
@@ -70,9 +70,9 @@ function renderTable(rows: string[][], keyBase: number) {
         </thead>
         <tbody>
           {body.map((row, ri) => (
-            <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
+            <tr key={ri} className={ri % 2 === 0 ? 'bg-white dark:bg-slate-900/40' : 'bg-slate-50/60 dark:bg-slate-800/40'}>
               {row.map((cell, ci) => (
-                <td key={ci} className="border-b border-slate-100 px-3 py-2 align-top text-slate-700">
+                <td key={ci} className="border-b border-slate-100 px-3 py-2 align-top text-slate-700 dark:border-slate-800 dark:text-slate-300">
                   {inlineFormat(cell.replace(/<br\s*\/?>/gi, ' · '))}
                 </td>
               ))}
@@ -140,10 +140,10 @@ export function BuddyMarkdown({ text }: { text: string }) {
       const content = inlineFormat(heading[2]);
       const cls =
         level === 1
-          ? 'mt-3 mb-2 text-lg font-black text-slate-950'
+          ? 'mt-3 mb-2 text-lg font-black text-slate-950 dark:text-white'
           : level === 2
-            ? 'mt-3 mb-2 text-base font-black text-slate-950'
-            : 'mt-2 mb-1 text-sm font-bold text-slate-900';
+            ? 'mt-3 mb-2 text-base font-black text-slate-950 dark:text-white'
+            : 'mt-2 mb-1 text-sm font-bold text-slate-900 dark:text-slate-100';
       blocks.push(
         <div key={key++} className={cls}>
           {content}
@@ -161,7 +161,7 @@ export function BuddyMarkdown({ text }: { text: string }) {
         i += 1;
       }
       blocks.push(
-        <ul key={key++} className="my-2 list-disc space-y-1.5 pl-5 text-sm leading-6 text-slate-700">
+        <ul key={key++} className="my-2 list-disc space-y-1.5 pl-5 text-sm leading-6 text-slate-700 dark:text-slate-300">
           {items.map((item, idx) => (
             <li key={idx}>{inlineFormat(item)}</li>
           ))}
@@ -178,7 +178,7 @@ export function BuddyMarkdown({ text }: { text: string }) {
         i += 1;
       }
       blocks.push(
-        <ol key={key++} className="my-2 list-decimal space-y-1.5 pl-5 text-sm leading-6 text-slate-700">
+        <ol key={key++} className="my-2 list-decimal space-y-1.5 pl-5 text-sm leading-6 text-slate-700 dark:text-slate-300">
           {items.map((item, idx) => (
             <li key={idx}>{inlineFormat(item)}</li>
           ))}
@@ -203,7 +203,7 @@ export function BuddyMarkdown({ text }: { text: string }) {
       i += 1;
     }
     blocks.push(
-      <p key={key++} className="my-1.5 text-sm leading-7 text-slate-700">
+      <p key={key++} className="my-1.5 text-sm leading-7 text-slate-700 dark:text-slate-300">
         {para.map((p, idx) => (
           <Fragment key={idx}>
             {idx > 0 && <br />}
