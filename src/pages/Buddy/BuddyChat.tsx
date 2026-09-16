@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Bot, BriefcaseBusiness, CalendarRange, Check, Brain, Clipboard, Copy, Languages, MoreHorizontal, Plus, RotateCcw, Send, Sparkles, ThumbsUp, Trophy, UserRound } from 'lucide-react';
+import { ArrowUpRight, Bot, BriefcaseBusiness, CalendarRange, Check, Brain, Clipboard, Copy, Languages, MoreHorizontal, Plus, RotateCcw, Send, Sparkles, ThumbsUp, Trash2, Trophy, UserRound } from 'lucide-react';
 import { fetchBuddyProgress, saveSkillGap, sendBuddyMessage } from '../../services/buddyApi';
 import type { BuddyLanguage, BuddyMessage, BuddyProgress } from '../../types/buddy';
 import { getAuthUser } from '../../utils/rbacAuth';
@@ -92,11 +92,22 @@ export const BuddyChat = () => {
 
   const submitMessage = (event: FormEvent) => { event.preventDefault(); void handleSend(); };
 
-  const startNewChat = () => {
-    setMessages([initialMessage]);
+  const clearChat = () => {
+    setMessages([{ ...initialMessage, id: Date.now(), timestamp: timestamp() }]);
     setInput('');
     setError('');
     setLastFailedMessage('');
+    setIsTyping(false);
+  };
+
+  const startNewChat = () => {
+    clearChat();
+  };
+
+  const deleteChat = () => {
+    if (messages.length <= 1) return;
+    const ok = window.confirm('Delete this chat? All messages in this conversation will be cleared.');
+    if (ok) clearChat();
   };
 
   const copyMessage = async (message: BuddyMessage) => {
@@ -106,20 +117,20 @@ export const BuddyChat = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] flex-1 flex-col overflow-hidden bg-[#f5f7fb]">
-      <header className="border-b border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur-xl md:px-8">
+    <div className="flex h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] flex-1 flex-col overflow-hidden bg-[#f5f7fb]">
+      <header className="shrink-0 border-b border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur-xl md:px-8">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200"><Sparkles className="h-6 w-6" /><span className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" /></div>
           <div><div className="flex flex-wrap items-center gap-2"><h1 className="text-xl font-black tracking-tight text-slate-950">Buddy AI Mentor</h1><span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-700">AI online</span></div><p className="text-xs font-semibold text-slate-500">Your context-aware study and career copilot</p></div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3"><label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">Language<select value={language} onChange={(event) => setLanguage(event.target.value as BuddyLanguage)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-slate-700"><option value="english">English</option><option value="hindi">Hindi</option><option value="hinglish">Hinglish</option></select></label><button type="button" onClick={startNewChat} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-indigo-300 hover:text-indigo-700"><Plus className="h-4 w-4" /> New chat</button></div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3"><label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">Language<select value={language} onChange={(event) => setLanguage(event.target.value as BuddyLanguage)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-slate-700"><option value="english">English</option><option value="hindi">Hindi</option><option value="hinglish">Hinglish</option></select></label><button type="button" onClick={deleteChat} disabled={messages.length <= 1} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="h-4 w-4" /> Delete chat</button><button type="button" onClick={startNewChat} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-indigo-300 hover:text-indigo-700"><Plus className="h-4 w-4" /> New chat</button></div>
         </div>
       </header>
 
-      <div className="mx-auto grid min-h-0 w-full max-w-[1440px] flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_350px]">
-        <main className="flex min-h-0 flex-col">
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 md:px-8"><div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto grid min-h-0 w-full max-w-[1440px] flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_350px]">
+        <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 md:px-8"><div className="mx-auto max-w-4xl space-y-6">
             {messages.length === 1 && <div className="rounded-3xl border border-indigo-100 bg-linear-to-br from-indigo-50 via-white to-white p-5 shadow-sm md:p-7"><div className="flex items-start gap-4"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white"><Sparkles className="h-5 w-5" /></div><div><p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Personal mentor mode</p><h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">What are you working toward?</h2><p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">Ask about a roadmap, a project, interviews, internships, or the next skill to unlock. Buddy uses your progress to make the answer practical.</p></div></div></div>}
             {messages.map((message) => <motion.div key={message.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`group flex items-end gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {message.role === 'ai' && <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white sm:flex"><Bot className="h-4 w-4" /></div>}
@@ -129,7 +140,7 @@ export const BuddyChat = () => {
             {isTyping && <div className="flex items-center gap-3 text-sm font-semibold text-slate-500"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-white"><Bot className="h-4 w-4" /></div><span className="rounded-2xl bg-white px-4 py-3 shadow-sm">Buddy is thinking<span className="ml-1 animate-pulse">...</span></span></div>}
             {error && <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"><span>{error}</span>{lastFailedMessage && <button type="button" onClick={() => void handleSend(lastFailedMessage)} className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-red-100 px-3 py-2 font-bold text-red-800"><RotateCcw className="h-3.5 w-3.5" /> Retry</button>}</div>}
           </div></div>
-          <form onSubmit={submitMessage} className="border-t border-slate-200 bg-white/90 p-4 backdrop-blur-xl md:p-6"><div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-inner focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10"><div className="flex items-end gap-3"><textarea rows={1} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Ask Buddy anything about your learning journey..." className="max-h-32 min-h-12 flex-1 resize-none border-0 bg-transparent px-3 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400" /><button type="submit" disabled={!input.trim() || isTyping} aria-label="Send message" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 disabled:cursor-not-allowed disabled:opacity-40"><Send className="h-4 w-4" /></button></div><p className="mt-2 px-3 text-[11px] text-slate-400">Enter to send · Shift + Enter for a new line</p></div></form>
+          <form onSubmit={submitMessage} className="sticky bottom-0 z-20 shrink-0 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl md:p-6"><div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-inner focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10"><div className="flex items-end gap-3"><textarea ref={inputRef} rows={1} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Ask Buddy anything about your learning journey..." className="max-h-32 min-h-12 flex-1 resize-none border-0 bg-transparent px-3 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400" /><button type="submit" disabled={!input.trim() || isTyping} aria-label="Send message" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 disabled:cursor-not-allowed disabled:opacity-40"><Send className="h-4 w-4" /></button></div><p className="mt-2 px-3 text-[11px] text-slate-400">Enter to send · Shift + Enter for a new line</p></div></form>
         </main>
 
         <aside className="min-h-0 overflow-y-auto border-t border-slate-200 bg-white/80 p-4 md:p-6 lg:border-l lg:border-t-0">
