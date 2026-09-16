@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Bot, BriefcaseBusiness, CalendarRange, Check, Brain, Clipboard, Copy, Languages, MoreHorizontal, Plus, RotateCcw, Send, Sparkles, ThumbsUp, Trash2, Trophy, UserRound } from 'lucide-react';
+import { ArrowUpRight, Bot, BriefcaseBusiness, Briefcase, CalendarRange, Check, Brain, Clipboard, Code2, Copy, FileText, Languages, Map, MoreHorizontal, Plus, RotateCcw, Search, Send, Sparkles, ThumbsUp, Trash2, Trophy, UserRound } from 'lucide-react';
 import { fetchBuddyProgress, saveSkillGap, sendBuddyMessage } from '../../services/buddyApi';
 import type { BuddyLanguage, BuddyMessage, BuddyProgress } from '../../types/buddy';
 import { getAuthUser } from '../../utils/rbacAuth';
@@ -18,6 +18,13 @@ const QUICK_PROMPTS = [
   { label: 'Find my skill gaps', prompt: 'What skill gaps should I work on next based on my current progress?', icon: Brain },
   { label: 'Plan my week', prompt: 'Create a focused study plan for this week', icon: CalendarRange },
   { label: 'Improve my portfolio', prompt: 'How should I improve my resume and portfolio?', icon: BriefcaseBusiness },
+];
+
+const POPULAR_SEARCHES = [
+  { label: 'Suggest a roadmap', prompt: 'Suggest a personalized learning roadmap based on my goals', icon: Map },
+  { label: 'DSA practice questions', prompt: 'Give me DSA practice questions for interviews', icon: Code2 },
+  { label: 'Interview tips', prompt: 'Share practical interview tips for tech roles', icon: FileText },
+  { label: 'Internship opportunities', prompt: 'How can I find and prepare for internship opportunities?', icon: Briefcase },
 ];
 
 const timestamp = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -54,6 +61,17 @@ export const BuddyChat = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const missingSkills = useMemo(() => SKILL_CHECK_QUESTIONS.filter((question) => skillAnswers[question.key] === false).map((question) => question.key.toUpperCase()), [skillAnswers]);
   const answeredSkills = Object.keys(skillAnswers).length;
@@ -207,10 +225,13 @@ export const BuddyChat = () => {
             {isTyping && <div className="flex items-center gap-3 text-sm font-semibold text-slate-500"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-white"><Bot className="h-4 w-4" /></div><span className="rounded-2xl bg-white px-4 py-3 shadow-sm">Buddy is thinking<span className="ml-1 animate-pulse">...</span></span></div>}
             {error && <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"><span>{error}</span>{lastFailedMessage && <button type="button" onClick={() => void handleSend(lastFailedMessage)} className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-red-100 px-3 py-2 font-bold text-red-800"><RotateCcw className="h-3.5 w-3.5" /> Retry</button>}</div>}
           </div></div>
-          <form onSubmit={submitMessage} className="sticky bottom-0 z-20 shrink-0 border-t border-slate-200/80 bg-gradient-to-t from-white via-white/95 to-white/80 p-4 pb-5 backdrop-blur-xl md:px-6 md:pb-6">
+          <form onSubmit={submitMessage} className="sticky bottom-0 z-20 shrink-0 border-t border-slate-200/80 bg-gradient-to-t from-white via-white/95 to-white/80 p-4 pb-5 backdrop-blur-xl dark:border-slate-800/80 dark:from-slate-950 dark:via-slate-950/95 dark:to-slate-950/80 md:px-6 md:pb-6">
             <div className="mx-auto max-w-3xl">
-              {/* Grok / YouTube-inspired chat search bar */}
-              <div className="group relative flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 shadow-[0_4px_24px_rgba(15,23,42,0.08)] transition-all focus-within:border-violet-400 focus-within:shadow-[0_4px_28px_rgba(139,92,246,0.18)] focus-within:ring-2 focus-within:ring-violet-500/15">
+              {/* Premium search bar — Grok / YouTube style, light + dark */}
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white px-1.5 py-1.5 shadow-[0_4px_24px_rgba(15,23,42,0.08)] transition-all focus-within:border-violet-400 focus-within:shadow-[0_4px_28px_rgba(139,92,246,0.2)] focus-within:ring-2 focus-within:ring-violet-500/15 dark:border-slate-700/80 dark:bg-slate-900/90 dark:shadow-[0_4px_32px_rgba(0,0,0,0.45)] dark:focus-within:border-violet-500/60 dark:focus-within:ring-violet-500/20">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300" aria-hidden="true">
+                  <Search className="h-4 w-4" />
+                </div>
                 <textarea
                   ref={inputRef}
                   rows={1}
@@ -223,18 +244,42 @@ export const BuddyChat = () => {
                     }
                   }}
                   placeholder="Ask Buddy anything about your learning journey..."
-                  className="max-h-32 min-h-[44px] flex-1 resize-none border-0 bg-transparent px-4 py-2.5 text-[15px] leading-6 text-slate-800 outline-none placeholder:text-slate-400"
+                  className="max-h-32 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-1 py-2 text-[15px] leading-6 text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
+                <kbd className="hidden shrink-0 select-none items-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-sans text-[11px] font-medium text-slate-400 sm:inline-flex dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-500">
+                  Ctrl&nbsp;K
+                </kbd>
                 <button
                   type="submit"
                   disabled={!input.trim() || isTyping}
                   aria-label="Send message"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-500 text-white shadow-md shadow-violet-200 transition-all hover:bg-violet-600 hover:shadow-lg hover:shadow-violet-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-500 text-white shadow-md shadow-violet-200/60 transition-all hover:bg-violet-600 hover:shadow-lg hover:shadow-violet-300/50 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none dark:shadow-violet-900/40 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
                 >
                   <Send className="h-4 w-4" />
                 </button>
               </div>
-              <p className="mt-2.5 text-center text-[11px] text-slate-400">
+
+              {/* Popular search chips */}
+              <div className="mt-3 flex flex-wrap items-center gap-2 px-0.5">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                  <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                  Popular searches:
+                </span>
+                {POPULAR_SEARCHES.map(({ label, prompt, icon: ChipIcon }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => void handleSend(prompt)}
+                    disabled={isTyping}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/80 px-3 py-1.5 text-[12px] font-medium text-slate-600 shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/80 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-violet-500/50 dark:hover:bg-violet-950/40 dark:hover:text-violet-300"
+                  >
+                    <ChipIcon className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <p className="mt-2.5 text-center text-[11px] text-slate-400 dark:text-slate-500">
                 Enter to send · Shift + Enter for a new line
               </p>
             </div>
