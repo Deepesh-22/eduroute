@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Sparkles, Languages, Brain, Trophy, CalendarRange, BriefcaseBusiness } from 'lucide-react';
+import { Send, Sparkles, Languages, Brain, Trophy, CalendarRange, BriefcaseBusiness, Globe, ExternalLink } from 'lucide-react';
 import { fetchBuddyProgress, saveSkillGap, sendBuddyMessage } from '../../services/buddyApi';
 import type { BuddyLanguage, BuddyMessage, BuddyProgress } from '../../types/buddy';
 
@@ -85,6 +85,8 @@ export const BuddyChat = () => {
           role: 'ai',
           text: response.reply,
           timestamp: toTimestamp(),
+          usedWebSearch: Boolean(response.usedWebSearch),
+          sources: response.sources || [],
         },
       ]);
 
@@ -189,12 +191,39 @@ export const BuddyChat = () => {
         {messages.map((msg) => (
           <motion.div key={msg.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-3xl p-4 rounded-2xl ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-100 text-slate-800'}`}>
+              {msg.role === 'ai' && msg.usedWebSearch && (
+                <div className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                  <Globe className="h-3 w-3" /> Live web search
+                </div>
+              )}
               <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+              {msg.role === 'ai' && msg.sources && msg.sources.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-slate-100 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sources</p>
+                  {msg.sources.slice(0, 3).map((s) => (
+                    <a
+                      key={s.url}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[11px] text-indigo-600 hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{s.title || s.url}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
               <p className="text-[10px] mt-2 opacity-70">{msg.timestamp}</p>
             </div>
           </motion.div>
         ))}
-        {isTyping && <div className="text-sm text-slate-500">Buddy is typing...</div>}
+        {isTyping && (
+          <div className="text-sm text-slate-500 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+            Buddy is thinking...
+          </div>
+        )}
         {error && <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</div>}
       </div>
 
