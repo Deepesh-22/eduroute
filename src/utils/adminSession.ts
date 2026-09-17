@@ -1,5 +1,6 @@
 const ADMIN_SESSION_KEY = 'eduroute.adminSession';
-const ADMIN_PASSWORD_HASH = '89263fa24598520bf17b7762ffb5304dc5b776e9827a6fcb96d8697d52d00a62';
+/** SHA-256 of password "timepass" */
+const ADMIN_PASSWORD_HASH = '26fa1ef0060cbe67be260ed64701b8d5dec4c7493c8c59eee455b891cbf4cdd1';
 
 const isBrowser = typeof window !== 'undefined';
 
