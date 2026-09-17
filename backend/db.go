@@ -63,17 +63,30 @@ func ensureSchema(db *sql.DB) error {
 	return nil
 }
 
-func (s *Server) ensureDefaultAdmin() error {
+func (s *Server) ensureAdminUser(email, name, plainPassword string) error {
 	var id int64
-	if err := s.db.QueryRow("SELECT id FROM users WHERE email = ? LIMIT 1", "vansh777@gmail.com").Scan(&id); err == nil {
+	err := s.db.QueryRow("SELECT id FROM users WHERE email = ? LIMIT 1", email).Scan(&id)
+	if err == nil {
 		return nil
 	}
-	password, err := bcrypt.GenerateFromPassword([]byte("timepass"), 12)
+	if err != sql.ErrNoRows {
+		return err
+	}
+	password, err := bcrypt.GenerateFromPassword([]byte(plainPassword), 12)
 	if err != nil {
 		return err
 	}
-	_, err = s.db.Exec("INSERT INTO users (name,email,password,role,is_verified,college_verified) VALUES (?,?,?,?,TRUE,?)", "EDUROUTE Staff Admin", "vansh777@gmail.com", password, "admin", "verified")
+	_, err = s.db.Exec("INSERT INTO users (name,email,password,role,is_verified,college_verified) VALUES (?,?,?,?,TRUE,?)", name, email, password, "admin", "verified")
 	return err
+}
+
+func (s *Server) ensureDefaultAdmin() error {
+	// Existing default staff account (unchanged)
+	if err := s.ensureAdminUser("vansh777@gmail.com", "EDUROUTE Staff Admin", "timepass"); err != nil {
+		return err
+	}
+	// Additional admin requested for sign-in page
+	return s.ensureAdminUser("admin@gmail.com", "EduRoute Admin", "timepass")
 }
 
 func (s *Server) ensureStarterCourse() error {
@@ -82,7 +95,7 @@ func (s *Server) ensureStarterCourse() error {
 		return err
 	}
 	var adminID int64
-	if err := s.db.QueryRow("SELECT id FROM users WHERE email = ? LIMIT 1", "vansh777@gmail.com").Scan(&adminID); err != nil {
+	if err := s.db.QueryRow("SELECT id FROM users WHERE email IN (?, ?) ORDER BY id ASC LIMIT 1", "admin@gmail.com", "vansh777@gmail.com").Scan(&adminID); err != nil {
 		return err
 	}
 	_, err := s.db.Exec("INSERT INTO courses (title,description,category,level,duration,instructor,created_by) VALUES (?,?,?,?,?,?,?)", "Web Development Foundations", "Learn HTML, CSS, JavaScript, and the fundamentals needed to build your first web project.", "Development", "Beginner", "8 weeks", "EDUROUTE Learning Team", adminID)
