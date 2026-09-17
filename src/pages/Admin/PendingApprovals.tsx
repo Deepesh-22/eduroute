@@ -20,7 +20,6 @@ import {
   listLocalPendingVerifications,
   updateLocalVerificationStatus,
   getLocalVerificationDocument,
-  type LocalPendingVerification,
 } from '../../utils/pendingVerificationStore';
 
 type PendingStudent = {
@@ -38,12 +37,13 @@ type PendingStudent = {
   appliedAt?: string;
   collegeVerified?: string;
   documentCreatedAt?: string;
-  source?: 'api' | 'local';
+  source?: 'api' | 'local' | 'demo';
   documentDataUrl?: string;
   mimeType?: string;
 };
 
-const DEMO_FALLBACK: PendingStudent[] = [
+/** Constant demo rows — always visible for UI testing */
+const DEMO_CONSTANT: PendingStudent[] = [
   {
     id: 'demo-1',
     name: 'Aman Sharma',
@@ -57,7 +57,7 @@ const DEMO_FALLBACK: PendingStudent[] = [
     fileName: 'id_card_aman.jpg',
     verificationId: 'demo-1',
     appliedAt: '2025-09-16T10:24:00',
-    source: 'local',
+    source: 'demo',
   },
   {
     id: 'demo-2',
@@ -71,7 +71,7 @@ const DEMO_FALLBACK: PendingStudent[] = [
     fileName: 'admission_letter.pdf',
     verificationId: 'demo-2',
     appliedAt: '2025-09-15T16:12:00',
-    source: 'local',
+    source: 'demo',
   },
 ];
 
@@ -92,25 +92,31 @@ const formatApplied = (iso?: string) => {
 };
 
 export const PendingApprovals = () => {
-  const [students, setStudents] = useState<PendingStudent[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [students, setStudents] = useState<PendingStudent[]>(DEMO_CONSTANT);
+  const [selectedId, setSelectedId] = useState<string | null>(DEMO_CONSTANT[0]?.id || null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [docPreviewUrl, setDocPreviewUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'id' | 'docs'>('profile');
+  const [backendConnected, setBackendConnected] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setMessage('');
+
+    let apiRows: PendingStudent[] = [];
+    let connected = false;
+
     try {
       const response = await apiGetPendingStudents();
-      const apiRows: PendingStudent[] = (response.data || []).map((row: any) => ({
+      connected = true;
+      apiRows = (response.data || []).map((row: any) => ({
         id: String(row.id),
         name: row.name || 'Student',
         email: row.email || '',
         phone: row.phone,
-        course: row.course || row.collegeVerified,
+        course: row.course,
         college: row.college,
         location: row.location,
         fileName: row.fileName,
@@ -119,36 +125,44 @@ export const PendingApprovals = () => {
         collegeVerified: row.collegeVerified,
         source: 'api' as const,
       }));
-
-      const localRows: PendingStudent[] = listLocalPendingVerifications().map((item) => ({
-        ...item,
-        source: 'local' as const,
-      }));
-
-      // Prefer API; merge locals that are not already present by email
-      const emails = new Set(apiRows.map((r) => r.email.toLowerCase()));
-      const merged = [...apiRows, ...localRows.filter((l) => !emails.has(l.email.toLowerCase()))];
-      setStudents(merged.length ? merged : DEMO_FALLBACK);
-      if (!selectedId && merged.length) setSelectedId(merged[0].id);
-      else if (!selectedId && DEMO_FALLBACK.length) setSelectedId(DEMO_FALLBACK[0].id);
     } catch {
-      const localRows: PendingStudent[] = listLocalPendingVerifications().map((item) => ({
-        ...item,
-        source: 'local' as const,
-      }));
-      const fallback = localRows.length ? localRows : DEMO_FALLBACK;
-      setStudents(fallback);
-      if (!selectedId && fallback.length) setSelectedId(fallback[0].id);
-      setMessage('Showing local / demo queue (backend unavailable).');
-    } finally {
-      setLoading(false);
+      connected = false;
     }
-  }, [selectedId]);
+
+    setBackendConnected(connected);
+
+    const localRows: PendingStudent[] = listLocalPendingVerifications().map((item) => ({
+      ...item,
+      source: 'local' as const,
+    }));
+
+    // Demos always stay; then API real data; then local uploads not already in API
+    const apiEmails = new Set(apiRows.map((r) => r.email.toLowerCase()));
+    const localOnly = localRows.filter((l) => !apiEmails.has(l.email.toLowerCase()));
+    const merged = [...DEMO_CONSTANT, ...apiRows, ...localOnly];
+
+    setStudents(merged);
+    setSelectedId((prev) => {
+      if (prev && merged.some((s) => s.id === prev)) return prev;
+      return merged[0]?.id || null;
+    });
+
+    if (connected) {
+      setMessage(
+        apiRows.length
+          ? `Loaded ${apiRows.length} real pending request(s) from backend (+ 2 demo rows).`
+          : 'Backend connected. No pending API requests yet — demo rows still shown.',
+      );
+    } else {
+      setMessage('Backend offline — showing demo rows and any local uploads.');
+    }
+
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     load().catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
 
   const selected = useMemo(
     () => students.find((s) => s.id === selectedId) || null,
@@ -161,10 +175,15 @@ export const PendingApprovals = () => {
       setDocPreviewUrl(null);
       if (!selected?.verificationId) return;
 
-      if (selected.source === 'local' || selected.documentDataUrl) {
-        const local = getLocalVerificationDocument(selected.verificationId) || selected;
+      if (selected.source === 'local' || selected.source === 'demo' || selected.documentDataUrl) {
+        const local = getLocalVerificationDocument(selected.verificationId);
         if (local?.documentDataUrl) {
           setDocPreviewUrl(local.documentDataUrl);
+          return;
+        }
+        if (selected.documentDataUrl) {
+          setDocPreviewUrl(selected.documentDataUrl);
+          return;
         }
         return;
       }
@@ -175,7 +194,7 @@ export const PendingApprovals = () => {
         revoke = url;
         setDocPreviewUrl(url);
       } catch {
-        // no document available
+        // no document available from API
       }
     };
     loadDoc().catch(() => undefined);
@@ -186,6 +205,11 @@ export const PendingApprovals = () => {
 
   const handleDecision = async (action: 'approve' | 'reject') => {
     if (!selected) return;
+    if (selected.source === 'demo') {
+      setMessage('Demo rows stay constant and cannot be removed.');
+      return;
+    }
+
     setActionLoading(true);
     setMessage('');
     try {
@@ -194,12 +218,14 @@ export const PendingApprovals = () => {
       } else {
         updateLocalVerificationStatus(selected.id, action === 'approve' ? 'verified' : 'rejected');
       }
-      setStudents((prev) => prev.filter((s) => s.id !== selected.id));
+      setStudents((prev) => prev.filter((s) => s.id !== selected.id || s.source === 'demo'));
       setSelectedId((prev) => {
-        const remaining = students.filter((s) => s.id !== selected.id);
-        return remaining[0]?.id || null;
+        const remaining = students.filter((s) => s.id !== selected.id || s.source === 'demo');
+        return remaining.find((s) => s.id !== selected.id)?.id || remaining[0]?.id || null;
       });
       setMessage(`Student ${action === 'approve' ? 'approved' : 'rejected'} successfully.`);
+      // Refresh real data after action
+      await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Action failed');
     } finally {
@@ -209,11 +235,31 @@ export const PendingApprovals = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-black text-[var(--text-primary)]">Student Approval Requests</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">
-          Review student details, verify ID card and profile, then approve or reject their application.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-[var(--text-primary)]">Student Approval Requests</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
+            Review student details, verify ID card and profile, then approve or reject their application.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+              backendConnected
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+            }`}
+          >
+            {backendConnected ? 'Backend connected' : 'Backend offline'}
+          </span>
+          <button
+            type="button"
+            onClick={() => load()}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-input)]"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       {message && (
@@ -223,7 +269,6 @@ export const PendingApprovals = () => {
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
-        {/* List */}
         <section className="xl:col-span-2 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-card)] overflow-hidden shadow-sm">
           <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between">
             <h2 className="font-bold text-[var(--text-primary)]">
@@ -246,7 +291,7 @@ export const PendingApprovals = () => {
               const active = student.id === selectedId;
               return (
                 <div
-                  key={student.id}
+                  key={`${student.source}-${student.id}`}
                   className={`p-4 flex flex-col gap-3 transition-colors cursor-pointer ${
                     active
                       ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-l-4 border-l-indigo-500'
@@ -265,7 +310,7 @@ export const PendingApprovals = () => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-[var(--text-primary)]">{student.name}</span>
                         <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300">
-                          New
+                          {student.source === 'demo' ? 'Demo' : student.source === 'api' ? 'Live' : 'Local'}
                         </span>
                       </div>
                       <div className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
@@ -276,7 +321,7 @@ export const PendingApprovals = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 pl-15">
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       className="px-3 py-1.5 text-xs font-bold rounded-lg border border-[var(--border-default)] bg-[var(--surface-input)] text-[var(--text-secondary)]"
@@ -294,7 +339,7 @@ export const PendingApprovals = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedId(student.id);
-                        handleDecision('approve');
+                        void handleDecision('approve');
                       }}
                     >
                       Approve
@@ -305,7 +350,7 @@ export const PendingApprovals = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedId(student.id);
-                        handleDecision('reject');
+                        void handleDecision('reject');
                       }}
                     >
                       Reject
@@ -317,7 +362,6 @@ export const PendingApprovals = () => {
           </div>
         </section>
 
-        {/* Detail */}
         <section className="xl:col-span-3 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-card)] shadow-sm overflow-hidden flex flex-col min-h-[520px]">
           {!selected ? (
             <div className="flex-1 flex items-center justify-center text-sm text-[var(--text-secondary)] p-8">
@@ -387,52 +431,45 @@ export const PendingApprovals = () => {
                   </div>
                 </div>
 
-                {(activeTab === 'id' || activeTab === 'docs' || activeTab === 'profile') && (
-                  <div className="rounded-2xl border border-[var(--border-default)] p-4 bg-[var(--surface-input)]">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-bold text-sm text-[var(--text-primary)] flex items-center gap-2">
-                        <IdCard className="h-4 w-4 text-indigo-500" />
-                        Student ID Card {selected.fileName ? '(Uploaded)' : '(Not uploaded)'}
-                      </h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="rounded-xl border border-dashed border-[var(--border-default)] bg-white dark:bg-slate-900/50 min-h-[140px] flex items-center justify-center overflow-hidden">
-                        {docPreviewUrl ? (
-                          selected.mimeType?.includes('pdf') || selected.fileName?.endsWith('.pdf') ? (
-                            <a
-                              href={docPreviewUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-sm font-semibold text-indigo-600 underline"
-                            >
-                              Open PDF document
-                            </a>
-                          ) : (
-                            <img src={docPreviewUrl} alt="ID document" className="max-h-48 object-contain" />
-                          )
-                        ) : (
-                          <span className="text-xs text-[var(--text-secondary)] px-4 text-center">
-                            {selected.fileName
-                              ? `Document: ${selected.fileName} (preview unavailable)`
-                              : 'No document attached'}
-                          </span>
-                        )}
-                      </div>
-                      <ul className="space-y-2 text-sm">
-                        {[
-                          'Name matches',
-                          'Roll number matches',
-                          'College name verified',
-                          'Valid session',
-                        ].map((label) => (
-                          <li key={label} className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
-                            <Check className="h-4 w-4" /> {label}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                <div className="rounded-2xl border border-[var(--border-default)] p-4 bg-[var(--surface-input)]">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-sm text-[var(--text-primary)] flex items-center gap-2">
+                      <IdCard className="h-4 w-4 text-indigo-500" />
+                      Student ID Card {selected.fileName || docPreviewUrl ? '(Uploaded)' : '(Not uploaded)'}
+                    </h4>
                   </div>
-                )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-xl border border-dashed border-[var(--border-default)] bg-white dark:bg-slate-900/50 min-h-[140px] flex items-center justify-center overflow-hidden p-2">
+                      {docPreviewUrl ? (
+                        selected.mimeType?.includes('pdf') || selected.fileName?.endsWith('.pdf') ? (
+                          <a
+                            href={docPreviewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm font-semibold text-indigo-600 underline"
+                          >
+                            Open PDF document
+                          </a>
+                        ) : (
+                          <img src={docPreviewUrl} alt="ID document" className="max-h-48 object-contain" />
+                        )
+                      ) : (
+                        <span className="text-xs text-[var(--text-secondary)] px-4 text-center">
+                          {selected.fileName
+                            ? `Document: ${selected.fileName}${selected.source === 'api' ? ' — open via backend when available' : ''}`
+                            : 'No document attached'}
+                        </span>
+                      )}
+                    </div>
+                    <ul className="space-y-2 text-sm">
+                      {['Name matches', 'Roll number matches', 'College name verified', 'Valid session'].map((label) => (
+                        <li key={label} className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
+                          <Check className="h-4 w-4" /> {label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
 
                 <div>
                   <h4 className="font-bold text-sm mb-3 text-[var(--text-primary)]">Profile Information</h4>
@@ -483,7 +520,7 @@ export const PendingApprovals = () => {
                 </button>
                 <button
                   type="button"
-                  disabled={actionLoading}
+                  disabled={actionLoading || selected.source === 'demo'}
                   onClick={() => handleDecision('approve')}
                   className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm inline-flex items-center gap-2 disabled:opacity-60"
                 >
@@ -491,7 +528,7 @@ export const PendingApprovals = () => {
                 </button>
                 <button
                   type="button"
-                  disabled={actionLoading}
+                  disabled={actionLoading || selected.source === 'demo'}
                   onClick={() => handleDecision('reject')}
                   className="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm inline-flex items-center gap-2 disabled:opacity-60"
                 >

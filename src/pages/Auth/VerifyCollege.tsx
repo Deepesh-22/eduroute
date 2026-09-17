@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveAuthSession, getAuthUser } from '../../utils/rbacAuth';
+import { saveAuthSession, getAuthUser, getAuthToken } from '../../utils/rbacAuth';
 import { getStoredUserProfile } from '../../utils/userProfile';
 import { apiSubmitCollegeVerification } from '../../utils/authApi';
 import { addLocalPendingVerification } from '../../utils/pendingVerificationStore';
@@ -20,12 +20,13 @@ export const VerifyCollege = () => {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'pending'>('idle');
   const [error, setError] = useState('');
+  const [storedForAdmin, setStoredForAdmin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const completeVerification = () => {
     const storedProfile = getStoredUserProfile();
     const existing = getAuthUser();
-    const token = localStorage.getItem('eduroute:auth-token') || 'pending-verification-session';
+    const token = getAuthToken() || localStorage.getItem('eduroute:auth-token') || 'pending-verification-session';
 
     saveAuthSession(token, {
       id: existing?.id || (storedProfile?.email ? `pending-${storedProfile.email}` : `pending-${Date.now()}`),
@@ -43,18 +44,26 @@ export const VerifyCollege = () => {
     if (!file) return;
     setError('');
     setStatus('uploading');
+    setStoredForAdmin(false);
 
     const storedProfile = getStoredUserProfile();
     const authUser = getAuthUser();
     const name = authUser?.name || storedProfile?.name || 'Student';
     const email = authUser?.email || storedProfile?.email || 'student@eduroute.app';
 
-    try {
-      await apiSubmitCollegeVerification(file);
-    } catch {
-      // Backend may be offline — still queue for admin panel locally
+    let backendOk = false;
+    // Try backend first when student is authenticated (JWT required by Go API)
+    if (getAuthToken()) {
+      try {
+        await apiSubmitCollegeVerification(file);
+        backendOk = true;
+      } catch (uploadError) {
+        // continue to local store so admin can still review
+        console.warn('Backend college verification failed, using local queue', uploadError);
+      }
     }
 
+    // Always persist locally so admin panel can show profile + image
     try {
       const documentDataUrl = await fileToDataUrl(file);
       addLocalPendingVerification({
@@ -62,12 +71,13 @@ export const VerifyCollege = () => {
         email,
         fileName: file.name,
         documentDataUrl,
-        mimeType: file.type,
-        course: storedProfile?.course,
-        college: storedProfile?.college,
-        location: storedProfile?.location,
-        phone: storedProfile?.phone,
+        mimeType: file.type || 'image/jpeg',
+        course: (storedProfile as any)?.course,
+        college: (storedProfile as any)?.college,
+        location: (storedProfile as any)?.location,
+        phone: (storedProfile as any)?.phone,
       });
+      setStoredForAdmin(true);
     } catch {
       addLocalPendingVerification({
         name,
@@ -75,6 +85,11 @@ export const VerifyCollege = () => {
         fileName: file.name,
         mimeType: file.type,
       });
+      setStoredForAdmin(true);
+    }
+
+    if (!backendOk && !getAuthToken()) {
+      setError('Saved for admin review locally. Log in as a student before upload to also store on the server.');
     }
 
     setStatus('pending');
@@ -123,8 +138,7 @@ export const VerifyCollege = () => {
               <div className="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl flex gap-3">
                 <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
                 <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                  Verification usually takes 24-48 hours. You can still use the platform while we verify your ID.
-                  Uploads appear in the Admin → Pending Approvals queue.
+                  Your ID is stored for admin review (Admin → Pending Approvals). Verification usually takes 24–48 hours.
                 </p>
               </div>
               {error && <p className="text-sm text-rose-600" role="alert">{error}</p>}
@@ -151,7 +165,7 @@ export const VerifyCollege = () => {
           {status === 'uploading' && (
             <div className="py-12 text-center">
               <div className="mx-auto h-12 w-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-              <p className="text-slate-600 dark:text-slate-300 font-medium">Uploading your documents...</p>
+              <p className="text-slate-600 dark:text-slate-300 font-medium">Uploading and storing your ID…</p>
             </div>
           )}
 
@@ -161,9 +175,14 @@ export const VerifyCollege = () => {
                 <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Application Received!</h3>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 mb-8">
-                Your verification is now pending. An admin will review your ID in the Admin Panel.
+              <p className="mt-2 text-slate-600 dark:text-slate-400 mb-2">
+                Your verification is pending. Admins can review your ID under Pending Approvals.
               </p>
+              {storedForAdmin && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-6">
+                  ID card stored for admin review.
+                </p>
+              )}
               <button
                 onClick={completeVerification}
                 className="inline-flex items-center px-8 py-3 bg-slate-900 dark:bg-indigo-600 text-white rounded-xl font-bold hover:bg-slate-800 transition-all group"
