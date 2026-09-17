@@ -8,6 +8,13 @@ exports.handler = async (event) => {
     return mysqlAuth.json(405, { success: false, error: 'Method not allowed' });
   }
 
+  if (mysqlAuth.hasMysqlConfig() && !mysqlAuth.depsReady()) {
+    return mysqlAuth.json(500, {
+      success: false,
+      error: 'Server missing mysql2/bcryptjs. Check Netlify function dependencies.',
+    });
+  }
+
   if (mysqlAuth.hasMysqlConfig() && mysqlAuth.depsReady()) {
     try {
       const body = JSON.parse(event.body || '{}');

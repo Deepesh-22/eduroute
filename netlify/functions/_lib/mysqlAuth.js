@@ -35,9 +35,12 @@ function options() {
 }
 
 function hasMysqlConfig() {
+  if (process.env.MYSQL_URL) return true;
   return Boolean(
-    process.env.MYSQL_URL ||
-      (process.env.MYSQL_HOST && process.env.MYSQL_USER && process.env.MYSQL_PASSWORD),
+    process.env.MYSQL_HOST &&
+      process.env.MYSQL_USER &&
+      typeof process.env.MYSQL_PASSWORD === 'string' &&
+      process.env.MYSQL_PASSWORD.length > 0,
   );
 }
 
@@ -108,7 +111,7 @@ function issueToken(user) {
     }),
   ).toString('base64url');
   const data = `${header}.${payload}`;
-  const sig = require('crypto').createHmac('sha256', secret).update(data).digest('base64url');
+  const sig = crypto.createHmac('sha256', secret).update(data).digest('base64url');
   return `${data}.${sig}`;
 }
 
