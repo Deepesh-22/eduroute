@@ -13,14 +13,14 @@ import {
   LogOut,
   Menu,
   X,
-  Search,
   Bell,
   Shield,
   ChevronDown,
 } from 'lucide-react';
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { FloatingBuddyWidget } from '../components/FloatingBuddyWidget';
+import { GlobalSearch } from '../components/GlobalSearch';
 
 const NAVIGATION = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -36,8 +36,6 @@ const NAVIGATION = [
 export const MainLayout = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchRef = useRef<HTMLInputElement>(null);
 
   const handleLogout = () => {
     clearAuthSession();
@@ -58,18 +56,6 @@ export const MainLayout = () => {
     };
   }, []);
 
-  // ⌘K / Ctrl+K focus search
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/');
 
@@ -77,7 +63,6 @@ export const MainLayout = () => {
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
       {/* ========== DESKTOP SIDEBAR ========== */}
       <aside className="er-sidebar hidden lg:flex shrink-0">
-        {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5">
           <Link to="/dashboard" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent)] text-white shadow-md">
@@ -93,7 +78,6 @@ export const MainLayout = () => {
           </Link>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
           {NAVIGATION.map((item) => {
             const active = isActive(item.path);
@@ -110,7 +94,6 @@ export const MainLayout = () => {
           })}
         </nav>
 
-        {/* Bottom: user + admin + logout */}
         <div className="mt-auto border-t border-[var(--border-default)] p-3 space-y-1">
           <Link
             to="/profile"
@@ -132,10 +115,7 @@ export const MainLayout = () => {
             <ChevronDown className="h-4 w-4 text-[var(--text-muted)]" />
           </Link>
 
-          <Link
-            to="/admin-login"
-            className="er-nav-item"
-          >
+          <Link to="/admin-login" className="er-nav-item">
             <Shield className="h-[18px] w-[18px]" strokeWidth={1.75} />
             Admin Panel
           </Link>
@@ -153,9 +133,7 @@ export const MainLayout = () => {
 
       {/* ========== MAIN COLUMN ========== */}
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-        {/* Top header */}
         <header className="er-header shrink-0">
-          {/* Mobile menu button */}
           <button
             type="button"
             className="lg:hidden p-2 -ml-1 rounded-xl hover:bg-[var(--accent-soft)]"
@@ -165,24 +143,9 @@ export const MainLayout = () => {
             <Menu className="h-5 w-5" />
           </button>
 
-          {/* Search */}
-          <div className="relative flex-1 max-w-xl mx-auto">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input
-              ref={searchRef}
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search courses, topics, or skills..."
-              className="er-input"
-              aria-label="Search"
-            />
-            <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-0.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-primary)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
-              ⌘ K
-            </kbd>
-          </div>
+          {/* Live global search — all authenticated pages via MainLayout */}
+          <GlobalSearch variant="header" />
 
-          {/* Right actions */}
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
@@ -214,13 +177,11 @@ export const MainLayout = () => {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>
 
-      {/* ========== MOBILE DRAWER ========== */}
       {isMobileMenuOpen && (
         <>
           <div
@@ -246,6 +207,9 @@ export const MainLayout = () => {
               >
                 <X className="h-5 w-5" />
               </button>
+            </div>
+            <div className="px-3 pb-2">
+              <GlobalSearch variant="full" />
             </div>
             <nav className="flex-1 overflow-y-auto px-3 space-y-0.5">
               {NAVIGATION.map((item) => (
@@ -280,7 +244,6 @@ export const MainLayout = () => {
         </>
       )}
 
-      {/* Global AI assistant — all authenticated pages */}
       <FloatingBuddyWidget />
     </div>
   );
