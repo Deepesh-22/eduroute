@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { FloatingBuddyWidget } from '../components/FloatingBuddyWidget';
 
 const NAVIGATION = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -278,6 +279,9 @@ export const MainLayout = () => {
           </aside>
         </>
       )}
+
+      {/* Global AI assistant — all authenticated pages */}
+      <FloatingBuddyWidget />
     </div>
   );
 };
