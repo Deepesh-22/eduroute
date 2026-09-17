@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { getAuthUser } from '../utils/rbacAuth';
+import { clearAuthSession, getAuthUser } from '../utils/rbacAuth';
 import { getStoredUserProfile } from '../utils/userProfile';
 import {
   LayoutDashboard,
