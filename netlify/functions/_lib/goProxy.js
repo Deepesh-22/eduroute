@@ -1,8 +1,3 @@
-/**
- * Shared proxy to the Go + MySQL API.
- * Netlify env: GO_API_URL (preferred) or BACKEND_URL — base without trailing slash,
- * e.g. https://api.eduroute.example.com  or  http://localhost:5000
- */
 function json(statusCode, body) {
   return {
     statusCode,
@@ -31,16 +26,14 @@ async function forward(event, path) {
     return json(503, {
       success: false,
       error:
-        'GO_API_URL is not set on Netlify. Point it to your Go backend so signup/login can use MySQL.',
+        'MySQL not configured. Netlify par MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE set karein (ya GO_API_URL).',
     });
   }
 
   const url = `${base}${path.startsWith('/') ? path : `/${path}`}`;
 
   try {
-    const headers = {
-      'Content-Type': 'application/json',
-    };
+    const headers = { 'Content-Type': 'application/json' };
     if (event.headers?.authorization || event.headers?.Authorization) {
       headers.Authorization = event.headers.authorization || event.headers.Authorization;
     }
@@ -69,7 +62,7 @@ async function forward(event, path) {
     console.error('goProxy error', path, err);
     return json(502, {
       success: false,
-      error: 'Unable to reach Go/MySQL backend. Check GO_API_URL and that the API is running.',
+      error: 'Backend unreachable. MYSQL_* ya GO_API_URL check karein.',
     });
   }
 }
