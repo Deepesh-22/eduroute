@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Lock, Mail, Sparkles, User } from 'lucide-react';
+import { ArrowRight, Lock, Mail, Sparkles, User, ShieldCheck } from 'lucide-react';
 import { apiRegisterUser } from '../../utils/authApi';
 import { saveAuthSession } from '../../utils/rbacAuth';
 import { parseGoogleCredential, saveUserProfile } from '../../utils/userProfile';
@@ -66,9 +66,16 @@ export const Signup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const googleClientId = useMemo(
-    () => import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || '234757313390-8ihis6sl6h1635ievvaitfcjjndqv1je.apps.googleusercontent.com',
-    []
+    () =>
+      import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ||
+      '234757313390-8ihis6sl6h1635ievvaitfcjjndqv1je.apps.googleusercontent.com',
+    [],
   );
+
+  /** After signup → college ID upload page (student verification flow). */
+  const goToCollegeIdUpload = () => {
+    navigate('/verify-college', { replace: true });
+  };
 
   useEffect(() => {
     if (!googleClientId) {
@@ -107,11 +114,11 @@ export const Signup = () => {
               email: googleProfile.email,
               avatar: googleProfile.avatar,
               role: 'student',
-              verificationStatus: 'verified',
+              verificationStatus: 'pending',
             });
 
-            console.log('[Signup] Google sign-up success, redirecting to /dashboard');
-            navigate('/dashboard');
+            // Next step: upload college ID
+            goToCollegeIdUpload();
           },
         });
 
@@ -154,37 +161,42 @@ export const Signup = () => {
     setFormErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      console.warn('[Signup] Form validation failed:', errors);
       return;
     }
 
     setIsSubmitting(true);
 
-    try {
-      const payload = {
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-      };
+    const payload = {
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
+    };
 
-      console.log('[Signup] Register request started for:', payload.email);
+    try {
       const registerResponse = await apiRegisterUser(payload);
 
       localStorage.setItem('eduroute:auth-token', registerResponse.token);
       saveUserProfile({ name: payload.name, email: payload.email });
-
-      console.log('[Signup] Registration successful, redirecting to /verify-college');
-      navigate('/verify-college');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Signup failed. Please try again.';
-      console.warn('[Signup] Registration API failed, continuing to /verify-college:', errorMessage);
-
-      saveUserProfile({
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
+      saveAuthSession(registerResponse.token, {
+        id: registerResponse.user?.id || `student-${payload.email}`,
+        name: registerResponse.user?.name || payload.name,
+        email: registerResponse.user?.email || payload.email,
+        role: 'student',
+        verificationStatus: registerResponse.user?.verificationStatus || 'pending',
       });
-      navigate('/verify-college');
-      return;
+
+      goToCollegeIdUpload();
+    } catch (error) {
+      // Still allow student to reach ID upload with a local session
+      saveUserProfile({ name: payload.name, email: payload.email });
+      saveAuthSession(`local-signup-${Date.now()}`, {
+        id: `pending-${payload.email}`,
+        name: payload.name,
+        email: payload.email,
+        role: 'student',
+        verificationStatus: 'pending',
+      });
+      goToCollegeIdUpload();
     } finally {
       setIsSubmitting(false);
     }
@@ -202,14 +214,21 @@ export const Signup = () => {
           className="w-full rounded-[2rem] border border-white/20 bg-white/10 p-7 shadow-[0_20px_70px_rgba(8,47,73,0.45)] backdrop-blur-xl sm:p-9"
         >
           <Link to="/" className="mb-8 flex items-center justify-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-lg font-black text-slate-900 shadow-[0_0_28px_rgba(56,189,248,0.45)]">E</div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-lg font-black text-slate-900 shadow-[0_0_28px_rgba(56,189,248,0.45)]">
+              E
+            </div>
             <span className="text-xl font-semibold tracking-[0.2em] text-white">EDUROUTE</span>
           </Link>
 
           <p className="text-center text-sm text-cyan-200">Create Account Today</p>
           <h1 className="mt-2 text-center text-3xl font-semibold text-white">Start your learning journey</h1>
 
-          <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>
+          <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100">
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            After sign up you’ll upload your college ID for verification
+          </div>
+
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
             <div>
               <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-300">Name</label>
               <div className="relative">
@@ -255,14 +274,16 @@ export const Signup = () => {
               {formErrors.password ? <p className="mt-1 text-xs text-rose-300">{formErrors.password}</p> : null}
             </div>
 
-            {apiError ? <p className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{apiError}</p> : null}
+            {apiError ? (
+              <p className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{apiError}</p>
+            ) : null}
 
             <button
               type="submit"
               disabled={isSubmitting}
               className="group mt-2 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_8px_30px_rgba(56,189,248,0.4)] transition-all hover:scale-[1.01] hover:shadow-[0_10px_34px_rgba(139,92,246,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? 'Creating account...' : 'Sign Up'}
+              {isSubmitting ? 'Creating account...' : 'Sign Up & Verify ID'}
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </form>
@@ -285,7 +306,7 @@ export const Signup = () => {
 
           <div className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400">
             <Sparkles className="h-4 w-4" />
-            Secure OTP verification after signup
+            Next step: upload college ID card
           </div>
         </motion.div>
       </div>
