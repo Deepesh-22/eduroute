@@ -192,7 +192,7 @@ export const MainLayout = () => {
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[var(--bg-sidebar)]" />
             </button>
 
-            <ThemeToggle className="!h-9 !w-[68px]" />
+            <ThemeToggle />
 
             <Link
               to="/profile"
