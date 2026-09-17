@@ -1,2 +1,5 @@
-/api/*   /.netlify/functions/:splat   200
-/*    /index.html   200
+/api/auth/register            /.netlify/functions/auth-register           200
+/api/auth/login/student       /.netlify/functions/auth-login-student      200
+/api/auth/login/staff         /.netlify/functions/auth-login-staff        200
+/api/*                        /.netlify/functions/:splat                  200
+/*                            /index.html                                 200

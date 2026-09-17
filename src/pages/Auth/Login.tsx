@@ -6,7 +6,6 @@ import { apiRoleLogin } from '../../utils/authApi';
 import { saveAuthSession, type UserRole } from '../../utils/rbacAuth';
 import { setAdminSession, validateAdminPassword } from '../../utils/adminSession';
 
-/** Frontend-only staff access when backend is down (no backend changes). */
 const LOCAL_STAFF = {
   email: 'admin@gmail.com',
   password: 'timepass',
@@ -45,19 +44,26 @@ export const Login = () => {
     try {
       if (role === 'admin') {
         try {
+          // Primary: MySQL staff login via Go API
           const response = await apiRoleLogin({ ...formData, role: 'admin' });
           saveAuthSession(response.token, response.user);
           setAdminSession(true);
           navigate('/admin/pending-approvals', { replace: true });
           return;
-        } catch {
+        } catch (staffErr) {
+          // Fallback only for the known demo admin when API is down
           const ok = await enterLocalAdmin(formData.email, formData.password);
           if (ok) return;
-          setError('Staff login failed. Use admin@gmail.com / timepass (works offline too).');
+          setError(
+            staffErr instanceof Error
+              ? staffErr.message
+              : 'Staff login failed. Use admin@gmail.com / timepass.',
+          );
           return;
         }
       }
 
+      // Student: always verify email + password against MySQL (no offline fake login)
       const response = await apiRoleLogin({ ...formData, role: 'student' });
       saveAuthSession(response.token, response.user);
       navigate('/dashboard', { replace: true });
@@ -78,6 +84,9 @@ export const Login = () => {
           <span className="text-2xl font-bold text-slate-900 tracking-tight">EDUROUTE</span>
         </Link>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">Role based login</h2>
+        <p className="mt-2 text-center text-sm text-slate-500">
+          Passwords are verified against your MySQL account
+        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -89,7 +98,10 @@ export const Login = () => {
           <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 mb-5">
             <button
               type="button"
-              onClick={() => setRole('student')}
+              onClick={() => {
+                setRole('student');
+                setError('');
+              }}
               className={`rounded-lg py-2 text-sm font-bold transition ${
                 role === 'student' ? 'bg-white text-indigo-600 shadow' : 'text-slate-500'
               }`}
@@ -98,7 +110,10 @@ export const Login = () => {
             </button>
             <button
               type="button"
-              onClick={() => setRole('admin')}
+              onClick={() => {
+                setRole('admin');
+                setError('');
+              }}
               className={`rounded-lg py-2 text-sm font-bold transition ${
                 role === 'admin' ? 'bg-white text-indigo-600 shadow' : 'text-slate-500'
               }`}
@@ -113,8 +128,12 @@ export const Login = () => {
               <span className="font-semibold text-slate-700">timepass</span>
             </p>
           )}
+
           {error && (
-            <p className="text-sm text-rose-600 mb-3 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2" role="alert">
+            <p
+              className="text-sm text-rose-700 mb-3 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 break-words max-h-24 overflow-y-auto"
+              role="alert"
+            >
               {error}
             </p>
           )}
@@ -159,7 +178,13 @@ export const Login = () => {
             </button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-slate-400">
+          <p className="mt-4 text-center text-sm text-slate-500">
+            New student?{' '}
+            <Link to="/signup" className="text-indigo-600 font-semibold hover:underline">
+              Sign up
+            </Link>
+          </p>
+          <p className="mt-2 text-center text-xs text-slate-400">
             Or open{' '}
             <Link to="/admin-login" className="text-indigo-600 font-semibold hover:underline">
               Admin password gate

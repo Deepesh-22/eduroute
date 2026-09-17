@@ -10,14 +10,33 @@
   node_bundler = "esbuild"
   external_node_modules = ["mongoose"]
 
-# API → Netlify functions (must stay above SPA catch-all)
+# Auth → dedicated proxies (Go + MySQL) — must be before generic /api/*
+[[redirects]]
+  from = "/api/auth/register"
+  to = "/.netlify/functions/auth-register"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/auth/login/student"
+  to = "/.netlify/functions/auth-login-student"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/auth/login/staff"
+  to = "/.netlify/functions/auth-login-staff"
+  status = 200
+  force = true
+
+# Other API → Netlify functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
 
-# SPA: every frontend route (including /login) serves the app, never Netlify 404 HTML
+# SPA fallback (never show Netlify 404 HTML for /login etc.)
 [[redirects]]
   from = "/*"
   to = "/index.html"
