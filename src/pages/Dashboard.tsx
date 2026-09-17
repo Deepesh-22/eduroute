@@ -1,55 +1,64 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { PlayCircle, Clock, Star, Users, Trophy, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock3, Flame, LayoutGrid, Play, ShieldCheck, Sparkles, Star, Target, Trophy, Zap } from 'lucide-react';
 import { COURSES } from '../data/mockData';
 import { Course } from '../types';
 import { getCurrentUser, getDisplayFirstName } from '../utils/userProfile';
 
+type Concept = 'focus' | 'discover';
+
 export const Dashboard = () => {
-  const navigate = useNavigate();
+  const [concept, setConcept] = useState<Concept>('focus');
   const currentUser = getCurrentUser();
   const enrolledCourses = COURSES.filter((course) => currentUser.enrolledCourses.includes(course.id));
   const recommendedCourses = COURSES.filter((course) => !currentUser.enrolledCourses.includes(course.id));
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-8">
-      <header className="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Welcome back, {getDisplayFirstName()}!</h1>
-          <p className="mt-2 font-medium text-slate-500 dark:text-slate-300">You've completed 45% of your current path. Keep it up!</p>
+    <div className="min-h-full flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+      <div className="mx-auto max-w-[1440px]">
+        <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-[var(--border-default)] bg-[var(--surface-card)] p-4 backdrop-blur-xl md:flex-row md:items-center md:justify-between md:p-5">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-500">Dashboard concepts</p>
+            <h1 className="mt-1 text-xl font-black text-[var(--text-primary)]">Choose a direction for EduRoute</h1>
+          </div>
+          <div className="flex rounded-2xl bg-[var(--bg-secondary)] p-1">
+            <button type="button" onClick={() => setConcept('focus')} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${concept === 'focus' ? 'bg-[var(--surface-nav)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)]'}`}><Target className="h-4 w-4" /> Focus cockpit</button>
+            <button type="button" onClick={() => setConcept('discover')} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${concept === 'discover' ? 'bg-[var(--surface-nav)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)]'}`}><LayoutGrid className="h-4 w-4" /> Discovery hub</button>
+          </div>
         </div>
-        <div className="flex items-center gap-4 rounded-[28px] border border-amber-200 bg-amber-50 p-6">
-          <div className="rounded-2xl bg-amber-100 p-3 text-amber-600"><ShieldCheck className="h-6 w-6" /></div>
-          <div><div className="text-sm font-black text-amber-900">Verify College ID</div><p className="text-xs font-bold text-amber-700">Unlock 50% discount on certifications</p></div>
-          <Link to="/verify-college" className="ml-4 rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white shadow-lg shadow-amber-200 hover:bg-amber-700">Verify</Link>
-        </div>
-      </header>
-
-      <section className="mb-12">
-        <div className="mb-8 flex items-center justify-between"><h2 className="text-2xl font-black text-slate-900 dark:text-white">Continue Learning</h2><Link to="/courses" className="text-sm font-bold text-indigo-600 hover:text-indigo-700">View all</Link></div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">{enrolledCourses.map((course) => <ContinueLearningCard key={course.id} course={course} />)}</div>
-      </section>
-
-      <section className="mb-12">
-        <div className="mb-8 flex items-center justify-between"><h2 className="text-2xl font-black text-slate-900 dark:text-white">Recommended for You</h2><Link to="/browse" className="text-sm font-bold text-indigo-600 hover:text-indigo-700">Explore</Link></div>
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"><DSABeginnerCard onOpen={() => navigate('/dsa-sheet')} />{recommendedCourses.map((course) => <CourseCard key={course.id} course={course} />)}</div>
-      </section>
-
-      <section><div className="rounded-[40px] bg-indigo-600 p-10 text-white shadow-2xl shadow-indigo-200"><div className="flex flex-col items-center justify-between gap-12 md:flex-row"><div className="space-y-6"><h2 className="text-3xl font-black">Weekly Goal Progress</h2><div className="flex gap-6"><div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20"><Trophy className="h-8 w-8" /></div><div><div className="text-sm font-bold uppercase tracking-widest opacity-80">Points earned</div><div className="text-3xl font-black">340 / 500</div></div></div><div className="h-3 w-full max-w-sm rounded-full bg-white/20"><div className="h-full w-[68%] rounded-full bg-white" /></div></div><Link to="/assessments" className="flex items-center gap-3 rounded-3xl bg-white px-10 py-5 font-black text-indigo-600 shadow-xl transition-transform hover:scale-105 active:scale-95">Set New Goal <ArrowRight className="h-6 w-6" /></Link></div></div></section>
+        {concept === 'focus' ? <FocusConcept enrolledCourses={enrolledCourses} recommendedCourses={recommendedCourses} /> : <DiscoverConcept enrolledCourses={enrolledCourses} recommendedCourses={recommendedCourses} />}
+      </div>
     </div>
   );
 };
 
-const ContinueLearningCard = ({ course }: { course: Course }) => {
-  const content = <><div className="relative aspect-video w-full overflow-hidden rounded-3xl sm:w-56"><img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" /><div className="absolute inset-0 flex items-center justify-center bg-black/20"><PlayCircle className="h-12 w-12 text-white" /></div></div><div className="flex flex-1 flex-col justify-center py-2"><div className="text-[10px] font-black uppercase tracking-widest text-indigo-600">{course.category} <span className="mx-2 text-slate-300">•</span> 40% Done</div><h3 className="mt-6 text-xl font-bold text-slate-900">{course.title}</h3><div className="mt-4 h-2 w-full rounded-full bg-slate-100"><div className="h-full w-[40%] rounded-full bg-indigo-500" /></div></div></>;
-  const className = 'group flex flex-col gap-7 overflow-hidden rounded-4xl border border-slate-100 bg-white p-6 transition-all hover:shadow-xl sm:flex-row';
-  return course.link ? <motion.a href={course.link} target="_blank" rel="noreferrer" whileHover={{ y: -4 }} className={className}>{content}</motion.a> : <motion.div whileHover={{ y: -4 }} className={className}><Link to={`/course/${course.id}`} className="contents">{content}</Link></motion.div>;
+const FocusConcept = ({ enrolledCourses, recommendedCourses }: { enrolledCourses: Course[]; recommendedCourses: Course[] }) => {
+  const navigate = useNavigate();
+  return <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+    <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <div><div className="mb-3 flex items-center gap-2 text-sm font-bold text-indigo-600"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Your learning plan is on track</div><h2 className="text-4xl font-black tracking-tight text-[var(--text-primary)] md:text-5xl">Welcome back,<br /><span className="text-gradient">{getDisplayFirstName()}.</span></h2><p className="mt-4 max-w-xl text-base font-medium text-[var(--text-secondary)]">Keep your momentum going. You&apos;re 45% through your current path and only 3 lessons away from your next milestone.</p></div>
+      <Link to="/verify-college" className="flex items-center gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-sm dark:bg-amber-950/30 dark:text-amber-100"><div className="rounded-2xl bg-amber-100 p-3 text-amber-600"><ShieldCheck className="h-6 w-6" /></div><div><p className="text-sm font-black">Verify College ID</p><p className="text-xs font-semibold text-amber-700 dark:text-amber-300">Unlock 50% certification discount</p></div><ArrowRight className="ml-3 h-5 w-5" /></Link>
+    </header>
+    <div className="grid gap-5 md:grid-cols-3"><Stat icon={Flame} label="Day streak" value="12 days" tone="orange" /><Stat icon={BookOpen} label="Learning time" value="8h 24m" tone="blue" /><Stat icon={Trophy} label="Weekly points" value="340 / 500" tone="purple" /></div>
+    <section><SectionHeading title="Pick up where you left off" link="View all" href="/courses" /><div className="grid gap-5 lg:grid-cols-2">{enrolledCourses.map((course) => <FocusCourse key={course.id} course={course} />)}</div></section>
+    <section><SectionHeading title="Recommended next steps" link="Explore courses" href="/browse" /><div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{recommendedCourses.slice(0, 3).map((course) => <CourseCard key={course.id} course={course} />)}</div></section>
+    <div className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-indigo-600 p-7 text-white shadow-xl shadow-indigo-200 md:flex-row md:items-center"><div><p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-200">Next milestone</p><h3 className="mt-2 text-2xl font-black">Complete your React pathway</h3><p className="mt-1 text-sm text-indigo-100">2 of 5 modules completed</p></div><button type="button" onClick={() => navigate('/roadmaps')} className="flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-indigo-600">Open roadmap <ArrowRight className="h-4 w-4" /></button></div>
+  </motion.div>;
 };
 
-const DSABeginnerCard = ({ onOpen }: { onOpen: () => void }) => <motion.div whileHover={{ y: -8 }} className="group overflow-hidden rounded-4xl border border-slate-100 bg-white transition-all hover:shadow-2xl"><div className="relative aspect-16/10 overflow-hidden"><img src="https://images.unsplash.com/photo-1629904853893-c2c8981a1dc5?q=80&w=1170&auto=format&fit=crop" alt="DSA Beginner Sheet" className="h-full w-full object-cover" /><div className="absolute left-4 top-4 rounded-xl bg-white/90 px-3 py-1.5 text-[10px] font-black text-emerald-700">FREE</div></div><div className="p-8"><div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400"><span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> 4 HOURS</span><span><Star className="inline h-4 w-4 fill-yellow-400 text-yellow-400" /> 4.9</span></div><h3 className="mt-4 text-xl font-bold text-slate-900">DSA Beginner Sheet</h3><p className="mt-4 text-sm font-medium text-slate-500">Start your DSA journey with structured problems and guided practice.</p><button type="button" onClick={onOpen} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-white">Open Sheet <ArrowRight className="h-4 w-4" /></button></div></motion.div>;
+const DiscoverConcept = ({ enrolledCourses, recommendedCourses }: { enrolledCourses: Course[]; recommendedCourses: Course[] }) => <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+  <header className="rounded-[2rem] bg-slate-950 p-7 text-white shadow-2xl md:p-10"><div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end"><div><div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-indigo-200"><Sparkles className="h-3.5 w-3.5" /> Personalised for you</div><h2 className="max-w-2xl text-4xl font-black tracking-tight md:text-5xl">Build the career<br /><span className="text-indigo-400">you want.</span></h2><p className="mt-4 max-w-lg text-sm font-medium leading-6 text-slate-300">Discover curated paths, practice real skills, and get closer to your next opportunity every day.</p></div><div className="grid grid-cols-2 gap-3"><MiniMetric value="45%" label="Path complete" /><MiniMetric value="12" label="Day streak" /></div></div></header>
+  <div className="grid gap-5 lg:grid-cols-[1.4fr_0.6fr]"><section className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface-card)] p-6"><SectionHeading title="Continue learning" link="See all" href="/courses" /> <div className="mt-5 flex flex-col gap-4">{enrolledCourses.map((course) => <DiscoverCourse key={course.id} course={course} />)}</div></section><aside className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface-card)] p-6"><div className="flex items-center justify-between"><h3 className="text-lg font-black text-[var(--text-primary)]">Your activity</h3><Zap className="h-5 w-5 text-amber-500" /></div><div className="mt-6 flex items-end gap-1.5">{[30, 48, 36, 72, 56, 84, 66].map((height, index) => <div key={index} className="flex-1 rounded-t-lg bg-indigo-100 dark:bg-indigo-950" style={{ height: `${height}px` }}><div className="h-1/2 rounded-t-lg bg-indigo-500" /></div>)}</div><div className="mt-3 flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]"><span>Mon</span><span>Today</span><span>Sun</span></div><p className="mt-6 text-sm font-semibold text-[var(--text-secondary)]"><strong className="text-[var(--text-primary)]">8h 24m</strong> learning time this week</p></aside></div>
+  <section><SectionHeading title="Explore your next skill" link="Browse all" href="/browse" /><div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{recommendedCourses.slice(0, 3).map((course) => <CourseCard key={course.id} course={course} />)}</div></section>
+</motion.div>;
 
-const CourseCard = ({ course }: { course: Course }) => {
-  const content = <><div className="relative aspect-16/10 overflow-hidden"><img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" /><div className="absolute left-4 top-4 rounded-xl bg-white/90 px-3 py-1.5 text-[10px] font-black text-slate-900">{course.level.toUpperCase()}</div></div><div className="p-8"><div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400"><span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {course.duration}</span><span><Star className="inline h-4 w-4 fill-yellow-400 text-yellow-400" /> {course.rating}</span></div><h3 className="mt-4 text-xl font-bold text-slate-900">{course.title}</h3><div className="mt-12 flex items-center justify-between border-t border-slate-50 pt-6"><span className="flex items-center gap-2 text-xs font-bold text-slate-500"><Users className="h-4 w-4" /> {course.students.toLocaleString()} students</span><span className="text-2xl font-black text-slate-900">₹{course.price}</span></div></div></>;
-  const className = 'group overflow-hidden rounded-4xl border border-slate-100 bg-white transition-all hover:shadow-2xl';
-  return course.link ? <motion.a href={course.link} target="_blank" rel="noreferrer" whileHover={{ y: -8 }} className={className}>{content}</motion.a> : <motion.div whileHover={{ y: -8 }} className={className}><Link to={`/course/${course.id}`} className="contents">{content}</Link></motion.div>;
-};
+const SectionHeading = ({ title, link, href }: { title: string; link: string; href: string }) => <div className="flex items-center justify-between"><h3 className="text-2xl font-black text-[var(--text-primary)]">{title}</h3><Link to={href} className="text-sm font-black text-indigo-600">{link} <ArrowRight className="ml-1 inline h-4 w-4" /></Link></div>;
+const Stat = ({ icon: Icon, label, value, tone }: { icon: typeof Flame; label: string; value: string; tone: 'orange' | 'blue' | 'purple' }) => <div className="flex items-center gap-4 rounded-3xl border border-[var(--border-default)] bg-[var(--surface-card)] p-5"><div className={`rounded-2xl p-3 ${tone === 'orange' ? 'bg-orange-100 text-orange-600' : tone === 'blue' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}><Icon className="h-5 w-5" /></div><div><p className="text-xs font-bold text-[var(--text-secondary)]">{label}</p><p className="text-lg font-black text-[var(--text-primary)]">{value}</p></div></div>;
+const MiniMetric = ({ value, label }: { value: string; label: string }) => <div className="rounded-2xl bg-white/10 px-5 py-4"><p className="text-2xl font-black">{value}</p><p className="mt-1 text-xs font-bold text-slate-400">{label}</p></div>;
+const FocusCourse = ({ course }: { course: Course }) => <Link to={`/course/${course.id}`} className="group flex flex-col gap-5 rounded-3xl border border-[var(--border-default)] bg-[var(--surface-card)] p-4 transition hover:-translate-y-1 hover:shadow-xl sm:flex-row"><img src={course.thumbnail} alt={course.title} className="h-44 w-full rounded-2xl object-cover sm:h-32 sm:w-48" /><div className="flex flex-1 flex-col justify-center"><div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-indigo-600"><span>{course.category}</span><span>40%</span></div><h4 className="mt-3 text-xl font-black text-[var(--text-primary)]">{course.title}</h4><div className="mt-5 h-2 rounded-full bg-slate-200 dark:bg-slate-700"><div className="h-full w-[40%] rounded-full bg-indigo-500" /></div><p className="mt-2 text-xs font-semibold text-[var(--text-secondary)]">Continue lesson <ArrowRight className="ml-1 inline h-3.5 w-3.5" /></p></div></Link>;
+const DiscoverCourse = ({ course }: { course: Course }) => <Link to={`/course/${course.id}`} className="flex items-center gap-4 rounded-2xl border border-[var(--border-default)] p-3 transition hover:bg-indigo-50 dark:hover:bg-indigo-950/30"><img src={course.thumbnail} alt={course.title} className="h-20 w-28 rounded-xl object-cover" /><div className="min-w-0 flex-1"><p className="text-[10px] font-black uppercase tracking-wider text-indigo-600">{course.category}</p><h4 className="truncate text-base font-black text-[var(--text-primary)]">{course.title}</h4><div className="mt-2 flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)]"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500" /> 40% complete</div></div><Play className="h-5 w-5 text-indigo-500" /></Link>;
+const CourseCard = ({ course }: { course: Course }) => <Link to={`/course/${course.id}`} className="group overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface-card)] transition hover:-translate-y-1 hover:shadow-xl"><div className="relative"><img src={course.thumbnail} alt={course.title} className="aspect-[16/9] w-full object-cover" /><span className="absolute left-4 top-4 rounded-lg bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase text-slate-900">{course.level}</span></div><div className="p-5"><div className="flex items-center justify-between text-xs font-bold text-[var(--text-secondary)]"><span><Clock3 className="mr-1 inline h-3.5 w-3.5" /> {course.duration}</span><span><Star className="mr-1 inline h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {course.rating}</span></div><h4 className="mt-3 text-lg font-black text-[var(--text-primary)]">{course.title}</h4><p className="mt-4 flex items-center gap-1 text-sm font-bold text-indigo-600">Explore course <ArrowRight className="h-4 w-4" /></p></div></Link>;
+
+export default Dashboard;
+
