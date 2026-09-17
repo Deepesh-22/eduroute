@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Lock, Mail, Sparkles, User } from 'lucide-react';
+import { ArrowRight, Lock, Mail, Sparkles, User, ShieldCheck } from 'lucide-react';
 import { apiRegisterUser } from '../../utils/authApi';
 import { saveAuthSession } from '../../utils/rbacAuth';
 import { parseGoogleCredential, saveUserProfile } from '../../utils/userProfile';
@@ -66,13 +66,19 @@ export const Signup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const googleClientId = useMemo(
-    () => import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || '234757313390-8ihis6sl6h1635ievvaitfcjjndqv1je.apps.googleusercontent.com',
-    []
+    () =>
+      import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ||
+      '234757313390-8ihis6sl6h1635ievvaitfcjjndqv1je.apps.googleusercontent.com',
+    [],
   );
+
+  const goToCollegeIdUpload = () => {
+    navigate('/verify-college', { replace: true });
+  };
 
   useEffect(() => {
     if (!googleClientId) {
-      setGoogleError('Google sign up is not configured yet. Add VITE_GOOGLE_CLIENT_ID to your .env file.');
+      setGoogleError('Google sign up is not configured yet.');
       return;
     }
 
@@ -100,6 +106,7 @@ export const Signup = () => {
               return;
             }
 
+            // Google users still go to ID verification; password login is email-based only.
             saveUserProfile(googleProfile);
             saveAuthSession(credential, {
               id: `google-${googleProfile.email}`,
@@ -107,11 +114,9 @@ export const Signup = () => {
               email: googleProfile.email,
               avatar: googleProfile.avatar,
               role: 'student',
-              verificationStatus: 'verified',
+              verificationStatus: 'pending',
             });
-
-            console.log('[Signup] Google sign-up success, redirecting to /dashboard');
-            navigate('/dashboard');
+            goToCollegeIdUpload();
           },
         });
 
@@ -154,37 +159,41 @@ export const Signup = () => {
     setFormErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      console.warn('[Signup] Form validation failed:', errors);
       return;
     }
 
     setIsSubmitting(true);
 
-    try {
-      const payload = {
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-      };
+    const payload = {
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
+    };
 
-      console.log('[Signup] Register request started for:', payload.email);
+    try {
+      // MUST succeed: Go API bcrypt-hashes password and inserts into MySQL users table
       const registerResponse = await apiRegisterUser(payload);
 
-      localStorage.setItem('eduroute:auth-token', registerResponse.token);
+      if (!registerResponse.token || !registerResponse.user) {
+        throw new Error('Registration succeeded but no session was returned.');
+      }
+
       saveUserProfile({ name: payload.name, email: payload.email });
-
-      console.log('[Signup] Registration successful, redirecting to /verify-college');
-      navigate('/verify-college');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Signup failed. Please try again.';
-      console.warn('[Signup] Registration API failed, continuing to /verify-college:', errorMessage);
-
-      saveUserProfile({
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
+      saveAuthSession(registerResponse.token, {
+        id: String(registerResponse.user.id),
+        name: registerResponse.user.name || payload.name,
+        email: registerResponse.user.email || payload.email,
+        role: 'student',
+        verificationStatus: registerResponse.user.verificationStatus || 'pending',
       });
-      navigate('/verify-college');
-      return;
+
+      goToCollegeIdUpload();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Signup failed. Could not save account to database.';
+      setApiError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -193,7 +202,6 @@ export const Signup = () => {
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-10 font-['Inter',sans-serif] sm:px-6">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.24),transparent_38%),radial-gradient(circle_at_bottom,_rgba(139,92,246,0.26),transparent_45%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:36px_36px]" />
 
       <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-md items-center justify-center">
         <motion.div
@@ -202,14 +210,21 @@ export const Signup = () => {
           className="w-full rounded-[2rem] border border-white/20 bg-white/10 p-7 shadow-[0_20px_70px_rgba(8,47,73,0.45)] backdrop-blur-xl sm:p-9"
         >
           <Link to="/" className="mb-8 flex items-center justify-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-lg font-black text-slate-900 shadow-[0_0_28px_rgba(56,189,248,0.45)]">E</div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-lg font-black text-slate-900">
+              E
+            </div>
             <span className="text-xl font-semibold tracking-[0.2em] text-white">EDUROUTE</span>
           </Link>
 
           <p className="text-center text-sm text-cyan-200">Create Account Today</p>
           <h1 className="mt-2 text-center text-3xl font-semibold text-white">Start your learning journey</h1>
 
-          <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>
+          <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100">
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            Account is saved in MySQL — then upload college ID
+          </div>
+
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
             <div>
               <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-300">Name</label>
               <div className="relative">
@@ -248,21 +263,25 @@ export const Signup = () => {
                   type="password"
                   value={formData.password}
                   onChange={(event) => handleInputChange('password', event.target.value)}
-                  placeholder="Enter password"
+                  placeholder="Min 8 characters"
                   className="w-full rounded-2xl border border-white/15 bg-slate-900/60 py-3 pl-11 pr-4 text-sm text-white placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
                 />
               </div>
               {formErrors.password ? <p className="mt-1 text-xs text-rose-300">{formErrors.password}</p> : null}
             </div>
 
-            {apiError ? <p className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{apiError}</p> : null}
+            {apiError ? (
+              <p className="rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200 break-words max-h-28 overflow-y-auto">
+                {apiError}
+              </p>
+            ) : null}
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group mt-2 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_8px_30px_rgba(56,189,248,0.4)] transition-all hover:scale-[1.01] hover:shadow-[0_10px_34px_rgba(139,92,246,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="group mt-2 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-3.5 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? 'Creating account...' : 'Sign Up'}
+              {isSubmitting ? 'Saving to database...' : 'Sign Up & Verify ID'}
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </form>
@@ -278,17 +297,19 @@ export const Signup = () => {
 
           <div className="mt-6 text-center text-sm text-slate-300">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-cyan-300 transition-colors hover:text-cyan-200">
+            <Link to="/login" className="font-semibold text-cyan-300 hover:text-cyan-200">
               Sign in
             </Link>
           </div>
 
           <div className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400">
             <Sparkles className="h-4 w-4" />
-            Secure OTP verification after signup
+            Password is stored securely (bcrypt) in MySQL
           </div>
         </motion.div>
       </div>
     </div>
   );
 };
+
+export default Signup;
