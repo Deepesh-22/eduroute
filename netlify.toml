@@ -10,13 +10,16 @@
   node_bundler = "esbuild"
   external_node_modules = ["mongoose"]
 
+# API → Netlify functions (must stay above SPA catch-all)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
 
+# SPA: every frontend route (including /login) serves the app, never Netlify 404 HTML
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
