@@ -25,6 +25,21 @@ const RoleRoute = ({ children, role }: { children: ReactElement; role: 'student'
   return children;
 };
 
+/** Staff JWT admin OR password session (timepass) can open the admin panel. */
+const AdminAccessRoute = ({ children }: { children: ReactElement }) => {
+  const user = getAuthUser();
+  if (user?.role === 'admin') {
+    return children;
+  }
+  if (isAdminSessionActive()) {
+    return children;
+  }
+  if (isAuthenticated()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Navigate to="/admin-login" replace />;
+};
+
 const PublicOnlyRoute = ({ children }: { children: ReactElement }) => {
   if (isAuthenticated()) {
     const user = getAuthUser();
@@ -49,6 +64,7 @@ const BrowseCourses = lazy(() => import('./pages/BrowseCourses').then((module) =
 const CourseDetails = lazy(() => import('./pages/CourseDetails').then((module) => ({ default: module.CourseDetails })));
 const Pathways = lazy(() => import('./pages/Pathways').then((module) => ({ default: module.Pathways })));
 const MainLayout = lazy(() => import('./layouts/MainLayout').then((module) => ({ default: module.MainLayout })));
+const AdminLayout = lazy(() => import('./layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
 const Signup = lazy(() => import('./pages/Auth/Signup').then((module) => ({ default: module.Signup })));
 const Login = lazy(() => import('./pages/Auth/Login').then((module) => ({ default: module.Login })));
 const VerifyOTP = lazy(() => import('./pages/Auth/VerifyOTP').then((module) => ({ default: module.VerifyOTP })));
@@ -64,6 +80,7 @@ const CompanyDetail = lazy(() => import('./pages/Career/CompanyDetail').then((mo
 const Events = lazy(() => import('./pages/Growth/Events').then((module) => ({ default: module.Events })));
 const SoftSkills = lazy(() => import('./pages/Growth/SoftSkills').then((module) => ({ default: module.SoftSkills })));
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
+const PendingApprovals = lazy(() => import('./pages/Admin/PendingApprovals').then((module) => ({ default: module.PendingApprovals })));
 const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin').then((module) => ({ default: module.AdminLogin })));
 const CourseManager = lazy(() => import('./pages/Admin/CourseManager').then((module) => ({ default: module.CourseManager })));
 const ProfileDashboard = lazy(() => import('./pages/Profile/ProfileDashboard').then((module) => ({ default: module.ProfileDashboard })));
@@ -96,9 +113,21 @@ export function App() {
           <Route path="/signin" element={<Navigate to="/login" replace />} />
           <Route path="/sign-in" element={<Navigate to="/login" replace />} />
           <Route path="/verify-otp" element={<PublicOnlyRoute><VerifyOTP /></PublicOnlyRoute>} />
-          <Route path="/verify-college" element={<PublicOnlyRoute><VerifyCollege /></PublicOnlyRoute>} />
+          <Route path="/verify-college" element={<VerifyCollege />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/course-manager" element={<AdminSessionRoute><CourseManager /></AdminSessionRoute>} />
+
+          {/* Admin panel — staff login OR password session */}
+          <Route element={<AdminAccessRoute><AdminLayout /></AdminAccessRoute>}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/pending-approvals" element={<PendingApprovals />} />
+            <Route path="/admin/students" element={<PendingApprovals />} />
+            <Route path="/admin/verified" element={<AdminDashboard />} />
+            <Route path="/admin/courses" element={<AdminDashboard />} />
+            <Route path="/admin/partners" element={<AdminDashboard />} />
+            <Route path="/admin/reports" element={<AdminDashboard />} />
+            <Route path="/admin/settings" element={<AdminDashboard />} />
+          </Route>
 
           <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<RoleRoute role="student"><Dashboard /></RoleRoute>} />
@@ -118,7 +147,6 @@ export function App() {
             <Route path="/soft-skills" element={<RoleRoute role="student"><SoftSkills /></RoleRoute>} />
             <Route path="/dsa-sheet" element={<RoleRoute role="student"><DSASheet /></RoleRoute>} />
             <Route path="/profile" element={<RoleRoute role="student"><ProfileDashboard /></RoleRoute>} />
-            <Route path="/admin" element={<RoleRoute role="admin"><AdminDashboard /></RoleRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
