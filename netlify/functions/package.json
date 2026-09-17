@@ -2,6 +2,8 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "mysql2": "^3.11.5"
+    "mongoose": "^9.1.6",
+    "mysql2": "^3.11.5",
+    "nodemailer": "^6.9.16"
   }
 }
