@@ -31,7 +31,6 @@ export type IndustryApplicant = {
   appliedAt: string;
 };
 
-/** Shape compatible with student Internships cards. */
 export type StudentInternshipCard = {
   id: string;
   role: string;
@@ -54,7 +53,6 @@ export type StudentInternshipCard = {
 
 const POSTINGS_KEY = 'eduroute:industry-postings-v1';
 const APPLICANTS_KEY = 'eduroute:industry-applicants-v1';
-/** Mirror list students read on Internships (same data as postings). */
 const STUDENT_FEED_KEY = 'eduroute:industry-student-feed-v1';
 
 const DEMO_POSTINGS: IndustryPosting[] = [
@@ -141,15 +139,22 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
-function writeJson(key: string, value: unknown) {
+/** Write localStorage only — do not fire events here (avoids read→write loops). */
+function writeJsonSilent(key: string, value: unknown) {
   try {
     if (typeof window === 'undefined') return;
     localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new Event('eduroute:industry-updated'));
-    // Cross-tab sync for student Internships on same origin
-    window.dispatchEvent(new StorageEvent('storage', { key }));
   } catch {
     /* private mode */
+  }
+}
+
+function notifyUpdated() {
+  try {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new Event('eduroute:industry-updated'));
+  } catch {
+    /* ignore */
   }
 }
 
@@ -175,30 +180,33 @@ function postingToStudentCard(p: IndustryPosting): StudentInternshipCard {
   };
 }
 
-function syncStudentFeed(postings: IndustryPosting[]) {
-  const feed = postings.map(postingToStudentCard);
-  writeJson(STUDENT_FEED_KEY, feed);
+function syncStudentFeedSilent(postings: IndustryPosting[]) {
+  writeJsonSilent(STUDENT_FEED_KEY, postings.map(postingToStudentCard));
 }
 
 function ensureSeed() {
   if (typeof window === 'undefined') return;
-  if (!localStorage.getItem(POSTINGS_KEY)) {
-    writeJson(POSTINGS_KEY, DEMO_POSTINGS);
-    syncStudentFeed(DEMO_POSTINGS);
-  } else {
-    // Keep student feed in sync with postings
-    const list = readJson<IndustryPosting[]>(POSTINGS_KEY, DEMO_POSTINGS);
-    if (Array.isArray(list)) syncStudentFeed(list);
-  }
-  if (!localStorage.getItem(APPLICANTS_KEY)) {
-    writeJson(APPLICANTS_KEY, DEMO_APPLICANTS);
+  try {
+    if (!localStorage.getItem(POSTINGS_KEY)) {
+      writeJsonSilent(POSTINGS_KEY, DEMO_POSTINGS);
+      syncStudentFeedSilent(DEMO_POSTINGS);
+    }
+    if (!localStorage.getItem(APPLICANTS_KEY)) {
+      writeJsonSilent(APPLICANTS_KEY, DEMO_APPLICANTS);
+    }
+    if (!localStorage.getItem(STUDENT_FEED_KEY)) {
+      const list = readJson<IndustryPosting[]>(POSTINGS_KEY, DEMO_POSTINGS);
+      syncStudentFeedSilent(Array.isArray(list) ? list : DEMO_POSTINGS);
+    }
+  } catch {
+    /* ignore */
   }
 }
 
 export function readIndustryPostings(): IndustryPosting[] {
   ensureSeed();
   const list = readJson<IndustryPosting[]>(POSTINGS_KEY, DEMO_POSTINGS);
-  return Array.isArray(list) ? list : DEMO_POSTINGS;
+  return Array.isArray(list) ? list : [...DEMO_POSTINGS];
 }
 
 export function findIndustryPosting(id: string): IndustryPosting | undefined {
@@ -214,22 +222,24 @@ export function addIndustryPosting(
   const postings = readIndustryPostings();
   const posting: IndustryPosting = {
     id: `ind-post-${Date.now()}`,
-    title: input.title.trim(),
-    skills: input.skills,
-    stipend: input.stipend.trim(),
-    location: input.location.trim(),
-    description: input.description.trim(),
+    title: (input.title || '').trim() || 'Untitled internship',
+    skills: input.skills?.length ? input.skills : ['General'],
+    stipend: (input.stipend || '').trim() || 'Negotiable',
+    location: (input.location || '').trim() || 'Remote',
+    description:
+      (input.description || '').trim() ||
+      'Internship opportunity posted by industry partner.',
     company: 'EduRoute Partners',
     type: input.type || 'Full-time',
     duration: input.duration || '3–6 Months',
     postedAt: new Date().toISOString(),
     logo: 'https://api.dicebear.com/7.x/initials/svg?seed=EP',
   };
-  const nextPostings = [posting, ...postings];
-  writeJson(POSTINGS_KEY, nextPostings);
-  syncStudentFeed(nextPostings);
 
-  // Attach 2 demo student applicants so the recruiter board is not empty
+  const nextPostings = [posting, ...postings];
+  writeJsonSilent(POSTINGS_KEY, nextPostings);
+  syncStudentFeedSilent(nextPostings);
+
   const existingApps = readIndustryApplicants();
   const now = Date.now();
   const extras: IndustryApplicant[] = DEMO_STUDENT_NAMES.slice(0, 2).map((s, i) => ({
@@ -240,18 +250,19 @@ export function addIndustryPosting(
     college: s.college,
     skills: posting.skills.slice(0, 3),
     matchPercent: 70 + ((now + i * 7) % 25),
-    status: i === 0 ? 'Applied' : 'Applied',
+    status: 'Applied',
     appliedAt: new Date(now - i * 3600_000).toISOString(),
   }));
-  writeJson(APPLICANTS_KEY, [...extras, ...existingApps]);
+  writeJsonSilent(APPLICANTS_KEY, [...extras, ...existingApps]);
 
+  notifyUpdated();
   return posting;
 }
 
 export function readIndustryApplicants(postingId?: string): IndustryApplicant[] {
   ensureSeed();
   const list = readJson<IndustryApplicant[]>(APPLICANTS_KEY, DEMO_APPLICANTS);
-  const all = Array.isArray(list) ? list : DEMO_APPLICANTS;
+  const all = Array.isArray(list) ? list : [...DEMO_APPLICANTS];
   if (!postingId) return all;
   return all.filter((a) => a.postingId === postingId);
 }
@@ -263,7 +274,8 @@ export function shortlistApplicant(applicantId: string): IndustryApplicant | nul
   const next: IndustryApplicant = { ...list[idx], status: 'Shortlisted' };
   const updated = [...list];
   updated[idx] = next;
-  writeJson(APPLICANTS_KEY, updated);
+  writeJsonSilent(APPLICANTS_KEY, updated);
+  notifyUpdated();
   return next;
 }
 
@@ -277,11 +289,11 @@ export function setApplicantStatus(
   const next: IndustryApplicant = { ...list[idx], status };
   const updated = [...list];
   updated[idx] = next;
-  writeJson(APPLICANTS_KEY, updated);
+  writeJsonSilent(APPLICANTS_KEY, updated);
+  notifyUpdated();
   return next;
 }
 
-/** Map industry postings into the shape used by student Internships cards. */
 export function industryPostingsAsInternships(): StudentInternshipCard[] {
   ensureSeed();
   const fromFeed = readJson<StudentInternshipCard[] | null>(STUDENT_FEED_KEY, null);
@@ -292,14 +304,18 @@ export function industryPostingsAsInternships(): StudentInternshipCard[] {
 }
 
 function formatRelative(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) return 'Just now';
-  if (hours < 24) return `${hours} hours ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return '1 day ago';
-  if (days < 7) return `${days} days ago`;
-  return `${Math.floor(days / 7)} week(s) ago`;
+  try {
+    const diff = Date.now() - new Date(iso).getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours < 1) return 'Just now';
+    if (hours < 24) return `${hours} hours ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return '1 day ago';
+    if (days < 7) return `${days} days ago`;
+    return `${Math.floor(days / 7)} week(s) ago`;
+  } catch {
+    return 'Recently';
+  }
 }
 
 export const INDUSTRY_DEMO_CREDENTIALS = {
