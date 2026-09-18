@@ -65,25 +65,38 @@ export const Dashboard = () => {
     <div className="er-page space-y-8">
       {/* ========== WELCOME BANNER ========== */}
       <section
-        className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-default)]"
-        style={{ background: 'var(--bg-banner)' }}
+        className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-default)] min-h-[180px] md:min-h-[200px]"
       >
+        {/* Background photo (hot-air balloons / sky) — works in light & dark */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?auto=format&fit=crop&w=1600&q=80')",
+          }}
+          aria-hidden
+        />
+        {/* Light mode: soft white/lavender veil so navy text stays readable */}
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-white/92 via-white/80 to-indigo-50/55 dark:from-slate-950/90 dark:via-slate-950/75 dark:to-indigo-950/50"
+          aria-hidden
+        />
         <div className="relative z-10 flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
           <div className="max-w-xl">
-            <p className="mb-1 text-sm font-medium text-[var(--text-secondary)]">
+            <p className="mb-1 text-sm font-medium text-slate-600 dark:text-slate-300">
               <span className="mr-1">👋</span> Welcome back,
             </p>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[var(--text-primary)] md:text-4xl">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white md:text-4xl">
               {firstName}! <span className="inline-block">👋</span>
             </h1>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               You've completed 45% of your current path. Keep it up!
             </p>
             <div className="mt-5 flex items-center gap-3">
               <div className="er-progress flex-1 max-w-xs">
                 <div className="er-progress-bar" style={{ width: '45%' }} />
               </div>
-              <span className="text-sm font-semibold text-[var(--text-secondary)]">45%</span>
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">45%</span>
             </div>
           </div>
 
@@ -105,9 +118,9 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Decorative mountain silhouette (CSS) */}
+        {/* Soft accent shapes (low opacity over photo) */}
         <div
-          className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-40 dark:opacity-30"
+          className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-20 dark:opacity-15"
           aria-hidden
         >
           <svg className="h-full w-full" viewBox="0 0 400 200" preserveAspectRatio="xMaxYMid slice" fill="none">
