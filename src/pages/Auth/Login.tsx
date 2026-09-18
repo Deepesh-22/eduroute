@@ -45,8 +45,7 @@ export const Login = () => {
     const passOk = password === COLLEGE_DEMO_CREDENTIALS.password;
     if (!emailOk || !passOk) return false;
     saveAuthSession(`college-${Date.now()}`, COLLEGE_DEMO_CREDENTIALS.user);
-    setAdminSession(true);
-    navigate('/admin/placements', { replace: true });
+    navigate('/college/placements', { replace: true });
     return true;
   };
 
@@ -76,11 +75,16 @@ export const Login = () => {
         return;
       }
 
-      if (role === 'admin') {
+      if (role === 'college') {
         if (enterCollege(formData.email, formData.password)) {
           setUsedDemoMode(true);
           return;
         }
+        setError('College login failed. Use college@gmail.com / student');
+        return;
+      }
+
+      if (role === 'admin') {
         try {
           const response = await apiRoleLogin({ ...formData, role: 'admin' });
           saveAuthSession(response.token, response.user);
@@ -163,7 +167,7 @@ export const Login = () => {
           Role based login
         </h2>
         <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
-          Student · Industry · Staff — demo credentials when MySQL is offline
+          Student · Industry · College · Staff — demo credentials when MySQL is offline
         </p>
       </div>
 
@@ -173,7 +177,7 @@ export const Login = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white dark:bg-slate-900 py-8 px-4 shadow-xl shadow-slate-200/50 dark:shadow-none sm:rounded-3xl sm:px-10 border border-slate-100 dark:border-slate-800"
         >
-          <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-5">
             <button
               type="button"
               onClick={() => {
@@ -206,9 +210,24 @@ export const Login = () => {
             <button
               type="button"
               onClick={() => {
-                setRole('admin');
+                setRole('college');
                 setError('');
                 setFormData({ email: 'college@gmail.com', password: 'student' });
+              }}
+              className={`rounded-lg py-2 text-xs sm:text-sm font-bold transition ${
+                role === 'college'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              <Building2 className="h-3.5 w-3.5 inline mr-0.5" /> College
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRole('admin');
+                setError('');
+                setFormData({ email: 'admin@gmail.com', password: 'timepass' });
               }}
               className={`rounded-lg py-2 text-xs sm:text-sm font-bold transition ${
                 role === 'admin'
@@ -226,10 +245,14 @@ export const Login = () => {
             </p>
           )}
 
-          {role === 'admin' && (
+          {role === 'college' && (
             <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 px-3 py-2">
               College: <strong>college@gmail.com</strong> / <strong>student</strong>
-              <br />
+            </p>
+          )}
+
+          {role === 'admin' && (
+            <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 px-3 py-2">
               Staff: <strong>admin@gmail.com</strong> / <strong>timepass</strong>
             </p>
           )}
