@@ -64,6 +64,7 @@ const Signup = lazy(() => import('./pages/Auth/Signup').then((module) => ({ defa
 const Login = lazy(() => import('./pages/Auth/Login').then((module) => ({ default: module.Login })));
 const VerifyOTP = lazy(() => import('./pages/Auth/VerifyOTP').then((module) => ({ default: module.VerifyOTP })));
 const VerifyCollege = lazy(() => import('./pages/Auth/VerifyCollege').then((module) => ({ default: module.VerifyCollege })));
+const OnboardingAnalyze = lazy(() => import('./pages/Auth/OnboardingAnalyze').then((module) => ({ default: module.OnboardingAnalyze })));
 const RoadmapList = lazy(() => import('./pages/Roadmaps/RoadmapList').then((module) => ({ default: module.RoadmapList })));
 const RoadmapDetail = lazy(() => import('./pages/Roadmaps/RoadmapDetail').then((module) => ({ default: module.RoadmapDetail })));
 const Assessments = lazy(() => import('./pages/Assessments/Assessments').then((module) => ({ default: module.Assessments })));
@@ -129,6 +130,7 @@ export function App() {
           <Route path="/verify-otp" element={<PublicOnlyRoute><VerifyOTP /></PublicOnlyRoute>} />
           {/* Allow logged-in students to upload college ID */}
           <Route path="/verify-college" element={<VerifyCollege />} />
+          <Route path="/onboarding" element={<OnboardingAnalyze />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/course-manager" element={<AdminSessionRoute><CourseManager /></AdminSessionRoute>} />
 
