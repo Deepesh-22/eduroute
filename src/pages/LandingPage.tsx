@@ -176,12 +176,44 @@ export const LandingPage = () => {
 
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <video className="h-full w-full object-cover" autoPlay muted loop playsInline>
+          <video
+            className="h-full w-full scale-105 object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+          >
             <source src={HERO_VIDEO_CDN} type="video/mp4" />
             <source src={HERO_VIDEO_LOCAL} type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/55 dark:from-slate-950 dark:via-slate-950/90 dark:to-slate-950/50" />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/40 dark:from-slate-950 dark:to-slate-950/30" />
+          {/* Light: soft left fade for text; right stays clear so video is visible */}
+          <div
+            className="
+              absolute inset-0
+              bg-gradient-to-r
+              from-white from-0%
+              via-white/75 via-35%
+              to-white/15 to-100%
+              dark:from-slate-950 dark:from-0%
+              dark:via-slate-950/80 dark:via-40%
+              dark:to-slate-950/25 dark:to-100%
+            "
+          />
+          <div
+            className="
+              absolute inset-x-0 bottom-0 h-40
+              bg-gradient-to-t from-white/90 to-transparent
+              dark:from-slate-950/90 dark:to-transparent
+            "
+          />
+          <div
+            className="
+              absolute inset-x-0 top-0 h-24
+              bg-gradient-to-b from-white/50 to-transparent
+              dark:from-slate-950/40 dark:to-transparent
+            "
+          />
         </div>
 
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-24">
@@ -191,7 +223,7 @@ export const LandingPage = () => {
               Your Growth Partner in Tech
             </div>
 
-            <h1 className="text-4xl font-black leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl dark:text-white">
+            <h1 className="text-4xl font-black leading-[1.1] tracking-tight text-slate-900 drop-shadow-sm sm:text-5xl lg:text-6xl dark:text-white">
               Build Skills.
               <br />
               <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
@@ -199,7 +231,7 @@ export const LandingPage = () => {
               </span>
             </h1>
 
-            <p className="mt-5 max-w-md text-base leading-7 text-slate-600 dark:text-slate-300">
+            <p className="mt-5 max-w-md text-base leading-7 text-slate-700 dark:text-slate-200">
               EDUROUTE helps you find the right roadmap, get internships and job
               opportunities, participate in hackathons and build the skills you need
               to grow in tech — all in one place.
@@ -355,7 +387,7 @@ export const LandingPage = () => {
               <p className="mb-2 text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
                 Contact Us
               </p>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">We&apos;d love to hear from you</h2>
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">We'd love to hear from you</h2>
               <p className="mt-3 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
                 Questions about roadmaps, partnerships, or feedback? Reach out anytime — we usually reply within a day.
               </p>
