@@ -196,43 +196,6 @@ export const Dashboard = () => {
         </Link>
       </section>
 
-      {applications.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
-              <Briefcase className="h-5 w-5 text-[var(--accent)]" />
-              My Applications
-            </h2>
-            <Link
-              to="/internships"
-              className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
-            >
-              View internships <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="er-card divide-y divide-[var(--border-default)] overflow-hidden p-0">
-            {applications.slice(0, 5).map((app) => (
-              <div
-                key={app.internshipId}
-                className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="truncate font-semibold text-[var(--text-primary)]">{app.role}</div>
-                  <div className="text-xs text-[var(--text-secondary)]">
-                    {app.company} · {app.stipend}
-                  </div>
-                </div>
-                <span
-                  className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold sm:self-center ${statusBadgeClass(app.status)}`}
-                >
-                  {app.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--text-primary)]">Continue Learning</h2>
@@ -277,6 +240,43 @@ export const Dashboard = () => {
           ))}
         </div>
       </section>
+
+      {applications.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
+              <Briefcase className="h-5 w-5 text-[var(--accent)]" />
+              My Applications
+            </h2>
+            <Link
+              to="/internships"
+              className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+            >
+              View internships <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="er-card divide-y divide-[var(--border-default)] overflow-hidden p-0">
+            {applications.slice(0, 5).map((app) => (
+              <div
+                key={app.internshipId}
+                className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-[var(--text-primary)]">{app.role}</div>
+                  <div className="text-xs text-[var(--text-secondary)]">
+                    {app.company} · {app.stipend}
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold sm:self-center ${statusBadgeClass(app.status)}`}
+                >
+                  {app.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };
