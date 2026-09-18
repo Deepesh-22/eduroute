@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Mail, ArrowRight, UserCog, GraduationCap } from 'lucide-react';
+import { Lock, Mail, ArrowRight, UserCog, GraduationCap, Building2 } from 'lucide-react';
 import { apiRoleLogin } from '../../utils/authApi';
 import { saveAuthSession, type UserRole } from '../../utils/rbacAuth';
 import { setAdminSession, validateAdminPassword } from '../../utils/adminSession';
 import { isAuthDbConfigError, localDemoLogin } from '../../utils/localDemoAuth';
+import { INDUSTRY_DEMO_CREDENTIALS } from '../../utils/industryStore';
 
 const LOCAL_STAFF = {
   email: 'admin@gmail.com',
@@ -38,6 +39,15 @@ export const Login = () => {
     return true;
   };
 
+  const enterIndustry = (email: string, password: string) => {
+    const emailOk = email.trim().toLowerCase() === INDUSTRY_DEMO_CREDENTIALS.email;
+    const passOk = password === INDUSTRY_DEMO_CREDENTIALS.password;
+    if (!emailOk || !passOk) return false;
+    saveAuthSession(`industry-${Date.now()}`, INDUSTRY_DEMO_CREDENTIALS.user);
+    navigate('/industry', { replace: true });
+    return true;
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -45,6 +55,16 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
+      if (role === 'industry') {
+        const ok = enterIndustry(formData.email, formData.password);
+        if (ok) {
+          setUsedDemoMode(true);
+          return;
+        }
+        setError('Industry login failed. Use company@gmail.com / hire');
+        return;
+      }
+
       if (role === 'admin') {
         try {
           const response = await apiRoleLogin({ ...formData, role: 'admin' });
@@ -55,7 +75,6 @@ export const Login = () => {
         } catch (staffErr) {
           const ok = await enterLocalAdmin(formData.email, formData.password);
           if (ok) return;
-          // Local demo admin fallback when DB not configured
           if (staffErr instanceof Error && isAuthDbConfigError(staffErr.message)) {
             try {
               const demo = localDemoLogin({
@@ -81,7 +100,6 @@ export const Login = () => {
         }
       }
 
-      // Student: prefer MySQL API; if DB not configured, use local demo accounts
       try {
         const response = await apiRoleLogin({ ...formData, role: 'student' });
         saveAuthSession(response.token, response.user);
@@ -130,7 +148,7 @@ export const Login = () => {
           Role based login
         </h2>
         <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
-          Passwords verified against MySQL when configured — otherwise secure demo mode
+          Student · Industry · Staff — demo credentials when MySQL is offline
         </p>
       </div>
 
@@ -140,20 +158,35 @@ export const Login = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white dark:bg-slate-900 py-8 px-4 shadow-xl shadow-slate-200/50 dark:shadow-none sm:rounded-3xl sm:px-10 border border-slate-100 dark:border-slate-800"
         >
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-5">
+          <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-5">
             <button
               type="button"
               onClick={() => {
                 setRole('student');
                 setError('');
               }}
-              className={`rounded-lg py-2 text-sm font-bold transition ${
+              className={`rounded-lg py-2 text-xs sm:text-sm font-bold transition ${
                 role === 'student'
                   ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              <GraduationCap className="h-4 w-4 inline mr-1" /> Student
+              <GraduationCap className="h-3.5 w-3.5 inline mr-0.5" /> Student
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRole('industry');
+                setError('');
+                setFormData({ email: 'company@gmail.com', password: 'hire' });
+              }}
+              className={`rounded-lg py-2 text-xs sm:text-sm font-bold transition ${
+                role === 'industry'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              <Building2 className="h-3.5 w-3.5 inline mr-0.5" /> Industry
             </button>
             <button
               type="button"
@@ -161,15 +194,21 @@ export const Login = () => {
                 setRole('admin');
                 setError('');
               }}
-              className={`rounded-lg py-2 text-sm font-bold transition ${
+              className={`rounded-lg py-2 text-xs sm:text-sm font-bold transition ${
                 role === 'admin'
                   ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              <UserCog className="h-4 w-4 inline mr-1" /> Staff/Admin
+              <UserCog className="h-3.5 w-3.5 inline mr-0.5" /> Staff
             </button>
           </div>
+
+          {role === 'industry' && (
+            <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 px-3 py-2">
+              Demo: <strong>company@gmail.com</strong> / <strong>hire</strong>
+            </p>
+          )}
 
           {error && (
             <p
@@ -182,7 +221,7 @@ export const Login = () => {
 
           {usedDemoMode && (
             <p className="text-xs text-amber-700 dark:text-amber-300 mb-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900 px-3 py-2">
-              Signed in with local demo mode (MySQL not configured on this site).
+              Signed in with local demo mode.
             </p>
           )}
 
@@ -234,12 +273,6 @@ export const Login = () => {
             New student?{' '}
             <Link to="/signup" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
               Sign up
-            </Link>
-          </p>
-          <p className="mt-2 text-center text-xs text-slate-400">
-            Or open{' '}
-            <Link to="/admin-login" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
-              Admin password gate
             </Link>
           </p>
         </motion.div>
