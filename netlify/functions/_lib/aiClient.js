@@ -10,9 +10,24 @@ const SEARCH_TRIGGER_PATTERNS = [
   /\b(how much|what is the fee|deadline|last date|registration)\b/i,
   /\b(recommend|suggest).*(course|tool|platform|resource|internship|event)/i,
   /\b(who is|who's|who was|who are|what is|what's|when is|when was|where is)\b/i,
-  /\b(prime minister|president|cm of|chief minister|minister of|governor of)\b/i,
+  /\b(prime\s*minister|\bpm\b|president|cm of|chief minister|minister of|governor of)\b/i,
   /\b(capital of|population of|currency of|ceo of|founder of)\b/i,
+  /\bpm\s*(of\s*)?(india|bharat)\b/i,
+  /\b(india'?s?\s+pm|indian\s+pm)\b/i,
 ];
+
+/** Strip injected student-profile prefix so search/intent uses the real question. */
+function extractUserQuestion(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return '';
+  const m = text.match(/\[Student profile\][\s\S]*?\n\n([\s\S]+)$/i);
+  if (m && m[1].trim()) return m[1].trim();
+  if (/\[Student profile\]/i.test(text)) {
+    const lines = text.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    return lines[lines.length - 1] || text;
+  }
+  return text;
+}
 
 // Prefer models most free/developer accounts can access first
 const GROQ_MODEL_CANDIDATES = [
@@ -31,13 +46,17 @@ function env(name) {
 }
 
 function needsWebSearch(userMessage) {
-  if (!userMessage || userMessage.trim().length < 5) return false;
+  const q = extractUserQuestion(userMessage);
+  if (!q || q.trim().length < 2) return false;
+  if (/\bpm\b|prime\s*minister|president|capital of|who is|what is|current/i.test(q) && q.length < 120) {
+    return true;
+  }
   const pureGuidance =
     /^(create|give|make|show|explain|teach|help me with|motivate)\b.*\b(roadmap|plan|skill gap|motivation|resume|portfolio|study plan)\b/i;
-  if (pureGuidance.test(userMessage.trim()) && !SEARCH_TRIGGER_PATTERNS.some((p) => p.test(userMessage))) {
+  if (pureGuidance.test(q.trim()) && !SEARCH_TRIGGER_PATTERNS.some(function (p) { return p.test(q); })) {
     return false;
   }
-  return SEARCH_TRIGGER_PATTERNS.some((p) => p.test(userMessage));
+  return SEARCH_TRIGGER_PATTERNS.some(function (p) { return p.test(q); });
 }
 
 function localFallbackReply({ messages, language, reason }) {
@@ -184,8 +203,11 @@ async function searchWithWikipedia(query) {
 
 function refineSearchQuery(message) {
   const lower = message.toLowerCase().trim();
-  if (/prime\s*minister.*india|pm of india|india.*prime\s*minister/i.test(lower)) {
-    return 'Narendra Modi Prime Minister of India';
+  if (/prime\s*minister.*india|\bpm\b.*india|india.*\bpm\b|india.*prime\s*minister|\bpm of india\b/i.test(lower)) {
+    return 'Narendra Modi current Prime Minister of India';
+  }
+  if (/^pm$/i.test(lower) || /^who is (the )?pm/i.test(lower)) {
+    return 'Narendra Modi current Prime Minister of India';
   }
   const stop = {
     tell: 1, me: 1, about: 1, the: 1, a: 1, an: 1, for: 1, my: 1, please: 1, can: 1, you: 1,
@@ -254,19 +276,21 @@ async function generateBuddyReply({ messages, language }) {
         ? 'Reply in friendly Hinglish using simple Roman script words.'
         : 'Reply in English only.';
 
-  const lastUserMessage =
+  const lastUserMessageRaw =
     ([].concat(messages).reverse().find(function (m) {
       return m.role === 'user';
     }) || {}).content || '';
+  const lastUserMessage = extractUserQuestion(lastUserMessageRaw);
 
   let usedWebSearch = false;
   let sources = [];
   let searchContext = '';
   let searchData = null;
 
-  if (needsWebSearch(lastUserMessage)) {
+  if (needsWebSearch(lastUserMessageRaw) || needsWebSearch(lastUserMessage)) {
     try {
-      searchData = await performWebSearchWithFallback(lastUserMessage);
+      const searchQuery = refineSearchQuery(lastUserMessage || lastUserMessageRaw);
+      searchData = await performWebSearchWithFallback(searchQuery);
       searchContext = formatSearchContext(searchData);
       usedWebSearch = Boolean((searchData.results && searchData.results.length) || searchData.answer);
       sources = (searchData.results || [])
@@ -285,11 +309,16 @@ async function generateBuddyReply({ messages, language }) {
   const systemMessage = {
     role: 'system',
     content:
-      "You are Buddy, EDUROUTE's friendly student mentor AI. Help with learning roadmaps, skill-gap analysis, internships, resume tips, motivation, events, factual questions, and general wellness guidance (e.g. study-friendly meal ideas). For diet/health topics, give practical general information only and remind users to consult a doctor or dietitian for personal medical advice. Prefer clear structured answers. " +
+      "You are Buddy, EDUROUTE's friendly student mentor AI. " +
+      'CRITICAL RULES: (1) Always answer the user\'s LATEST question first and directly. ' +
+      '(2) If the user asks a factual / current-affairs question (e.g. who is the PM of India), give the correct short factual answer — do NOT turn it into a skill-gap or roadmap. ' +
+      '(3) Only use student profile / career interests when the question is about learning, careers, roadmaps, skills, internships, or resumes. ' +
+      '(4) When live search results are present, base the factual answer on them and cite briefly. ' +
+      'You also help with learning roadmaps, skill-gap analysis, internships, resume tips, motivation, and study wellness (general info only). Prefer clear structured answers. ' +
       ROADMAP_FALLBACK +
       ' ' +
       languageDirective +
-      ' When live search results are present, answer using them first. Keep responses safe and education focused.' +
+      ' Keep responses safe and education focused.' +
       searchContext,
   };
 
