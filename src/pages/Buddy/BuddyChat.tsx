@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Code2,
+  Languages,
   Lightbulb,
   Map,
   MessageSquare,
@@ -39,6 +40,12 @@ const QUICK_PROMPTS = [
   { label: 'Interview preparation tips', prompt: 'Share practical interview preparation tips for software roles.', icon: UserRound },
   { label: 'Career guidance', prompt: 'Give me career guidance for landing an SDE or related role.', icon: Briefcase },
 ] as const;
+
+const LANGUAGE_OPTIONS: { value: BuddyLanguage; label: string; short: string }[] = [
+  { value: 'english', label: 'English', short: 'EN' },
+  { value: 'hindi', label: 'Hindi', short: 'HI' },
+  { value: 'hinglish', label: 'Hinglish', short: 'HN' },
+];
 
 function welcomeMessage(name: string): BuddyMessage {
   return {
@@ -263,7 +270,30 @@ export const BuddyChat = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Language switcher */}
+            <div className="relative flex items-center">
+              <label htmlFor="buddy-language" className="sr-only">
+                Reply language
+              </label>
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/80">
+                <Languages className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden />
+                <select
+                  id="buddy-language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as BuddyLanguage)}
+                  className="max-w-[6.5rem] cursor-pointer appearance-none border-0 bg-transparent py-0.5 pr-4 text-xs font-semibold text-slate-700 outline-none dark:text-slate-200"
+                  title="Buddy reply language"
+                  aria-label="Buddy reply language"
+                >
+                  {LANGUAGE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <button
               type="button"
               onClick={onNewChat}
