@@ -116,7 +116,7 @@ export const AdminLayout = () => {
               className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-input)] pl-10 pr-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
             />
           </div>
-          <ThemeToggle className="h-9 w-[70px]" />
+          <ThemeToggle />
           <button type="button" className="relative p-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-input)]">
             <Bell className="h-4 w-4 text-[var(--text-secondary)]" />
             <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500" />

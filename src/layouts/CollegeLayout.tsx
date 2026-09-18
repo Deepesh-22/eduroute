@@ -32,7 +32,7 @@ export const CollegeLayout = () => {
           </Link>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle className="h-9 w-[70px]" />
+            <ThemeToggle />
             <button
               type="button"
               onClick={handleLogout}
