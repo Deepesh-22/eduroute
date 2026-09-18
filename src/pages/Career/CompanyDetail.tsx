@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   MapPin,
   Users,
@@ -18,10 +18,18 @@ import {
   statusBadgeClass,
   type InternshipApplication,
 } from '../../utils/internshipApplications';
+import { industryPostingsAsInternships } from '../../utils/industryStore';
 
 export const CompanyDetail = () => {
   const { id } = useParams();
-  const internship = INTERNSHIPS.find((job) => job.id === id) ?? INTERNSHIPS[0];
+  const internship = useMemo(() => {
+    const fromStatic = INTERNSHIPS.find((job) => job.id === id);
+    if (fromStatic) return fromStatic;
+    const fromIndustry = industryPostingsAsInternships().find((job) => job.id === id);
+    if (fromIndustry) return fromIndustry as (typeof INTERNSHIPS)[number];
+    return INTERNSHIPS[0];
+  }, [id]);
+
   const [application, setApplication] = useState<InternshipApplication | null>(null);
 
   const refresh = useCallback(() => {
@@ -119,11 +127,10 @@ export const CompanyDetail = () => {
       <div className="max-w-5xl mx-auto px-4 md:px-8 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-12">
           <section>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">About the Company</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">About the role</h2>
             <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-lg">
-              {internship.company} is a leading AI-first engineering company building next-generation
-              cloud infrastructure. We believe in radical transparency and autonomous teams. Our mission
-              is to accelerate the world's transition to decentralized computing.
+              {(internship as { description?: string }).description ||
+                `${internship.company} is hiring for ${internship.role}. Apply to join the team and grow with mentors on real projects.`}
             </p>
           </section>
 
