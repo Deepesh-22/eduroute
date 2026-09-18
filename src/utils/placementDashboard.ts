@@ -4,6 +4,7 @@
  */
 
 import type { ApplicationStatus, InternshipApplication } from './internshipApplications';
+import type { AuthUser } from './rbacAuth';
 import { readOnboarding } from './onboardingStore';
 
 const GLOBAL_KEY = 'eduroute:internship-applications-v1';
@@ -131,7 +132,6 @@ function countByStatus(apps: InternshipApplication[], status: ApplicationStatus)
   return apps.filter((a) => a.status === status).length;
 }
 
-/** Funnel: each stage includes later stages (Applied total = all rows). */
 function funnelCounts(apps: InternshipApplication[]): PlacementKpis {
   const total = apps.length;
   const shortlisted =
@@ -205,14 +205,16 @@ export function getPlacementDashboardData(institutionName = 'Modi Institute of T
   };
 }
 
+/** College institution demo — separate role from staff admin. */
 export const COLLEGE_DEMO_CREDENTIALS = {
   email: 'college@gmail.com',
   password: 'student',
   user: {
     id: 'local-college-1',
-    name: 'Modi Institute of Technology',
+    name: 'Placement Cell',
     email: 'college@gmail.com',
-    role: 'admin' as const,
+    role: 'college' as const,
     verificationStatus: 'verified',
-  },
+    institutionName: 'Modi Institute of Technology',
+  } satisfies AuthUser,
 };
