@@ -4,12 +4,10 @@ import {
   ArrowRight,
   BookOpen,
   Briefcase,
-  Clock,
   Code2,
   Instagram,
   Mail,
   Map,
-  MapPin,
   MessageCircle,
   Trophy,
   Users,
@@ -68,7 +66,6 @@ export const LandingPage = () => {
 
   const instagramUrl = 'https://www.instagram.com/vanshkhandelwal28/';
   const whatsappUrl = 'https://wa.link/9mfubu';
-  const contactEmail = 'hello@eduroute.in';
   const supportEmail = 'vanshkhandelwal777@gmail.com';
 
   return (
@@ -250,30 +247,38 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Contact + Footer — design match (large EDUROUTE outline + columns) */}
+      {/* Footer: EDUROUTE watermark first, then columns below (no overlap) */}
       <footer
         id="contact"
-        className="relative overflow-hidden border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-[#0a0a0f]"
+        className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-[#0a0a0f]"
       >
-        {/* Giant outlined EDUROUTE watermark */}
-        <div
-          className="pointer-events-none absolute inset-x-0 top-6 select-none overflow-hidden px-2 text-center sm:top-10"
-          aria-hidden
-        >
-          <span
-            className="inline-block whitespace-nowrap text-[14vw] font-black leading-none tracking-tight text-transparent sm:text-[12vw] lg:text-[10rem]"
-            style={{
-              WebkitTextStroke: '1.5px rgba(139, 92, 246, 0.35)',
-            }}
-          >
-            EDUROUTE
-          </span>
-        </div>
+        <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+          {/* Outlined EDUROUTE — in document flow so content sits fully below */}
+          <div className="select-none overflow-hidden text-center" aria-hidden>
+            <span
+              className="inline-block whitespace-nowrap text-[16vw] font-black leading-none tracking-tight sm:text-[12vw] lg:text-[9.5rem]"
+              style={{
+                color: 'transparent',
+                WebkitTextStroke: '2px rgba(109, 40, 217, 0.55)',
+              }}
+            >
+              <span className="dark:hidden">EDUROUTE</span>
+            </span>
+            <span
+              className="hidden whitespace-nowrap text-[16vw] font-black leading-none tracking-tight dark:inline-block sm:text-[12vw] lg:text-[9.5rem]"
+              style={{
+                color: 'transparent',
+                WebkitTextStroke: '2px rgba(167, 139, 250, 0.55)',
+              }}
+            >
+              EDUROUTE
+            </span>
+          </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 sm:pt-36 lg:px-8">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+          {/* All info below the word — no absolute overlay */}
+          <div className="mt-6 grid gap-10 pb-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
             {/* Brand */}
-            <div className="sm:col-span-2 lg:col-span-1">
+            <div>
               <div className="flex items-center gap-2.5">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-sm font-black text-white shadow-md">
                   E
@@ -288,7 +293,6 @@ export const LandingPage = () => {
               <p className="mt-2 max-w-xs text-xs leading-5 text-slate-500 dark:text-slate-400">
                 Your one stop platform to build skills, explore opportunities and grow your career in tech.
               </p>
-              {/* Only socials we have real links for */}
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <a
                   href={instagramUrl}
@@ -367,38 +371,7 @@ export const LandingPage = () => {
               </ul>
             </div>
 
-            {/* Get in touch */}
-            <div>
-              <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
-                Get In Touch
-              </h3>
-              <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
-                <li className="flex items-start gap-2.5">
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
-                  <a href={`mailto:${contactEmail}`} className="hover:text-violet-600 dark:hover:text-violet-300">
-                    {contactEmail}
-                  </a>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
-                  <span>
-                    Mon – Fri : 10am – 8pm
-                    <br />
-                    Sat – Sun : 11am – 6pm
-                  </span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
-                  <span>
-                    Kota, Rajasthan
-                    <br />
-                    India – 324005
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Join community — UI only, no backend */}
+            {/* Join community */}
             <div>
               <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
                 Join Our Community
@@ -434,7 +407,7 @@ export const LandingPage = () => {
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-500 sm:flex-row">
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 py-6 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-500 sm:flex-row">
             <p>© {new Date().getFullYear()} EDUROUTE. All rights reserved.</p>
             <p className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-400">
               Better Skills <span className="text-violet-500">→</span> Brighter Future
