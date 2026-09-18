@@ -23,7 +23,12 @@ const RoleRoute = ({
     return <Navigate to="/login" replace />;
   }
   if (user.role !== role) {
-    if (user.role === 'admin') return <Navigate to="/admin/pending-approvals" replace />;
+    if (user.role === 'admin') {
+      if (user.email?.toLowerCase() === 'college@gmail.com') {
+        return <Navigate to="/admin/placements" replace />;
+      }
+      return <Navigate to="/admin/pending-approvals" replace />;
+    }
     if (user.role === 'industry') return <Navigate to="/industry" replace />;
     return <Navigate to="/dashboard" replace />;
   }
@@ -50,7 +55,12 @@ const AdminAccessRoute = ({ children }: { children: ReactElement }) => {
 const PublicOnlyRoute = ({ children }: { children: ReactElement }) => {
   if (isAuthenticated()) {
     const user = getAuthUser();
-    if (user?.role === 'admin') return <Navigate to="/admin/pending-approvals" replace />;
+    if (user?.role === 'admin') {
+      if (user.email?.toLowerCase() === 'college@gmail.com') {
+        return <Navigate to="/admin/placements" replace />;
+      }
+      return <Navigate to="/admin/pending-approvals" replace />;
+    }
     if (user?.role === 'industry') return <Navigate to="/industry" replace />;
     return <Navigate to="/dashboard" replace />;
   }
@@ -96,6 +106,9 @@ const DSASheet = lazy(() => import('./pages/DSASheet').then((module) => ({ defau
 const SkillProfile = lazy(() => import('./pages/SkillProfile').then((module) => ({ default: module.SkillProfile })));
 const IndustryWorkspace = lazy(() =>
   import('./pages/Industry/IndustryWorkspace').then((module) => ({ default: module.IndustryWorkspace })),
+);
+const PlacementDashboard = lazy(() =>
+  import('./pages/Admin/PlacementDashboard').then((module) => ({ default: module.PlacementDashboard })),
 );
 
 const PageLoader = () => (
@@ -169,7 +182,8 @@ export function App() {
             <Route path="/admin/verified" element={<AdminDashboard />} />
             <Route path="/admin/courses" element={<AdminDashboard />} />
             <Route path="/admin/partners" element={<AdminDashboard />} />
-            <Route path="/admin/reports" element={<AdminDashboard />} />
+            <Route path="/admin/placements" element={<PlacementDashboard />} />
+            <Route path="/admin/reports" element={<PlacementDashboard />} />
             <Route path="/admin/settings" element={<AdminDashboard />} />
           </Route>
 

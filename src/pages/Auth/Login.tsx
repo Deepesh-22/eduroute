@@ -7,6 +7,7 @@ import { saveAuthSession, type UserRole } from '../../utils/rbacAuth';
 import { setAdminSession, validateAdminPassword } from '../../utils/adminSession';
 import { isAuthDbConfigError, localDemoLogin } from '../../utils/localDemoAuth';
 import { INDUSTRY_DEMO_CREDENTIALS } from '../../utils/industryStore';
+import { COLLEGE_DEMO_CREDENTIALS } from '../../utils/placementDashboard';
 
 const LOCAL_STAFF = {
   email: 'admin@gmail.com',
@@ -39,6 +40,16 @@ export const Login = () => {
     return true;
   };
 
+  const enterCollege = (email: string, password: string) => {
+    const emailOk = email.trim().toLowerCase() === COLLEGE_DEMO_CREDENTIALS.email;
+    const passOk = password === COLLEGE_DEMO_CREDENTIALS.password;
+    if (!emailOk || !passOk) return false;
+    saveAuthSession(`college-${Date.now()}`, COLLEGE_DEMO_CREDENTIALS.user);
+    setAdminSession(true);
+    navigate('/admin/placements', { replace: true });
+    return true;
+  };
+
   const enterIndustry = (email: string, password: string) => {
     const emailOk = email.trim().toLowerCase() === INDUSTRY_DEMO_CREDENTIALS.email;
     const passOk = password === INDUSTRY_DEMO_CREDENTIALS.password;
@@ -66,6 +77,10 @@ export const Login = () => {
       }
 
       if (role === 'admin') {
+        if (enterCollege(formData.email, formData.password)) {
+          setUsedDemoMode(true);
+          return;
+        }
         try {
           const response = await apiRoleLogin({ ...formData, role: 'admin' });
           saveAuthSession(response.token, response.user);
@@ -193,6 +208,7 @@ export const Login = () => {
               onClick={() => {
                 setRole('admin');
                 setError('');
+                setFormData({ email: 'college@gmail.com', password: 'student' });
               }}
               className={`rounded-lg py-2 text-xs sm:text-sm font-bold transition ${
                 role === 'admin'
@@ -207,6 +223,14 @@ export const Login = () => {
           {role === 'industry' && (
             <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 px-3 py-2">
               Demo: <strong>company@gmail.com</strong> / <strong>hire</strong>
+            </p>
+          )}
+
+          {role === 'admin' && (
+            <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 px-3 py-2">
+              College: <strong>college@gmail.com</strong> / <strong>student</strong>
+              <br />
+              Staff: <strong>admin@gmail.com</strong> / <strong>timepass</strong>
             </p>
           )}
 
