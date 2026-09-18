@@ -4,13 +4,13 @@ import {
   ArrowRight,
   BookOpen,
   Briefcase,
+  Clock,
   Code2,
-  FileText,
   Instagram,
   Mail,
   Map,
+  MapPin,
   MessageCircle,
-  Phone,
   Trophy,
   Users,
 } from 'lucide-react';
@@ -44,14 +44,32 @@ const JOURNEY = [
   { title: 'Get Hired', desc: 'Land internships and full-time roles', icon: Briefcase, color: 'bg-blue-500' },
 ];
 
+const QUICK_LINKS = [
+  { label: 'Home', href: '#home' },
+  { label: 'Roadmaps', href: '/roadmaps' },
+  { label: 'Jobs & Internships', href: '/internships' },
+  { label: 'Hackathons', href: '#features' },
+  { label: 'Resources', href: '#features' },
+  { label: 'Community', href: '#features' },
+];
+
+const COMPANY_LINKS = [
+  { label: 'About Us', href: '#contact' },
+  { label: 'Our Mission', href: '#features' },
+  { label: 'Contact Us', href: '#contact' },
+  { label: 'Privacy Policy', href: '#contact' },
+  { label: 'Terms & Conditions', href: '#contact' },
+];
+
 export const LandingPage = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
 
   const instagramUrl = 'https://www.instagram.com/vanshkhandelwal28/';
   const whatsappUrl = 'https://wa.link/9mfubu';
-  const contactEmail = 'vanshkhandelwal777@gmail.com';
-  const contactPhone = '+91 7898140600';
+  const contactEmail = 'hello@eduroute.in';
+  const supportEmail = 'vanshkhandelwal777@gmail.com';
 
   return (
     <div id="home" className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -232,67 +250,196 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      <section id="contact" className="border-t border-slate-200 bg-slate-50 py-16 dark:border-slate-800 dark:bg-slate-900/50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-10 lg:grid-cols-2">
-            <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">Contact Us</p>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">We'd love to hear from you</h2>
-              <p className="mt-3 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">Questions about roadmaps, partnerships, or feedback? Reach out anytime — we usually reply within a day.</p>
-              <ul className="mt-6 space-y-3">
-                <li>
-                  <a href={`mailto:${contactEmail}`} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-violet-200 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                    <Mail className="h-4 w-4 text-violet-500" />{contactEmail}
-                  </a>
-                </li>
-                <li>
-                  <a href={`tel:${contactPhone.replace(/\s/g, '')}`} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-violet-200 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                    <Phone className="h-4 w-4 text-violet-500" />{contactPhone}
-                  </a>
-                </li>
-                <li>
-                  <a href={whatsappUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-violet-200 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                    <MessageCircle className="h-4 w-4 text-emerald-500" />WhatsApp chat
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">Follow Us</p>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Stay in the loop</h2>
-              <p className="mt-3 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">Tips, roadmap updates, hackathons, and career stories — follow EDUROUTE on social.</p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <a href={instagramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-pink-200 hover:text-pink-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                  <Instagram className="h-4 w-4" />Instagram
+      {/* Contact + Footer — design match (large EDUROUTE outline + columns) */}
+      <footer
+        id="contact"
+        className="relative overflow-hidden border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-[#0a0a0f]"
+      >
+        {/* Giant outlined EDUROUTE watermark */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-6 select-none overflow-hidden px-2 text-center sm:top-10"
+          aria-hidden
+        >
+          <span
+            className="inline-block whitespace-nowrap text-[14vw] font-black leading-none tracking-tight text-transparent sm:text-[12vw] lg:text-[10rem]"
+            style={{
+              WebkitTextStroke: '1.5px rgba(139, 92, 246, 0.35)',
+            }}
+          >
+            EDUROUTE
+          </span>
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-28 sm:px-6 sm:pt-36 lg:px-8">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+            {/* Brand */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-sm font-black text-white shadow-md">
+                  E
+                </span>
+                <span className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  EDU<span className="text-violet-600 dark:text-violet-400">ROUTE</span>
+                </span>
+              </div>
+              <p className="mt-4 text-sm font-bold text-slate-800 dark:text-slate-100">
+                Learn. Build. Compete. Get Hired.
+              </p>
+              <p className="mt-2 max-w-xs text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Your one stop platform to build skills, explore opportunities and grow your career in tech.
+              </p>
+              {/* Only socials we have real links for */}
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-pink-300 hover:text-pink-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-pink-500/50 dark:hover:text-pink-400"
+                >
+                  <Instagram className="h-4 w-4" />
                 </a>
-                <a href={whatsappUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                  <MessageCircle className="h-4 w-4" />WhatsApp
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="WhatsApp"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-emerald-300 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-emerald-500/50 dark:hover:text-emerald-400"
+                >
+                  <MessageCircle className="h-4 w-4" />
                 </a>
-                <a href={`mailto:${contactEmail}`} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-violet-200 hover:text-violet-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                  <Mail className="h-4 w-4" />Email
+                <a
+                  href={`mailto:${supportEmail}`}
+                  aria-label="Email"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-violet-300 hover:text-violet-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-violet-500/50 dark:hover:text-violet-300"
+                >
+                  <Mail className="h-4 w-4" />
                 </a>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <footer className="border-t border-slate-200 bg-white py-10 dark:border-slate-800 dark:bg-slate-950">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-xs font-black text-white">E</span>
-              <span className="font-extrabold text-slate-900 dark:text-white">EDU<span className="text-violet-600">ROUTE</span></span>
+            {/* Quick links */}
+            <div>
+              <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
+                Quick Links
+              </h3>
+              <ul className="space-y-2.5">
+                {QUICK_LINKS.map((item) =>
+                  item.href.startsWith('/') ? (
+                    <li key={item.label}>
+                      <Link
+                        to={item.href}
+                        className="text-sm text-slate-500 transition hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ) : (
+                    <li key={item.label}>
+                      <a
+                        href={item.href}
+                        className="text-sm text-slate-500 transition hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300"
+                      >
+                        {item.label}
+                      </a>
+                    </li>
+                  )
+                )}
+              </ul>
             </div>
-            <p className="mt-2 max-w-xs text-xs leading-5 text-slate-500 dark:text-slate-400">Build skills. Get hired. Your growth partner in tech.</p>
+
+            {/* Company */}
+            <div>
+              <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
+                Company
+              </h3>
+              <ul className="space-y-2.5">
+                {COMPANY_LINKS.map((item) => (
+                  <li key={item.label}>
+                    <a
+                      href={item.href}
+                      className="text-sm text-slate-500 transition hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300"
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Get in touch */}
+            <div>
+              <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
+                Get In Touch
+              </h3>
+              <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
+                <li className="flex items-start gap-2.5">
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+                  <a href={`mailto:${contactEmail}`} className="hover:text-violet-600 dark:hover:text-violet-300">
+                    {contactEmail}
+                  </a>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+                  <span>
+                    Mon – Fri : 10am – 8pm
+                    <br />
+                    Sat – Sun : 11am – 6pm
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+                  <span>
+                    Kota, Rajasthan
+                    <br />
+                    India – 324005
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Join community — UI only, no backend */}
+            <div>
+              <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
+                Join Our Community
+              </h3>
+              <p className="mb-4 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Stay updated with latest opportunities, events and learning resources.
+              </p>
+              <form
+                className="flex items-center gap-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (newsletterEmail.trim()) {
+                    window.location.href = `mailto:${supportEmail}?subject=Newsletter%20signup&body=${encodeURIComponent(newsletterEmail.trim())}`;
+                  }
+                }}
+              >
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="min-w-0 flex-1 bg-transparent px-4 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
+                  required
+                />
+                <button
+                  type="submit"
+                  aria-label="Subscribe"
+                  className="m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white transition hover:bg-violet-700"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </form>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <a href="#features" className="hover:text-violet-600">Features</a>
-            <a href="#contact" className="hover:text-violet-600">Contact</a>
-            <Link to="/roadmaps" className="hover:text-violet-600">Roadmaps</Link>
-            <Link to="/internships" className="hover:text-violet-600">Internships</Link>
+
+          <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-500 sm:flex-row">
+            <p>© {new Date().getFullYear()} EDUROUTE. All rights reserved.</p>
+            <p className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-400">
+              Better Skills <span className="text-violet-500">→</span> Brighter Future
+            </p>
           </div>
-          <p className="text-xs text-slate-400">© {new Date().getFullYear()} EDUROUTE. All rights reserved.</p>
         </div>
       </footer>
     </div>
