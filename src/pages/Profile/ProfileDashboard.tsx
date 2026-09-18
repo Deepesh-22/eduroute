@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Award,
   Flame,
@@ -7,12 +8,14 @@ import {
   Target,
   Trophy,
   Info,
+  ArrowRight,
 } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { getProfileDashboardData } from '../../services/profileDashboardApi';
 import { PROFILE_DASHBOARD_MOCK, type ProfileDashboardData } from '../../data/profileMockData';
 import { getAuthToken, getAuthUser, saveAuthSession } from '../../utils/rbacAuth';
 import { getStoredUserProfile, saveUserProfile } from '../../utils/userProfile';
+import { readOnboarding } from '../../utils/onboardingStore';
 
 const difficultyColors = {
   easy: '#22c55e',
@@ -35,6 +38,8 @@ export const ProfileDashboard = () => {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editBio, setEditBio] = useState('');
+  const onboarding = useMemo(() => readOnboarding(), []);
+  const skillGapCount = onboarding.missingSkills?.length || 0;
 
   useEffect(() => {
     const authUser = getAuthUser();
@@ -148,9 +153,22 @@ export const ProfileDashboard = () => {
                 <p className="mt-1 text-sm text-slate-300">{profileData.roleBio}</p>
               </div>
             </div>
-            <button type="button" onClick={openEditor} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-300/30 bg-indigo-500/20 px-5 py-3 text-sm font-bold text-indigo-100 hover:bg-indigo-400/30">
-              <PenLine className="h-4 w-4" /> Edit Profile
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/skill-profile"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-violet-300/30 bg-violet-500/20 px-5 py-3 text-sm font-bold text-violet-100 hover:bg-violet-400/30"
+              >
+                <Target className="h-4 w-4" /> Skill Profile
+                {skillGapCount > 0 && (
+                  <span className="rounded-full bg-rose-500/30 px-2 py-0.5 text-[10px] font-bold text-rose-200">
+                    {skillGapCount} gaps
+                  </span>
+                )}
+              </Link>
+              <button type="button" onClick={openEditor} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-300/30 bg-indigo-500/20 px-5 py-3 text-sm font-bold text-indigo-100 hover:bg-indigo-400/30">
+                <PenLine className="h-4 w-4" /> Edit Profile
+              </button>
+            </div>
           </div>
 
           <div className="mt-8 rounded-2xl border border-indigo-300/20 bg-[#11162b] p-5">
@@ -166,6 +184,16 @@ export const ProfileDashboard = () => {
             </div>
             <p className="mt-2 text-xs text-slate-400">{progressPercent}% to {levelTitles[Math.min(levelTitles.length - 1, profileData.xp.level)]}.</p>
           </div>
+
+          <Link
+            to="/skill-profile"
+            className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-violet-400/20 bg-violet-500/10 px-4 py-3 text-sm transition hover:border-violet-400/40 hover:bg-violet-500/15"
+          >
+            <span className="font-semibold text-violet-100">
+              View strengths, skill gaps & recommended next steps
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-violet-300" />
+          </Link>
         </section>
 
         {isEditing && (
