@@ -11,13 +11,21 @@ const ProtectedRoute = ({ children }: { children: ReactElement }) => {
   return children;
 };
 
-const RoleRoute = ({ children, role }: { children: ReactElement; role: 'student' | 'admin' }) => {
+const RoleRoute = ({
+  children,
+  role,
+}: {
+  children: ReactElement;
+  role: 'student' | 'admin' | 'industry';
+}) => {
   const user = getAuthUser();
   if (!user) {
     return <Navigate to="/login" replace />;
   }
   if (user.role !== role) {
-    return <Navigate to={user.role === 'admin' ? '/admin/pending-approvals' : '/dashboard'} replace />;
+    if (user.role === 'admin') return <Navigate to="/admin/pending-approvals" replace />;
+    if (user.role === 'industry') return <Navigate to="/industry" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 };
@@ -32,6 +40,8 @@ const AdminAccessRoute = ({ children }: { children: ReactElement }) => {
     return children;
   }
   if (isAuthenticated()) {
+    const u = getAuthUser();
+    if (u?.role === 'industry') return <Navigate to="/industry" replace />;
     return <Navigate to="/dashboard" replace />;
   }
   return <Navigate to="/admin-login" replace />;
@@ -40,7 +50,9 @@ const AdminAccessRoute = ({ children }: { children: ReactElement }) => {
 const PublicOnlyRoute = ({ children }: { children: ReactElement }) => {
   if (isAuthenticated()) {
     const user = getAuthUser();
-    return <Navigate to={user?.role === 'admin' ? '/admin/pending-approvals' : '/dashboard'} replace />;
+    if (user?.role === 'admin') return <Navigate to="/admin/pending-approvals" replace />;
+    if (user?.role === 'industry') return <Navigate to="/industry" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 };
@@ -82,6 +94,9 @@ const CourseManager = lazy(() => import('./pages/Admin/CourseManager').then((mod
 const ProfileDashboard = lazy(() => import('./pages/Profile/ProfileDashboard').then((module) => ({ default: module.ProfileDashboard })));
 const DSASheet = lazy(() => import('./pages/DSASheet').then((module) => ({ default: module.DSASheet })));
 const SkillProfile = lazy(() => import('./pages/SkillProfile').then((module) => ({ default: module.SkillProfile })));
+const IndustryWorkspace = lazy(() =>
+  import('./pages/Industry/IndustryWorkspace').then((module) => ({ default: module.IndustryWorkspace })),
+);
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-semibold">Loading...</div>
@@ -105,6 +120,7 @@ const DASHBOARD_ROUTES = [
   '/admin',
   '/profile',
   '/skill-profile',
+  '/industry',
 ];
 
 const GlobalThemeButton = () => {
@@ -130,11 +146,21 @@ export function App() {
           <Route path="/signin" element={<Navigate to="/login" replace />} />
           <Route path="/sign-in" element={<Navigate to="/login" replace />} />
           <Route path="/verify-otp" element={<PublicOnlyRoute><VerifyOTP /></PublicOnlyRoute>} />
-          {/* Allow logged-in students to upload college ID */}
           <Route path="/verify-college" element={<VerifyCollege />} />
           <Route path="/onboarding" element={<OnboardingAnalyze />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/course-manager" element={<AdminSessionRoute><CourseManager /></AdminSessionRoute>} />
+
+          <Route
+            path="/industry"
+            element={
+              <ProtectedRoute>
+                <RoleRoute role="industry">
+                  <IndustryWorkspace />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
 
           <Route element={<AdminAccessRoute><AdminLayout /></AdminAccessRoute>}>
             <Route path="/admin" element={<PendingApprovals />} />
