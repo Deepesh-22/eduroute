@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CheckCircle2,
@@ -11,11 +12,17 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  Briefcase,
 } from 'lucide-react';
 import { COURSES } from '../data/mockData';
 import { Course } from '../types';
 import { getCurrentUser, getDisplayFirstName } from '../utils/userProfile';
 import { readOnboarding } from '../utils/onboardingStore';
+import {
+  readApplications,
+  statusBadgeClass,
+  type InternshipApplication,
+} from '../utils/internshipApplications';
 
 export const Dashboard = () => {
   const currentUser = getCurrentUser();
@@ -25,8 +32,18 @@ export const Dashboard = () => {
   const onboarding = readOnboarding();
   const gapCount = onboarding.missingSkills?.length || 0;
   const hasSkillProfile = Boolean(onboarding.completedAt);
+  const [applications, setApplications] = useState<InternshipApplication[]>(() => readApplications());
 
-  // Demo stats aligned with reference
+  useEffect(() => {
+    const refresh = () => setApplications(readApplications());
+    window.addEventListener('eduroute:applications-updated', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener('eduroute:applications-updated', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
+
   const stats = [
     {
       label: 'Completed Courses',
@@ -68,10 +85,7 @@ export const Dashboard = () => {
 
   return (
     <div className="er-page space-y-8">
-      {/* ========== WELCOME BANNER ========== */}
-      <section
-        className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-default)] min-h-[180px] md:min-h-[200px]"
-      >
+      <section className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-default)] min-h-[180px] md:min-h-[200px]">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
           style={{
@@ -116,28 +130,16 @@ export const Dashboard = () => {
               <div className="text-sm font-semibold text-[var(--text-primary)]">Verify College ID</div>
               <p className="text-xs text-[var(--text-secondary)]">Unlock 50% discount on certifications</p>
             </div>
-            <Link
-              to="/verify-college"
-              className="er-btn er-btn-primary ml-2 shrink-0 !px-4 !py-2 text-xs"
-            >
+            <Link to="/verify-college" className="er-btn er-btn-primary ml-2 shrink-0 !px-4 !py-2 text-xs">
               Verify
             </Link>
           </div>
         </div>
 
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-20 dark:opacity-15"
-          aria-hidden
-        >
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-20 dark:opacity-15" aria-hidden>
           <svg className="h-full w-full" viewBox="0 0 400 200" preserveAspectRatio="xMaxYMid slice" fill="none">
-            <path
-              d="M0 200 L80 120 L140 160 L220 60 L280 110 L340 40 L400 90 L400 200 Z"
-              className="fill-indigo-200/60 dark:fill-indigo-900/40"
-            />
-            <path
-              d="M0 200 L60 150 L120 180 L200 90 L260 130 L320 70 L400 120 L400 200 Z"
-              className="fill-indigo-300/50 dark:fill-indigo-800/30"
-            />
+            <path d="M0 200 L80 120 L140 160 L220 60 L280 110 L340 40 L400 90 L400 200 Z" className="fill-indigo-200/60 dark:fill-indigo-900/40" />
+            <path d="M0 200 L60 150 L120 180 L200 90 L260 130 L320 70 L400 120 L400 200 Z" className="fill-indigo-300/50 dark:fill-indigo-800/30" />
             <circle cx="340" cy="48" r="18" className="fill-violet-400/30 dark:fill-violet-500/20" />
           </svg>
         </div>
@@ -151,14 +153,8 @@ export const Dashboard = () => {
             </div>
             <div className="min-w-0">
               <div className="text-xs font-medium text-[var(--text-secondary)]">{s.label}</div>
-              <div className="mt-0.5 text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-                {s.value}
-              </div>
-              <div
-                className={`mt-1 text-xs font-medium ${
-                  s.deltaPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'
-                }`}
-              >
+              <div className="mt-0.5 text-2xl font-bold tracking-tight text-[var(--text-primary)]">{s.value}</div>
+              <div className={`mt-1 text-xs font-medium ${s.deltaPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'}`}>
                 {s.deltaPositive && s.delta.startsWith('+') ? (
                   <span className="inline-flex items-center gap-0.5">
                     <span className="text-[10px]">↑</span> {s.delta}
@@ -200,6 +196,43 @@ export const Dashboard = () => {
         </Link>
       </section>
 
+      {applications.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
+              <Briefcase className="h-5 w-5 text-[var(--accent)]" />
+              My Applications
+            </h2>
+            <Link
+              to="/internships"
+              className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+            >
+              View internships <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="er-card divide-y divide-[var(--border-default)] overflow-hidden p-0">
+            {applications.slice(0, 5).map((app) => (
+              <div
+                key={app.internshipId}
+                className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-[var(--text-primary)]">{app.role}</div>
+                  <div className="text-xs text-[var(--text-secondary)]">
+                    {app.company} · {app.stipend}
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold sm:self-center ${statusBadgeClass(app.status)}`}
+                >
+                  {app.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--text-primary)]">Continue Learning</h2>
@@ -211,18 +244,16 @@ export const Dashboard = () => {
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {enrolledCourses.length > 0
-            ? enrolledCourses.map((course) => (
-                <ContinueCard key={course.id} course={course} progress={40} />
-              ))
-            : (
-              <div className="er-card col-span-full p-8 text-center text-[var(--text-secondary)]">
-                No enrolled courses yet.{' '}
-                <Link to="/browse" className="font-semibold text-[var(--accent)]">
-                  Browse courses
-                </Link>
-              </div>
-            )}
+          {enrolledCourses.length > 0 ? (
+            enrolledCourses.map((course) => <ContinueCard key={course.id} course={course} progress={40} />)
+          ) : (
+            <div className="er-card col-span-full p-8 text-center text-[var(--text-secondary)]">
+              No enrolled courses yet.{' '}
+              <Link to="/browse" className="font-semibold text-[var(--accent)]">
+                Browse courses
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -252,16 +283,9 @@ export const Dashboard = () => {
 
 function ContinueCard({ course, progress }: { course: Course; progress: number }) {
   return (
-    <Link
-      to={`/course/${course.id}`}
-      className="er-card er-card-hover group flex gap-4 overflow-hidden p-4 transition-all"
-    >
+    <Link to={`/course/${course.id}`} className="er-card er-card-hover group flex gap-4 overflow-hidden p-4 transition-all">
       <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--bg-secondary)]">
-        <img
-          src={course.thumbnail}
-          alt=""
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-        />
+        <img src={course.thumbnail} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
         <span className="absolute left-2 top-2 rounded-md bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
           In Progress
         </span>
@@ -275,19 +299,13 @@ function ContinueCard({ course, progress }: { course: Course; progress: number }
         <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
           {course.category} · {progress}% DONE
         </div>
-        <h3 className="mt-1 line-clamp-1 text-base font-semibold text-[var(--text-primary)]">
-          {course.title}
-        </h3>
-        <p className="mt-1 line-clamp-2 text-xs text-[var(--text-secondary)]">
-          {course.description}
-        </p>
+        <h3 className="mt-1 line-clamp-1 text-base font-semibold text-[var(--text-primary)]">{course.title}</h3>
+        <p className="mt-1 line-clamp-2 text-xs text-[var(--text-secondary)]">{course.description}</p>
         <div className="mt-auto pt-3">
           <div className="er-progress">
             <div className="er-progress-bar" style={{ width: `${progress}%` }} />
           </div>
-          <div className="mt-1 text-right text-[10px] font-medium text-[var(--text-muted)]">
-            {progress}%
-          </div>
+          <div className="mt-1 text-right text-[10px] font-medium text-[var(--text-muted)]">{progress}%</div>
         </div>
       </div>
     </Link>
@@ -296,10 +314,7 @@ function ContinueCard({ course, progress }: { course: Course; progress: number }
 
 function DsaSheetCard() {
   return (
-    <Link
-      to="/dsa-sheet"
-      className="er-card er-card-hover group flex flex-col overflow-hidden transition-all"
-    >
+    <Link to="/dsa-sheet" className="er-card er-card-hover group flex flex-col overflow-hidden transition-all">
       <div className="relative aspect-[16/10] overflow-hidden bg-[var(--bg-secondary)]">
         <img
           src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80"
@@ -319,9 +334,7 @@ function DsaSheetCard() {
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> 4.9
           </span>
         </div>
-        <h3 className="mt-2 line-clamp-1 text-sm font-semibold text-[var(--text-primary)]">
-          DSA Beginner Sheet
-        </h3>
+        <h3 className="mt-2 line-clamp-1 text-sm font-semibold text-[var(--text-primary)]">DSA Beginner Sheet</h3>
         <p className="mt-1 line-clamp-2 text-xs text-[var(--text-secondary)]">
           Start your DSA journey with structured problems and guided practice.
         </p>
@@ -349,25 +362,14 @@ function RecommendCard({ course, badgeIndex }: { course: Course; badgeIndex: num
     : course.duration || '6 weeks';
 
   return (
-    <Link
-      to={course.link || `/course/${course.id}`}
-      className="er-card er-card-hover group flex flex-col overflow-hidden transition-all"
-    >
+    <Link to={course.link || `/course/${course.id}`} className="er-card er-card-hover group flex flex-col overflow-hidden transition-all">
       <div className="relative aspect-[16/10] overflow-hidden bg-[var(--bg-secondary)]">
-        <img
-          src={course.thumbnail}
-          alt=""
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+        <img src={course.thumbnail} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
         <span className={`er-badge absolute left-3 top-3 ${badge.className}`}>{badge.label}</span>
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-1 text-sm font-semibold text-[var(--text-primary)]">
-          {course.title}
-        </h3>
-        <p className="mt-1 line-clamp-2 text-xs text-[var(--text-secondary)]">
-          {course.description}
-        </p>
+        <h3 className="line-clamp-1 text-sm font-semibold text-[var(--text-primary)]">{course.title}</h3>
+        <p className="mt-1 line-clamp-2 text-xs text-[var(--text-secondary)]">{course.description}</p>
         <div className="mt-auto flex items-center justify-between pt-4 text-[11px] text-[var(--text-muted)]">
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" /> {weeks}
