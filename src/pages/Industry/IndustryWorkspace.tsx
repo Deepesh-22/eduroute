@@ -29,6 +29,8 @@ export const IndustryWorkspace = () => {
   const [applicants, setApplicants] = useState<IndustryApplicant[]>(() => readIndustryApplicants());
   const [selectedPostingId, setSelectedPostingId] = useState<string>(() => readIndustryPostings()[0]?.id || '');
   const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [postingBusy, setPostingBusy] = useState(false);
   const [form, setForm] = useState({
     title: '',
     skills: '',
@@ -41,13 +43,14 @@ export const IndustryWorkspace = () => {
     const p = readIndustryPostings();
     setPostings(p);
     setApplicants(readIndustryApplicants());
-    if (!selectedPostingId && p[0]) setSelectedPostingId(p[0].id);
-  }, [selectedPostingId]);
+    setSelectedPostingId((prev) => prev || p[0]?.id || '');
+  }, []);
 
   useEffect(() => {
     refresh();
-    window.addEventListener('eduroute:industry-updated', refresh);
-    return () => window.removeEventListener('eduroute:industry-updated', refresh);
+    const onUp = () => refresh();
+    window.addEventListener('eduroute:industry-updated', onUp);
+    return () => window.removeEventListener('eduroute:industry-updated', onUp);
   }, [refresh]);
 
   const filteredApplicants = useMemo(
@@ -62,22 +65,37 @@ export const IndustryWorkspace = () => {
 
   const handlePost = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
+    const title = form.title.trim();
+    const stipend = form.stipend.trim();
+    const location = form.location.trim();
+    if (!title || !stipend || !location) {
+      setFormError('Title, stipend, and location are required.');
+      return;
+    }
     const skills = form.skills
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-    if (!form.title.trim() || !form.stipend.trim() || !form.location.trim()) return;
-    const posting = addIndustryPosting({
-      title: form.title,
-      skills: skills.length ? skills : ['General'],
-      stipend: form.stipend,
-      location: form.location,
-      description: form.description || 'Internship opportunity posted by industry partner.',
-    });
-    setForm({ title: '', skills: '', stipend: '', location: '', description: '' });
-    setShowForm(false);
-    setSelectedPostingId(posting.id);
-    refresh();
+    setPostingBusy(true);
+    try {
+      const created = addIndustryPosting({
+        title,
+        skills: skills.length ? skills : ['General'],
+        stipend,
+        location,
+        description:
+          form.description.trim() || 'Internship opportunity posted by industry partner.',
+      });
+      setForm({ title: '', skills: '', stipend: '', location: '', description: '' });
+      setShowForm(false);
+      setSelectedPostingId(created.id);
+      refresh();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not publish. Try again.');
+    } finally {
+      setPostingBusy(false);
+    }
   };
 
   const handleShortlist = (id: string) => {
@@ -128,7 +146,10 @@ export const IndustryWorkspace = () => {
             </div>
             <button
               type="button"
-              onClick={() => setShowForm((v) => !v)}
+              onClick={() => {
+                setShowForm((v) => !v);
+                setFormError('');
+              }}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-indigo-700"
             >
               <Plus className="h-4 w-4" /> Post internship
@@ -136,7 +157,18 @@ export const IndustryWorkspace = () => {
           </div>
 
           {showForm && (
-            <form onSubmit={handlePost} className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-2">
+            <form
+              onSubmit={handlePost}
+              className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-2"
+            >
+              {formError && (
+                <p
+                  className="sm:col-span-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+                  role="alert"
+                >
+                  {formError}
+                </p>
+              )}
               <div className="sm:col-span-2">
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Title</label>
                 <input
@@ -189,16 +221,20 @@ export const IndustryWorkspace = () => {
               <div className="sm:col-span-2 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false);
+                    setFormError('');
+                  }}
                   className="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white hover:bg-indigo-700"
+                  disabled={postingBusy}
+                  className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  Publish opening
+                  {postingBusy ? 'Publishing…' : 'Publish opening'}
                 </button>
               </div>
             </form>
@@ -251,7 +287,7 @@ export const IndustryWorkspace = () => {
             </h2>
             {filteredApplicants.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-                No applicants for this opening yet. Demo students appear on seed postings.
+                No applicants for this opening yet. New posts get 2 demo applicants automatically.
               </div>
             ) : (
               <ul className="space-y-3">
