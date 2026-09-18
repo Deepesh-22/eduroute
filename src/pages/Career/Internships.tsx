@@ -28,6 +28,7 @@ export const INTERNSHIPS = [
     posted: '2 days ago',
     logo: 'https://api.dicebear.com/7.x/initials/svg?seed=TF',
     tags: ['React', 'TypeScript', 'Tailwind'],
+    sector: 'software',
     verified: true,
     fastTrack: true,
     employeeCount: '500-1000 Employees',
@@ -44,6 +45,7 @@ export const INTERNSHIPS = [
     posted: '5 hours ago',
     logo: 'https://api.dicebear.com/7.x/initials/svg?seed=DS',
     tags: ['Node.js', 'PostgreSQL', 'Docker'],
+    sector: 'software',
     verified: true,
     fastTrack: false,
     employeeCount: '200-500 Employees',
@@ -60,40 +62,228 @@ export const INTERNSHIPS = [
     posted: '1 week ago',
     logo: 'https://api.dicebear.com/7.x/initials/svg?seed=CP',
     tags: ['Figma', 'Prototyping', 'User Research'],
+    sector: 'design',
     verified: false,
     fastTrack: false,
     employeeCount: '50-200 Employees',
     companylink: 'https://creativepulse.com',
   },
+  {
+    id: '4',
+    role: 'Fullstack Developer Intern',
+    company: 'Nimbus Labs',
+    location: 'Hyderabad, India (Remote)',
+    stipend: '₹28,000 / mo',
+    type: 'Full-time',
+    duration: '6 Months',
+    posted: '1 day ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=NL',
+    tags: ['React', 'Node.js', 'MongoDB', 'APIs'],
+    sector: 'software',
+    verified: true,
+    fastTrack: true,
+    employeeCount: '100-500 Employees',
+    companylink: 'https://nimbuslabs.dev',
+  },
+  {
+    id: '5',
+    role: 'Mobile App Intern (React Native)',
+    company: 'AppNest',
+    location: 'Chennai, India',
+    stipend: '₹22,000 / mo',
+    type: 'Full-time',
+    duration: '4 Months',
+    posted: '3 days ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=AN',
+    tags: ['React Native', 'TypeScript', 'Mobile'],
+    sector: 'software',
+    verified: true,
+    fastTrack: false,
+    employeeCount: '50-200 Employees',
+    companylink: 'https://appnest.io',
+  },
+  {
+    id: '6',
+    role: 'Cybersecurity Analyst Intern',
+    company: 'ShieldOps',
+    location: 'Delhi NCR, India',
+    stipend: '₹27,000 / mo',
+    type: 'Full-time',
+    duration: '6 Months',
+    posted: '4 hours ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=SO',
+    tags: ['Linux', 'Networking', 'SIEM', 'Security'],
+    sector: 'cybersecurity',
+    verified: true,
+    fastTrack: true,
+    employeeCount: '200-500 Employees',
+    companylink: 'https://shieldops.sec',
+  },
+  {
+    id: '7',
+    role: 'SOC / Threat Detection Intern',
+    company: 'BlueTeam Grid',
+    location: 'Bangalore, India (Remote)',
+    stipend: '₹24,000 / mo',
+    type: 'Full-time',
+    duration: '3 Months',
+    posted: '2 days ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=BG',
+    tags: ['Linux', 'Networking', 'Web Vulnerabilities', 'Incident Response'],
+    sector: 'cybersecurity',
+    verified: true,
+    fastTrack: false,
+    employeeCount: '100-300 Employees',
+    companylink: 'https://blueteamgrid.com',
+  },
+  {
+    id: '8',
+    role: 'Data Analyst Intern',
+    company: 'InsightHive',
+    location: 'Gurgaon, India',
+    stipend: '₹26,000 / mo',
+    type: 'Full-time',
+    duration: '5 Months',
+    posted: '6 hours ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=IH',
+    tags: ['SQL', 'Python', 'Visualization', 'Excel'],
+    sector: 'data',
+    verified: true,
+    fastTrack: true,
+    employeeCount: '500-1000 Employees',
+    companylink: 'https://insighthive.ai',
+  },
+  {
+    id: '9',
+    role: 'Business Intelligence Intern',
+    company: 'Metricly',
+    location: 'Pune, India (Remote)',
+    stipend: '₹20,000 / mo',
+    type: 'Part-time',
+    duration: '4 Months',
+    posted: '5 days ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=MT',
+    tags: ['SQL', 'Power BI', 'Statistics', 'Data Cleaning'],
+    sector: 'data',
+    verified: false,
+    fastTrack: false,
+    employeeCount: '50-150 Employees',
+    companylink: 'https://metricly.co',
+  },
+  {
+    id: '10',
+    role: 'Machine Learning Intern',
+    company: 'Vector Labs',
+    location: 'Bangalore, India',
+    stipend: '₹35,000 / mo',
+    type: 'Full-time',
+    duration: '6 Months',
+    posted: '1 day ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=VL',
+    tags: ['Python', 'Machine Learning', 'Statistics', 'SQL'],
+    sector: 'data',
+    verified: true,
+    fastTrack: true,
+    employeeCount: '200-500 Employees',
+    companylink: 'https://vectorlabs.ai',
+  },
+  {
+    id: '11',
+    role: 'Cloud / DevOps Intern',
+    company: 'CloudTrail India',
+    location: 'Hyderabad, India (Remote)',
+    stipend: '₹29,000 / mo',
+    type: 'Full-time',
+    duration: '6 Months',
+    posted: '3 days ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=CT',
+    tags: ['Docker', 'Linux', 'AWS', 'CI/CD'],
+    sector: 'software',
+    verified: true,
+    fastTrack: false,
+    employeeCount: '300-800 Employees',
+    companylink: 'https://cloudtrail.in',
+  },
+  {
+    id: '12',
+    role: 'Product / Growth Intern',
+    company: 'Launchpad Co',
+    location: 'Mumbai, India (Remote)',
+    stipend: '₹18,000 / mo',
+    type: 'Part-time',
+    duration: '3 Months',
+    posted: '1 week ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=LC',
+    tags: ['Analytics', 'User Research', 'Spreadsheets', 'Presentation'],
+    sector: 'product',
+    verified: false,
+    fastTrack: false,
+    employeeCount: '20-100 Employees',
+    companylink: 'https://launchpad.co',
+  },
 ];
 
 /** Soft skill labels from onboarding quiz → internship tag keywords */
 const SKILL_TO_TAG_HINTS: Record<string, string[]> = {
-  'project building': ['react', 'typescript', 'node.js', 'figma'],
-  'programming fundamentals': ['react', 'typescript', 'node.js', 'javascript'],
-  'data structures': ['typescript', 'node.js', 'postgresql'],
-  'git & github': ['react', 'typescript', 'node.js', 'docker'],
-  apis: ['node.js', 'react', 'typescript'],
-  'practical experience': ['react', 'typescript', 'node.js', 'docker'],
-  'networking basics': ['docker', 'node.js'],
-  linux: ['docker', 'node.js'],
-  'cryptography basics': ['docker'],
-  'hands-on security practice': ['docker', 'node.js'],
-  'web vulnerabilities': ['react', 'node.js'],
-  'os & network security': ['docker', 'linux'],
-  spreadsheets: ['postgresql', 'sql'],
-  sql: ['postgresql', 'node.js'],
-  'python/r for analysis': ['postgresql', 'node.js'],
-  visualization: ['figma', 'prototyping'],
-  statistics: ['postgresql'],
-  'data cleaning': ['postgresql', 'sql'],
+  'project building': ['react', 'typescript', 'node.js', 'figma', 'react native', 'mongodb', 'apis'],
+  'programming fundamentals': ['react', 'typescript', 'node.js', 'javascript', 'python', 'react native'],
+  'data structures': ['typescript', 'node.js', 'postgresql', 'python', 'algorithms'],
+  'git & github': ['react', 'typescript', 'node.js', 'docker', 'ci/cd'],
+  apis: ['node.js', 'react', 'typescript', 'mongodb', 'rest'],
+  'practical experience': ['react', 'typescript', 'node.js', 'docker', 'python'],
+  'networking basics': ['docker', 'node.js', 'linux', 'networking', 'security', 'siem'],
+  linux: ['docker', 'node.js', 'linux', 'aws', 'security'],
+  'cryptography basics': ['docker', 'security', 'linux'],
+  'hands-on security practice': ['docker', 'node.js', 'linux', 'security', 'siem', 'incident response'],
+  'web vulnerabilities': ['react', 'node.js', 'security', 'web vulnerabilities'],
+  'os & network security': ['docker', 'linux', 'networking', 'security', 'siem'],
+  spreadsheets: ['postgresql', 'sql', 'excel', 'power bi', 'analytics'],
+  sql: ['postgresql', 'node.js', 'sql', 'python', 'data cleaning'],
+  'python/r for analysis': ['postgresql', 'node.js', 'python', 'machine learning', 'statistics'],
+  visualization: ['figma', 'prototyping', 'power bi', 'excel', 'visualization'],
+  statistics: ['postgresql', 'sql', 'python', 'statistics', 'machine learning'],
+  'data cleaning': ['postgresql', 'sql', 'python', 'excel', 'data cleaning'],
 };
 
 /** Interest tracks boost related role / tag families */
 const INTEREST_TAG_BOOSTS: Record<InterestTrack, string[]> = {
-  software: ['react', 'typescript', 'tailwind', 'node.js', 'postgresql', 'docker'],
-  cybersecurity: ['docker', 'node.js', 'linux'],
-  data_analyst: ['postgresql', 'sql', 'node.js'],
+  software: [
+    'react',
+    'typescript',
+    'tailwind',
+    'node.js',
+    'postgresql',
+    'docker',
+    'mongodb',
+    'apis',
+    'react native',
+    'aws',
+    'ci/cd',
+    'mobile',
+  ],
+  cybersecurity: [
+    'docker',
+    'node.js',
+    'linux',
+    'networking',
+    'security',
+    'siem',
+    'web vulnerabilities',
+    'incident response',
+  ],
+  data_analyst: [
+    'postgresql',
+    'sql',
+    'node.js',
+    'python',
+    'visualization',
+    'excel',
+    'power bi',
+    'statistics',
+    'data cleaning',
+    'machine learning',
+    'analytics',
+  ],
 };
 
 function normalize(s: string) {
@@ -187,6 +377,7 @@ function matchBadgeClasses(score: number) {
 }
 
 type Internship = (typeof INTERNSHIPS)[number];
+type FilterKey = 'all' | 'frontend' | 'backend' | 'remote' | 'cyber' | 'data' | 'design';
 
 function InternshipCard({
   job,
@@ -280,9 +471,33 @@ function InternshipCard({
   );
 }
 
+function matchesSectorFilter(job: Internship, filter: FilterKey): boolean {
+  if (filter === 'all') return true;
+  const role = job.role.toLowerCase();
+  if (filter === 'frontend') {
+    return role.includes('frontend') || role.includes('ui/ux') || role.includes('mobile');
+  }
+  if (filter === 'backend') {
+    return role.includes('backend') || role.includes('devops') || role.includes('cloud') || role.includes('fullstack');
+  }
+  if (filter === 'remote') {
+    return job.location.toLowerCase().includes('remote');
+  }
+  if (filter === 'cyber') {
+    return job.sector === 'cybersecurity' || role.includes('security') || role.includes('soc');
+  }
+  if (filter === 'data') {
+    return job.sector === 'data' || role.includes('data') || role.includes('machine learning') || role.includes('intelligence');
+  }
+  if (filter === 'design') {
+    return job.sector === 'design' || role.includes('ui/ux') || role.includes('product');
+  }
+  return true;
+}
+
 export const Internships = () => {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | 'frontend' | 'backend' | 'remote'>('all');
+  const [filter, setFilter] = useState<FilterKey>('all');
 
   const skillProfile = useMemo(() => getStudentSkillProfile(), []);
 
@@ -295,14 +510,9 @@ export const Internships = () => {
 
   const filteredInternships = useMemo(() => {
     return scoredInternships.filter(({ job }) => {
-      const searchable = `${job.role} ${job.company} ${job.location} ${job.tags.join(' ')}`.toLowerCase();
+      const searchable = `${job.role} ${job.company} ${job.location} ${job.tags.join(' ')} ${job.sector}`.toLowerCase();
       const matchesQuery = searchable.includes(query.trim().toLowerCase());
-      const matchesFilter =
-        filter === 'all' ||
-        (filter === 'frontend' && job.role.toLowerCase().includes('frontend')) ||
-        (filter === 'backend' && job.role.toLowerCase().includes('backend')) ||
-        (filter === 'remote' && job.location.toLowerCase().includes('remote'));
-      return matchesQuery && matchesFilter;
+      return matchesQuery && matchesSectorFilter(job, filter);
     });
   }, [filter, query, scoredInternships]);
 
@@ -313,13 +523,28 @@ export const Internships = () => {
       .sort((a, b) => b.matchScore - a.matchScore);
   }, [filteredInternships, skillProfile.hasProfile]);
 
+  const filterBtn = (key: FilterKey, label: string) => (
+    <button
+      type="button"
+      key={key}
+      onClick={() => setFilter(key)}
+      className={`px-5 py-3 rounded-xl font-bold shrink-0 ${
+        filter === key
+          ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300'
+          : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto">
       <header className="mb-12">
         <h1 className="text-4xl font-black text-slate-900 mb-4 dark:text-white">Career Connect</h1>
         <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl">
-          Exclusive internship opportunities for EDUROUTE learners. Apply to verified companies based
-          on your roadmap progress.
+          Exclusive internship opportunities across software, cybersecurity, data, design, and more.
+          Matched to your skill profile when available.
         </p>
       </header>
 
@@ -330,7 +555,7 @@ export const Internships = () => {
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search roles or companies..."
+            placeholder="Search roles, companies, or skills..."
             className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
           />
         </div>
@@ -341,46 +566,13 @@ export const Internships = () => {
           >
             <Filter className="h-4 w-4" /> Filters
           </button>
-          <button
-            type="button"
-            onClick={() => setFilter('frontend')}
-            className={`px-5 py-3 rounded-xl font-bold shrink-0 ${
-              filter === 'frontend'
-                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300'
-                : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            Frontend
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('backend')}
-            className={`px-5 py-3 rounded-xl font-bold shrink-0 ${
-              filter === 'backend'
-                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300'
-                : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            Backend
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('remote')}
-            className={`px-5 py-3 rounded-xl font-bold shrink-0 ${
-              filter === 'remote'
-                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300'
-                : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            Remote Only
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('all')}
-            className="px-5 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold shrink-0"
-          >
-            All
-          </button>
+          {filterBtn('all', 'All')}
+          {filterBtn('frontend', 'Frontend')}
+          {filterBtn('backend', 'Backend / Cloud')}
+          {filterBtn('cyber', 'Cybersecurity')}
+          {filterBtn('data', 'Data / ML')}
+          {filterBtn('design', 'Design / Product')}
+          {filterBtn('remote', 'Remote Only')}
         </div>
       </div>
 
@@ -431,8 +623,8 @@ export const Internships = () => {
       </div>
 
       <div className="mt-12 text-center">
-        <p className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-          Showing {filteredInternships.length} opportunities
+        <p className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          Showing {filteredInternships.length} of {INTERNSHIPS.length} opportunities
         </p>
       </div>
     </div>
