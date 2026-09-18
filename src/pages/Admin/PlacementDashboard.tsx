@@ -17,6 +17,7 @@ import {
   getPlacementDashboardData,
   type PlacementDashboardData,
 } from '../../utils/placementDashboard';
+import { getAuthUser } from '../../utils/rbacAuth';
 
 const kpiIcons = [
   { key: 'applications', label: 'Total Applications', icon: FileText, tone: 'bg-violet-500/20 text-violet-300' },
@@ -79,7 +80,11 @@ function SimpleTrendChart({ data }: { data: PlacementDashboardData['trends'] }) 
 
 export const PlacementDashboard = () => {
   const [periodOpen, setPeriodOpen] = useState(false);
-  const data = useMemo(() => getPlacementDashboardData(), []);
+  const data = useMemo(() => {
+    const u = getAuthUser();
+    const name = u?.institutionName || u?.name || 'Modi Institute of Technology';
+    return getPlacementDashboardData(name);
+  }, []);
   const { kpis } = data;
   const total = Math.max(kpis.applications, 1);
 
@@ -158,7 +163,6 @@ export const PlacementDashboard = () => {
         </div>
       </div>
 
-      {/* KPI cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpiIcons.map((meta, i) => {
           const Icon = meta.icon;
@@ -186,7 +190,6 @@ export const PlacementDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        {/* Funnel */}
         <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)] xl:col-span-3">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -234,7 +237,6 @@ export const PlacementDashboard = () => {
           </div>
         </section>
 
-        {/* Skill gaps */}
         <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)] xl:col-span-2">
           <div className="mb-4 flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -281,7 +283,6 @@ export const PlacementDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        {/* Trends */}
         <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)] xl:col-span-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -308,7 +309,6 @@ export const PlacementDashboard = () => {
           <SimpleTrendChart data={data.trends} />
         </section>
 
-        {/* Companies */}
         <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)] xl:col-span-2">
           <div className="mb-4 flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
