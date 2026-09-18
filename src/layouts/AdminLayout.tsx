@@ -7,7 +7,6 @@ import {
   BookOpen,
   Building2,
   BarChart3,
-  Briefcase,
   Settings,
   LogOut,
   Bell,
@@ -24,7 +23,6 @@ const NAV = [
   { name: 'Verified Students', path: '/admin/verified', icon: ShieldCheck },
   { name: 'Courses', path: '/admin/courses', icon: BookOpen },
   { name: 'Company Partners', path: '/admin/partners', icon: Building2 },
-  { name: 'Placements', path: '/admin/placements', icon: Briefcase },
   { name: 'Reports', path: '/admin/reports', icon: BarChart3 },
   { name: 'Settings', path: '/admin/settings', icon: Settings },
 ];

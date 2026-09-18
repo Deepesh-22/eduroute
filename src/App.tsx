@@ -16,19 +16,15 @@ const RoleRoute = ({
   role,
 }: {
   children: ReactElement;
-  role: 'student' | 'admin' | 'industry';
+  role: 'student' | 'admin' | 'industry' | 'college';
 }) => {
   const user = getAuthUser();
   if (!user) {
     return <Navigate to="/login" replace />;
   }
   if (user.role !== role) {
-    if (user.role === 'admin') {
-      if (user.email?.toLowerCase() === 'college@gmail.com') {
-        return <Navigate to="/admin/placements" replace />;
-      }
-      return <Navigate to="/admin/pending-approvals" replace />;
-    }
+    if (user.role === 'college') return <Navigate to="/college/placements" replace />;
+    if (user.role === 'admin') return <Navigate to="/admin/pending-approvals" replace />;
     if (user.role === 'industry') return <Navigate to="/industry" replace />;
     return <Navigate to="/dashboard" replace />;
   }
@@ -38,6 +34,9 @@ const RoleRoute = ({
 /** Staff JWT admin OR password session (timepass) can open the admin panel. */
 const AdminAccessRoute = ({ children }: { children: ReactElement }) => {
   const user = getAuthUser();
+  if (user?.role === 'college') {
+    return <Navigate to="/college/placements" replace />;
+  }
   if (user?.role === 'admin') {
     return children;
   }
@@ -55,12 +54,8 @@ const AdminAccessRoute = ({ children }: { children: ReactElement }) => {
 const PublicOnlyRoute = ({ children }: { children: ReactElement }) => {
   if (isAuthenticated()) {
     const user = getAuthUser();
-    if (user?.role === 'admin') {
-      if (user.email?.toLowerCase() === 'college@gmail.com') {
-        return <Navigate to="/admin/placements" replace />;
-      }
-      return <Navigate to="/admin/pending-approvals" replace />;
-    }
+    if (user?.role === 'college') return <Navigate to="/college/placements" replace />;
+    if (user?.role === 'admin') return <Navigate to="/admin/pending-approvals" replace />;
     if (user?.role === 'industry') return <Navigate to="/industry" replace />;
     return <Navigate to="/dashboard" replace />;
   }
@@ -110,6 +105,9 @@ const IndustryWorkspace = lazy(() =>
 const PlacementDashboard = lazy(() =>
   import('./pages/Admin/PlacementDashboard').then((module) => ({ default: module.PlacementDashboard })),
 );
+const CollegeLayout = lazy(() =>
+  import('./layouts/CollegeLayout').then((module) => ({ default: module.CollegeLayout })),
+);
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-semibold">Loading...</div>
@@ -134,6 +132,7 @@ const DASHBOARD_ROUTES = [
   '/profile',
   '/skill-profile',
   '/industry',
+  '/college',
 ];
 
 const GlobalThemeButton = () => {
@@ -165,6 +164,20 @@ export function App() {
           <Route path="/course-manager" element={<AdminSessionRoute><CourseManager /></AdminSessionRoute>} />
 
           <Route
+            path="/college"
+            element={
+              <ProtectedRoute>
+                <RoleRoute role="college">
+                  <CollegeLayout />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/college/placements" replace />} />
+            <Route path="placements" element={<PlacementDashboard />} />
+          </Route>
+
+          <Route
             path="/industry"
             element={
               <ProtectedRoute>
@@ -182,8 +195,7 @@ export function App() {
             <Route path="/admin/verified" element={<AdminDashboard />} />
             <Route path="/admin/courses" element={<AdminDashboard />} />
             <Route path="/admin/partners" element={<AdminDashboard />} />
-            <Route path="/admin/placements" element={<PlacementDashboard />} />
-            <Route path="/admin/reports" element={<PlacementDashboard />} />
+            <Route path="/admin/reports" element={<AdminDashboard />} />
             <Route path="/admin/settings" element={<AdminDashboard />} />
           </Route>
 
