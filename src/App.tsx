@@ -81,6 +81,7 @@ const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin').then((module) =
 const CourseManager = lazy(() => import('./pages/Admin/CourseManager').then((module) => ({ default: module.CourseManager })));
 const ProfileDashboard = lazy(() => import('./pages/Profile/ProfileDashboard').then((module) => ({ default: module.ProfileDashboard })));
 const DSASheet = lazy(() => import('./pages/DSASheet').then((module) => ({ default: module.DSASheet })));
+const SkillProfile = lazy(() => import('./pages/SkillProfile').then((module) => ({ default: module.SkillProfile })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-semibold">Loading...</div>
@@ -103,6 +104,7 @@ const DASHBOARD_ROUTES = [
   '/dsa-sheet',
   '/admin',
   '/profile',
+  '/skill-profile',
 ];
 
 const GlobalThemeButton = () => {
@@ -163,6 +165,7 @@ export function App() {
             <Route path="/soft-skills" element={<RoleRoute role="student"><SoftSkills /></RoleRoute>} />
             <Route path="/dsa-sheet" element={<RoleRoute role="student"><DSASheet /></RoleRoute>} />
             <Route path="/profile" element={<RoleRoute role="student"><ProfileDashboard /></RoleRoute>} />
+            <Route path="/skill-profile" element={<RoleRoute role="student"><SkillProfile /></RoleRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
