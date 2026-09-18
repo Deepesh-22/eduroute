@@ -67,36 +67,42 @@ export const Dashboard = () => {
       <section
         className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-default)] min-h-[180px] md:min-h-[200px]"
       >
-        {/* Background photo (hot-air balloons / sky) — works in light & dark */}
+        {/* Background photo — boosted brightness/contrast for light mode visibility */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?auto=format&fit=crop&w=1600&q=80')",
+              "url('https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?auto=format&fit=crop&w=1600&q=85')",
+            filter: 'brightness(1.18) contrast(1.12) saturate(1.2)',
           }}
           aria-hidden
         />
-        {/* Light mode: soft white/lavender veil so navy text stays readable */}
+        {/* Light: strong veil only under text (left); right stays vivid. Dark: deeper navy. */}
         <div
-          className="absolute inset-0 bg-gradient-to-r from-white/92 via-white/80 to-indigo-50/55 dark:from-slate-950/90 dark:via-slate-950/75 dark:to-indigo-950/50"
+          className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/45 to-transparent dark:from-slate-950/92 dark:via-slate-950/70 dark:to-slate-950/35"
+          aria-hidden
+        />
+        {/* Extra soft top/bottom fade so edges feel premium */}
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-white/30 dark:from-slate-950/40 dark:via-transparent dark:to-slate-950/50"
           aria-hidden
         />
         <div className="relative z-10 flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
           <div className="max-w-xl">
-            <p className="mb-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+            <p className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
               <span className="mr-1">👋</span> Welcome back,
             </p>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white md:text-4xl">
               {firstName}! <span className="inline-block">👋</span>
             </h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">
               You've completed 45% of your current path. Keep it up!
             </p>
             <div className="mt-5 flex items-center gap-3">
               <div className="er-progress flex-1 max-w-xs">
                 <div className="er-progress-bar" style={{ width: '45%' }} />
               </div>
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">45%</span>
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-100">45%</span>
             </div>
           </div>
 
