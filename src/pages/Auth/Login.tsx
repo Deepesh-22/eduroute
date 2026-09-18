@@ -57,7 +57,7 @@ export const Login = () => {
           setError(
             staffErr instanceof Error
               ? staffErr.message
-              : 'Staff login failed. Use admin@gmail.com / timepass.',
+              : 'Staff login failed. Check email and password.',
           );
           return;
         }
@@ -121,13 +121,6 @@ export const Login = () => {
               <UserCog className="h-4 w-4 inline mr-1" /> Staff/Admin
             </button>
           </div>
-
-          {role === 'admin' && (
-            <p className="text-xs text-slate-500 mb-3">
-              Staff: <span className="font-semibold text-slate-700">admin@gmail.com</span> /{' '}
-              <span className="font-semibold text-slate-700">timepass</span>
-            </p>
-          )}
 
           {error && (
             <p
