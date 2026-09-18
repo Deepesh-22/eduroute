@@ -10,16 +10,21 @@ import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
+  Target,
 } from 'lucide-react';
 import { COURSES } from '../data/mockData';
 import { Course } from '../types';
 import { getCurrentUser, getDisplayFirstName } from '../utils/userProfile';
+import { readOnboarding } from '../utils/onboardingStore';
 
 export const Dashboard = () => {
   const currentUser = getCurrentUser();
   const firstName = getDisplayFirstName() || 'there';
   const enrolledCourses = COURSES.filter((c) => currentUser.enrolledCourses.includes(c.id)).slice(0, 2);
   const recommendedCourses = COURSES.filter((c) => !currentUser.enrolledCourses.includes(c.id)).slice(0, 4);
+  const onboarding = readOnboarding();
+  const gapCount = onboarding.missingSkills?.length || 0;
+  const hasSkillProfile = Boolean(onboarding.completedAt);
 
   // Demo stats aligned with reference
   const stats = [
@@ -67,7 +72,6 @@ export const Dashboard = () => {
       <section
         className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-default)] min-h-[180px] md:min-h-[200px]"
       >
-        {/* Background photo — boosted brightness/contrast for light mode visibility */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
           style={{
@@ -77,12 +81,10 @@ export const Dashboard = () => {
           }}
           aria-hidden
         />
-        {/* Light: strong veil only under text (left); right stays vivid. Dark: deeper navy. */}
         <div
           className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/45 to-transparent dark:from-slate-950/92 dark:via-slate-950/70 dark:to-slate-950/35"
           aria-hidden
         />
-        {/* Extra soft top/bottom fade so edges feel premium */}
         <div
           className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-white/30 dark:from-slate-950/40 dark:via-transparent dark:to-slate-950/50"
           aria-hidden
@@ -106,7 +108,6 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Verify College card */}
           <div className="flex shrink-0 items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-card)]/80 px-5 py-4 shadow-sm backdrop-blur-sm">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/20">
               <ShieldCheck className="h-5 w-5 text-violet-600 dark:text-violet-400" />
@@ -124,7 +125,6 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Soft accent shapes (low opacity over photo) */}
         <div
           className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-20 dark:opacity-15"
           aria-hidden
@@ -143,7 +143,6 @@ export const Dashboard = () => {
         </div>
       </section>
 
-      {/* ========== STATS ROW ========== */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="er-stat-card">
@@ -173,7 +172,34 @@ export const Dashboard = () => {
         ))}
       </section>
 
-      {/* ========== CONTINUE LEARNING ========== */}
+      <section>
+        <Link
+          to="/skill-profile"
+          className="er-card er-card-hover group flex flex-col gap-4 p-5 transition-all sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]">
+              <Target className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[var(--text-primary)] group-hover:text-[var(--accent)]">
+                Student Skill Profile
+              </h2>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                {hasSkillProfile
+                  ? gapCount > 0
+                    ? `You have ${gapCount} skill gap${gapCount === 1 ? '' : 's'} marked — view strengths, tracks, and next steps.`
+                    : 'View your strengths, target tracks, and recommended next steps.'
+                  : 'Complete onboarding to unlock strengths, gaps, and a personal path.'}
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[var(--accent)]">
+            Open profile <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          </span>
+        </Link>
+      </section>
+
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--text-primary)]">Continue Learning</h2>
@@ -200,7 +226,6 @@ export const Dashboard = () => {
         </div>
       </section>
 
-      {/* ========== RECOMMENDED ========== */}
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
@@ -225,7 +250,6 @@ export const Dashboard = () => {
   );
 };
 
-/* ---------- Continue Learning card ---------- */
 function ContinueCard({ course, progress }: { course: Course; progress: number }) {
   return (
     <Link
@@ -270,7 +294,6 @@ function ContinueCard({ course, progress }: { course: Course; progress: number }
   );
 }
 
-/* ---------- DSA Beginner Sheet card ---------- */
 function DsaSheetCard() {
   return (
     <Link
@@ -312,7 +335,6 @@ function DsaSheetCard() {
   );
 }
 
-/* ---------- Recommended card ---------- */
 const BADGES = [
   { label: 'FREE', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' },
   { label: 'BEGINNER', className: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' },
