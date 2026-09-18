@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -11,14 +11,19 @@ import {
   Sparkles,
   Target,
   AlertTriangle,
+  RefreshCw,
+  Layers,
 } from 'lucide-react';
 import {
   INTEREST_OPTIONS,
   InterestTrack,
   interestLabel,
   readOnboarding,
+  TRACK_RECOMMENDATIONS,
   type GapAnswer,
+  type OnboardingProfile,
 } from '../utils/onboardingStore';
+import { getAuthUser } from '../utils/rbacAuth';
 
 const TRACK_ICONS: Record<InterestTrack, typeof Code2> = {
   software: Code2,
@@ -83,7 +88,20 @@ function scoreFromRows(rows: SkillRow[]): number {
 }
 
 export const SkillProfile = () => {
-  const profile = useMemo(() => readOnboarding(), []);
+  const [profile, setProfile] = useState<OnboardingProfile>(() => readOnboarding());
+  const auth = getAuthUser();
+
+  // Re-read when tab focuses (e.g. after onboarding in another tab)
+  useEffect(() => {
+    const refresh = () => setProfile(readOnboarding());
+    window.addEventListener('focus', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+
   const rows = useMemo(
     () => buildSkillRows(profile.gapAnswers || [], profile.missingSkills || []),
     [profile.gapAnswers, profile.missingSkills],
@@ -94,47 +112,29 @@ export const SkillProfile = () => {
   const tracks = profile.interests || [];
   const hasData = Boolean(profile.completedAt) && (tracks.length > 0 || rows.length > 0);
 
-  const nextSteps = useMemo(() => {
-    const steps: { title: string; blurb: string; to: string; icon: typeof Map }[] = [];
-    const primary = tracks[0] || 'software';
-
-    if (primary === 'software' || gaps.some((g) => /data structures|programming/i.test(g.skill))) {
-      steps.push({
-        title: 'Practice DSA',
-        blurb: 'Close fundamentals with the beginner sheet.',
-        to: '/dsa-sheet',
-        icon: Code2,
+  const recommendations = useMemo(() => {
+    const list: { title: string; blurb: string; to: string; tag: string; track?: InterestTrack }[] = [];
+    const seen = new Set<string>();
+    const sources = tracks.length ? tracks : (['software'] as InterestTrack[]);
+    sources.forEach((t) => {
+      (TRACK_RECOMMENDATIONS[t] || []).forEach((r) => {
+        if (seen.has(r.to)) return;
+        seen.add(r.to);
+        list.push({ ...r, track: t });
       });
-    }
-    steps.push({
-      title: 'Follow a roadmap',
-      blurb:
-        primary === 'cybersecurity'
-          ? 'Security path: networking, Linux, and labs.'
-          : primary === 'data_analyst'
-            ? 'Data path: SQL, Python, and visualization.'
-            : 'Software path: projects, APIs, and Git.',
-      to: '/roadmaps',
-      icon: Map,
-    });
-    steps.push({
-      title: 'Explore internships',
-      blurb: 'Apply skills with real-world experience.',
-      to: '/internships',
-      icon: Briefcase,
     });
     if (gaps.length > 0) {
-      steps.push({
+      list.push({
         title: 'Ask Buddy AI',
-        blurb: `Focus on: ${gaps
-          .slice(0, 2)
+        blurb: `Focus on gaps: ${gaps
+          .slice(0, 3)
           .map((g) => g.skill)
           .join(', ')}.`,
         to: '/buddy',
-        icon: Sparkles,
+        tag: 'AI',
       });
     }
-    return steps.slice(0, 4);
+    return list;
   }, [tracks, gaps]);
 
   return (
@@ -143,36 +143,55 @@ export const SkillProfile = () => {
         <div>
           <p className="text-sm font-semibold text-[var(--accent)]">Student Skill Profile</p>
           <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[var(--text-primary)] md:text-3xl">
-            Your skills & gaps
+            Your skills & career path
           </h1>
           <p className="mt-1 max-w-xl text-sm text-[var(--text-secondary)]">
-            Built from your onboarding interests and skill-check answers. No account sync required.
+            Based on what you chose in onboarding
+            {auth?.email ? (
+              <>
+                {' '}
+                for <span className="font-semibold text-[var(--text-primary)]">{auth.email}</span>
+              </>
+            ) : null}
+            . Saved on this device with your login.
           </p>
         </div>
-        {hasData && (
-          <div className="er-card flex items-center gap-4 px-5 py-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-soft)]">
-              <Target className="h-6 w-6 text-[var(--accent)]" />
-            </div>
-            <div>
-              <div className="text-xs font-medium text-[var(--text-secondary)]">Skill readiness</div>
-              <div className="text-2xl font-bold text-[var(--text-primary)]">{score}%</div>
-              <div className="text-xs text-[var(--text-muted)]">
-                {strengths.length} strength{strengths.length === 1 ? '' : 's'} · {gaps.length} gap
-                {gaps.length === 1 ? '' : 's'}
+        <div className="flex flex-wrap items-center gap-3">
+          {hasData && (
+            <div className="er-card flex items-center gap-4 px-5 py-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-soft)]">
+                <Target className="h-6 w-6 text-[var(--accent)]" />
+              </div>
+              <div>
+                <div className="text-xs font-medium text-[var(--text-secondary)]">Skill readiness</div>
+                <div className="text-2xl font-bold text-[var(--text-primary)]">{score}%</div>
+                <div className="text-xs text-[var(--text-muted)]">
+                  {strengths.length} strength{strengths.length === 1 ? '' : 's'} · {gaps.length} gap
+                  {gaps.length === 1 ? '' : 's'}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+          <Link
+            to="/onboarding"
+            className="er-btn er-btn-primary inline-flex items-center gap-2 !px-4 !py-2.5 text-sm"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {hasData ? 'Update answers' : 'Start skill check'}
+          </Link>
+        </div>
       </header>
 
       {!hasData ? (
-        <section className="er-card p-8 text-center">
-          <Sparkles className="mx-auto h-10 w-10 text-[var(--accent)]" />
+        <section className="er-card p-8 text-center sm:p-12">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent-soft)]">
+            <Sparkles className="h-7 w-7 text-[var(--accent)]" />
+          </div>
           <h2 className="mt-4 text-lg font-bold text-[var(--text-primary)]">No skill profile yet</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-[var(--text-secondary)]">
-            Complete the short interest + skill-gap onboarding to see strengths, gaps, and recommended
-            next steps here.
+            Pick a track (Software / Cyber / Data) and answer a few yes/no questions. We store your
+            choices with your account email on this device and unlock roadmaps like DSA, Frontend, and
+            Backend for SDE.
           </p>
           <Link to="/onboarding" className="er-btn er-btn-primary mt-6 inline-flex items-center gap-2">
             Start skill check <ArrowRight className="h-4 w-4" />
@@ -180,9 +199,11 @@ export const SkillProfile = () => {
         </section>
       ) : (
         <>
-          {/* Target tracks */}
           <section>
-            <h2 className="mb-3 text-lg font-bold text-[var(--text-primary)]">Target tracks</h2>
+            <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
+              <Layers className="h-5 w-5 text-[var(--accent)]" />
+              Target tracks
+            </h2>
             {tracks.length === 0 ? (
               <p className="text-sm text-[var(--text-secondary)]">
                 No tracks selected.{' '}
@@ -201,7 +222,9 @@ export const SkillProfile = () => {
                       key={id}
                       className={`er-card flex items-start gap-3 p-4 ring-1 ${accent.ring}`}
                     >
-                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${accent.soft}`}>
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${accent.soft}`}
+                      >
                         <Icon className={`h-5 w-5 ${accent.text}`} />
                       </div>
                       <div className="min-w-0">
@@ -219,7 +242,6 @@ export const SkillProfile = () => {
             )}
           </section>
 
-          {/* Skill list */}
           <section>
             <div className="mb-3 flex items-center justify-between gap-2">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Skills</h2>
@@ -229,7 +251,7 @@ export const SkillProfile = () => {
             </div>
             {rows.length === 0 ? (
               <div className="er-card p-6 text-sm text-[var(--text-secondary)]">
-                You skipped the skill questions. Re-run onboarding to mark strengths and gaps.
+                You skipped the skill questions. Update onboarding to mark strengths and gaps.
                 <div className="mt-3">
                   <Link to="/onboarding" className="font-semibold text-[var(--accent)]">
                     Retake skill check →
@@ -243,7 +265,7 @@ export const SkillProfile = () => {
                     key={row.skill}
                     className={`er-card flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between ${
                       row.status === 'gap'
-                        ? 'border-rose-200/80 bg-rose-50/50 dark:border-rose-500/30 dark:bg-rose-500/10'
+                        ? 'border-rose-200/80 bg-rose-50/60 dark:border-rose-500/30 dark:bg-rose-500/10'
                         : ''
                     }`}
                   >
@@ -275,9 +297,8 @@ export const SkillProfile = () => {
             )}
           </section>
 
-          {/* Gaps callout */}
           {gaps.length > 0 && (
-            <section className="er-card border-rose-200/60 p-5 dark:border-rose-500/25">
+            <section className="er-card border-rose-200/70 p-5 dark:border-rose-500/25">
               <h2 className="flex items-center gap-2 text-base font-bold text-[var(--text-primary)]">
                 <AlertTriangle className="h-4 w-4 text-rose-500" />
                 Skill gaps to close
@@ -295,22 +316,45 @@ export const SkillProfile = () => {
             </section>
           )}
 
-          {/* Recommended next steps */}
           <section>
-            <h2 className="mb-3 text-lg font-bold text-[var(--text-primary)]">Recommended next steps</h2>
+            <h2 className="mb-1 text-lg font-bold text-[var(--text-primary)]">
+              Recommended for your track
+            </h2>
+            <p className="mb-4 text-sm text-[var(--text-secondary)]">
+              {tracks.includes('software')
+                ? 'Software / SDE path: DSA, Frontend, Backend, and Fullstack roadmaps.'
+                : tracks.includes('cybersecurity')
+                  ? 'Cyber path: security roadmap, practice, and internships.'
+                  : tracks.includes('data_analyst')
+                    ? 'Data path: analyst roadmap, SQL/Python practice, internships.'
+                    : 'Pick a track in onboarding for tailored roadmaps.'}
+            </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {nextSteps.map((step) => (
+              {recommendations.map((step) => (
                 <Link
                   key={step.to + step.title}
                   to={step.to}
                   className="er-card er-card-hover group flex items-start gap-3 p-4 transition-all"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]">
-                    <step.icon className="h-5 w-5" />
+                    {step.to.includes('dsa') ? (
+                      <Code2 className="h-5 w-5" />
+                    ) : step.to.includes('internship') ? (
+                      <Briefcase className="h-5 w-5" />
+                    ) : step.to.includes('buddy') ? (
+                      <Sparkles className="h-5 w-5" />
+                    ) : (
+                      <Map className="h-5 w-5" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent)]">
-                      {step.title}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent)]">
+                        {step.title}
+                      </span>
+                      <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--accent)]">
+                        {step.tag}
+                      </span>
                     </div>
                     <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{step.blurb}</p>
                   </div>
@@ -319,13 +363,6 @@ export const SkillProfile = () => {
               ))}
             </div>
           </section>
-
-          <p className="text-center text-xs text-[var(--text-muted)]">
-            Want to update answers?{' '}
-            <Link to="/onboarding" className="font-semibold text-[var(--accent)]">
-              Re-run onboarding
-            </Link>
-          </p>
         </>
       )}
     </div>

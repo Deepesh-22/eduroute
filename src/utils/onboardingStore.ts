@@ -1,7 +1,9 @@
 /**
- * Client-side onboarding profile for AI Buddy context.
- * Stored in localStorage (no backend change required).
+ * Client-side onboarding profile for AI Buddy + Skill Profile.
+ * Stored in localStorage, keyed by student email when available (no backend).
  */
+
+import { getAuthUser } from './rbacAuth';
 
 export type InterestTrack = 'software' | 'cybersecurity' | 'data_analyst';
 
@@ -18,9 +20,12 @@ export type OnboardingProfile = {
   missingSkills: string[];
   completedAt: string | null;
   skipped: boolean;
+  /** Email this profile belongs to (when known). */
+  userEmail?: string | null;
 };
 
-const STORAGE_KEY = 'eduroute:onboarding-v1';
+const GLOBAL_KEY = 'eduroute:onboarding-v1';
+const BY_EMAIL_PREFIX = 'eduroute:onboarding-v1:';
 
 const EMPTY: OnboardingProfile = {
   interests: [],
@@ -28,7 +33,21 @@ const EMPTY: OnboardingProfile = {
   missingSkills: [],
   completedAt: null,
   skipped: false,
+  userEmail: null,
 };
+
+function emailKey(email: string) {
+  return `${BY_EMAIL_PREFIX}${email.trim().toLowerCase()}`;
+}
+
+function currentEmail(): string | null {
+  try {
+    const u = getAuthUser();
+    return u?.email?.trim().toLowerCase() || null;
+  } catch {
+    return null;
+  }
+}
 
 export const INTEREST_OPTIONS: {
   id: InterestTrack;
@@ -90,22 +109,133 @@ export const GAP_QUESTIONS: Record<
   ],
 };
 
+/** Roadmap / path suggestions by career track (matches existing /roadmaps/:id). */
+export type TrackRecommendation = {
+  title: string;
+  blurb: string;
+  to: string;
+  tag: string;
+};
+
+export const TRACK_RECOMMENDATIONS: Record<InterestTrack, TrackRecommendation[]> = {
+  software: [
+    {
+      title: 'DSA Beginner Sheet',
+      blurb: 'Arrays, linked lists, and problem-solving for SDE interviews.',
+      to: '/dsa-sheet',
+      tag: 'DSA',
+    },
+    {
+      title: 'Frontend Developer',
+      blurb: 'HTML, CSS, React, and modern UI architecture.',
+      to: '/roadmaps/frontend',
+      tag: 'Frontend',
+    },
+    {
+      title: 'Backend Developer',
+      blurb: 'Node.js, SQL/NoSQL, APIs, and system design basics.',
+      to: '/roadmaps/backend',
+      tag: 'Backend',
+    },
+    {
+      title: 'Fullstack Engineer',
+      blurb: 'End-to-end path from UI to infrastructure.',
+      to: '/roadmaps/fullstack',
+      tag: 'Fullstack',
+    },
+    {
+      title: 'Internships',
+      blurb: 'Apply with projects and real interview practice.',
+      to: '/internships',
+      tag: 'Career',
+    },
+  ],
+  cybersecurity: [
+    {
+      title: 'Cybersecurity Roadmap',
+      blurb: 'Networking, Linux, ethical hacking, and defense.',
+      to: '/roadmaps/cybersecurity',
+      tag: 'Security',
+    },
+    {
+      title: 'Assessments',
+      blurb: 'Check networking and web vuln fundamentals.',
+      to: '/assessments',
+      tag: 'Practice',
+    },
+    {
+      title: 'Internships',
+      blurb: 'Security and SOC-style opportunities.',
+      to: '/internships',
+      tag: 'Career',
+    },
+  ],
+  data_analyst: [
+    {
+      title: 'Data Analyst Roadmap',
+      blurb: 'SQL, Python, stats, and visualization.',
+      to: '/roadmaps/data-analyst',
+      tag: 'Data',
+    },
+    {
+      title: 'Assessments',
+      blurb: 'Practice SQL and analysis quizzes.',
+      to: '/assessments',
+      tag: 'Practice',
+    },
+    {
+      title: 'Internships',
+      blurb: 'Analyst and BI intern roles.',
+      to: '/internships',
+      tag: 'Career',
+    },
+  ],
+};
+
 export function interestLabel(id: InterestTrack): string {
   return INTEREST_OPTIONS.find((o) => o.id === id)?.title || id;
 }
 
 export function readOnboarding(): OnboardingProfile {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    if (typeof window === 'undefined') return { ...EMPTY };
+    const email = currentEmail();
+    if (email) {
+      const byEmail = localStorage.getItem(emailKey(email));
+      if (byEmail) {
+        return { ...EMPTY, ...JSON.parse(byEmail), userEmail: email } as OnboardingProfile;
+      }
+    }
+    const raw = localStorage.getItem(GLOBAL_KEY);
     if (!raw) return { ...EMPTY };
-    return { ...EMPTY, ...JSON.parse(raw) } as OnboardingProfile;
+    const parsed = { ...EMPTY, ...JSON.parse(raw) } as OnboardingProfile;
+    // Migrate global → email bucket when logged in
+    if (email && parsed.completedAt) {
+      writeOnboarding({ ...parsed, userEmail: email });
+      return { ...parsed, userEmail: email };
+    }
+    return parsed;
   } catch {
     return { ...EMPTY };
   }
 }
 
 export function writeOnboarding(profile: OnboardingProfile) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+  try {
+    if (typeof window === 'undefined') return;
+    const email = currentEmail() || profile.userEmail || null;
+    const payload: OnboardingProfile = {
+      ...profile,
+      userEmail: email,
+    };
+    const json = JSON.stringify(payload);
+    localStorage.setItem(GLOBAL_KEY, json);
+    if (email) {
+      localStorage.setItem(emailKey(email), json);
+    }
+  } catch {
+    // ignore private mode
+  }
 }
 
 export function saveInterests(interests: InterestTrack[]) {
