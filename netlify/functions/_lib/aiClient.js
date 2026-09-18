@@ -29,7 +29,6 @@ function extractUserQuestion(raw) {
   return text;
 }
 
-// Prefer models most free/developer accounts can access first
 const GROQ_MODEL_CANDIDATES = [
   'llama-3.1-8b-instant',
   'llama-3.3-70b-versatile',
@@ -60,21 +59,16 @@ function needsWebSearch(userMessage) {
 }
 
 function localFallbackReply({ messages, language, reason }) {
-  const lastMessage = messages[messages.length - 1]?.content || 'learning guidance';
+  const lastRaw = messages[messages.length - 1]?.content || 'your question';
+  const lastMessage = extractUserQuestion(lastRaw);
   const intro =
     language === 'hindi'
       ? 'मैं Buddy हूँ। अभी limited mode में हूँ, लेकिन आपकी पूरी help करूंगा।'
       : language === 'hinglish'
         ? 'Main Buddy hoon. Abhi limited mode hai, but main full guidance dunga.'
-        : 'I am Buddy in limited mode, but I can still guide you effectively.';
+        : 'I am Buddy in limited mode, but I can still help.';
   const hint = reason ? '\n\n(Debug: ' + reason + ')' : '';
-  return (
-    intro +
-    '\n\nBased on: "' +
-    lastMessage +
-    '"\n\nBeginner → Intermediate → Pro Plan:\n1) Beginner: strengthen fundamentals + 1 mini project.\n2) Intermediate: framework mastery + API integration + portfolio update.\n3) Pro: system design, testing, interview prep, and internship applications.\n\nWeekly challenge: complete one project milestone and one mock interview.' +
-    hint
-  );
+  return intro + '\n\nYou asked: "' + lastMessage + '"\n\nPlease try again in a moment for a full AI answer.' + hint;
 }
 
 async function callGroqOnce({ apiKey, model, messages, temperature }) {
@@ -105,14 +99,12 @@ async function callGroq({ apiKey, model, messages, temperature }) {
   if (!apiKey || !String(apiKey).trim()) {
     throw new Error('GROQ_API_KEY is empty at runtime');
   }
-
   const preferred = (model || env('GROQ_MODEL') || 'llama-3.1-8b-instant').trim();
   const candidates = [];
   if (preferred) candidates.push(preferred);
   GROQ_MODEL_CANDIDATES.forEach(function (m) {
     if (candidates.indexOf(m) === -1) candidates.push(m);
   });
-
   let lastError = null;
   for (let i = 0; i < candidates.length; i++) {
     const m = candidates[i];
@@ -172,13 +164,11 @@ async function searchWithWikipedia(query) {
   const searchData = await searchRes.json();
   const hits = searchData?.query?.search || [];
   if (!hits.length) return { answer: '', results: [], provider: 'wikipedia' };
-
   const topTitle = hits[0].title;
   const sumRes = await fetch(
     'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(topTitle),
     { headers: { 'User-Agent': 'EduRoute-Buddy/1.0 (education)' } }
   );
-
   let answer = '';
   let pageUrl = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(topTitle.replace(/ /g, '_'));
   if (sumRes.ok) {
@@ -186,14 +176,10 @@ async function searchWithWikipedia(query) {
     answer = sum.extract || '';
     pageUrl = (sum.content_urls && sum.content_urls.desktop && sum.content_urls.desktop.page) || pageUrl;
   }
-
   const results = hits.slice(0, 5).map(function (h, i) {
     return {
       title: h.title,
-      url:
-        i === 0
-          ? pageUrl
-          : 'https://en.wikipedia.org/wiki/' + encodeURIComponent(h.title.replace(/ /g, '_')),
+      url: i === 0 ? pageUrl : 'https://en.wikipedia.org/wiki/' + encodeURIComponent(h.title.replace(/ /g, '_')),
       snippet: String(h.snippet || '').replace(/<[^>]+>/g, ''),
     };
   });
@@ -306,19 +292,37 @@ async function generateBuddyReply({ messages, language }) {
     }
   }
 
+  // Strip profile prefixes so the model answers the real question
+  const cleanMessages = ([].concat(messages)).map(function (m) {
+    if (!m || m.role !== 'user') return m;
+    return { role: 'user', content: extractUserQuestion(m.content || m.text || '') };
+  });
+
+  const profileHint = (function () {
+    const raw = lastUserMessageRaw || '';
+    const m = raw.match(/\[Student profile\]\s*([\s\S]*?)(?:\n\n|$)/i);
+    if (!m) return '';
+    const profile = m[1].trim();
+    if (!profile) return '';
+    return (
+      ' Optional student context (use ONLY if the question is about learning/career/skills): ' +
+      profile.slice(0, 400) +
+      '.'
+    );
+  })();
+
   const systemMessage = {
     role: 'system',
     content:
-      "You are Buddy, EDUROUTE's friendly student mentor AI. " +
-      'CRITICAL RULES: (1) Always answer the user\'s LATEST question first and directly. ' +
-      '(2) If the user asks a factual / current-affairs question (e.g. who is the PM of India), give the correct short factual answer — do NOT turn it into a skill-gap or roadmap. ' +
-      '(3) Only use student profile / career interests when the question is about learning, careers, roadmaps, skills, internships, or resumes. ' +
-      '(4) When live search results are present, base the factual answer on them and cite briefly. ' +
-      'You also help with learning roadmaps, skill-gap analysis, internships, resume tips, motivation, and study wellness (general info only). Prefer clear structured answers. ' +
-      ROADMAP_FALLBACK +
-      ' ' +
+      "You are Buddy, EDUROUTE's AI assistant. " +
+      'RULES (must follow): ' +
+      '(1) Answer the user\'s latest message directly and helpfully. ' +
+      '(2) Do NOT invent a learning roadmap, skill-gap analysis, or career blueprint unless the user explicitly asks for a roadmap, plan, skill gap, or career guidance. ' +
+      '(3) For greetings, concepts, coding, facts, or general questions — answer normally like ChatGPT. ' +
+      '(4) For factual/current questions, prefer live search results when provided. ' +
+      '(5) Keep answers clear and structured when useful, but match the question type. ' +
       languageDirective +
-      ' Keep responses safe and education focused.' +
+      profileHint +
       searchContext,
   };
 
@@ -328,42 +332,42 @@ async function generateBuddyReply({ messages, language }) {
       reply = await callGroq({
         apiKey: groqKey,
         model: env('GROQ_MODEL'),
-        messages: [systemMessage].concat(messages),
+        messages: [systemMessage].concat(cleanMessages),
         temperature: temperature,
       });
     } else if (provider === 'gemini' && geminiKey) {
       reply = await callGemini({
         apiKey: geminiKey,
         model: env('GEMINI_MODEL'),
-        messages: [systemMessage].concat(messages),
+        messages: [systemMessage].concat(cleanMessages),
         temperature: temperature,
       });
     } else if (provider === 'openai' && openaiKey) {
       reply = await callOpenAI({
         apiKey: openaiKey,
         model: env('OPENAI_MODEL'),
-        messages: [systemMessage].concat(messages),
+        messages: [systemMessage].concat(cleanMessages),
         temperature: temperature,
       });
     } else if (groqKey) {
       reply = await callGroq({
         apiKey: groqKey,
         model: env('GROQ_MODEL'),
-        messages: [systemMessage].concat(messages),
+        messages: [systemMessage].concat(cleanMessages),
         temperature: temperature,
       });
     } else if (openaiKey) {
       reply = await callOpenAI({
         apiKey: openaiKey,
         model: env('OPENAI_MODEL'),
-        messages: [systemMessage].concat(messages),
+        messages: [systemMessage].concat(cleanMessages),
         temperature: temperature,
       });
     } else if (geminiKey) {
       reply = await callGemini({
         apiKey: geminiKey,
         model: env('GEMINI_MODEL'),
-        messages: [systemMessage].concat(messages),
+        messages: [systemMessage].concat(cleanMessages),
         temperature: temperature,
       });
     } else if (searchData && usedWebSearch) {
