@@ -158,6 +158,18 @@ function notifyUpdated() {
   }
 }
 
+function normalizeStipend(raw: string): string {
+  let s = raw.trim();
+  if (!s) return 'Negotiable';
+  // Replace dollar signs with Indian rupee
+  s = s.replace(/\$/g, '₹');
+  // If pure number (optionally with /mo), prefix ₹
+  if (/^[\d,]+(\s*\/?\s*(mo|month|yr|year)?)?$/i.test(s)) {
+    s = `₹${s}`;
+  }
+  return s;
+}
+
 function postingToStudentCard(p: IndustryPosting): StudentInternshipCard {
   return {
     id: p.id,
@@ -224,7 +236,7 @@ export function addIndustryPosting(
     id: `ind-post-${Date.now()}`,
     title: (input.title || '').trim() || 'Untitled internship',
     skills: input.skills?.length ? input.skills : ['General'],
-    stipend: (input.stipend || '').trim() || 'Negotiable',
+    stipend: normalizeStipend((input.stipend || '').trim() || 'Negotiable'),
     location: (input.location || '').trim() || 'Remote',
     description:
       (input.description || '').trim() ||
