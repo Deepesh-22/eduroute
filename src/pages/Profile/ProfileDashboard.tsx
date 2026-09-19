@@ -16,6 +16,7 @@ import { PROFILE_DASHBOARD_MOCK, type ProfileDashboardData } from '../../data/pr
 import { getAuthToken, getAuthUser, saveAuthSession } from '../../utils/rbacAuth';
 import { getStoredUserProfile, saveUserProfile } from '../../utils/userProfile';
 import { readOnboarding } from '../../utils/onboardingStore';
+import { BuildCvCta } from '../../components/BuildCvCta';
 
 const difficultyColors = {
   easy: '#22c55e',
@@ -217,6 +218,8 @@ export const ProfileDashboard = () => {
           </Link>
         </section>
 
+        <BuildCvCta />
+
         {isEditing && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 dark:bg-black/70"
@@ -398,76 +401,36 @@ export const ProfileDashboard = () => {
             </div>
             <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
               <p className="text-xs uppercase text-[var(--text-muted)]">Platform Rank</p>
-              <p className="mt-1 text-2xl font-black text-[var(--accent)]">#{profileData.rank.platform.toLocaleString()}</p>
+              <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">#{profileData.rank.platform.toLocaleString()}</p>
             </div>
             <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
-              <p className="text-xs uppercase text-[var(--text-muted)]">Current / Max Streak</p>
-              <p className="mt-2 flex items-center gap-2 text-2xl font-black text-[var(--text-primary)]">
-                <Flame className="h-5 w-5 text-orange-400" /> {profileData.streak.current} / {profileData.streak.max}
-              </p>
+              <div className="flex items-center gap-2">
+                <Flame className="h-5 w-5 text-orange-500" />
+                <p className="text-xs uppercase text-[var(--text-muted)]">Current Streak</p>
+              </div>
+              <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">{profileData.streak.current} days</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Best: {profileData.streak.best} days</p>
             </div>
           </section>
         </div>
 
-        <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <article className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Courses</p>
-            <p className="mt-2 text-3xl font-black text-[var(--text-primary)]">
-              {profileData.courses?.filter((course) => course.enrolled).length ?? 0}
-            </p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">Enrolled courses from your account</p>
-          </article>
-          <article className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Roadmaps</p>
-            <p className="mt-2 text-3xl font-black text-[var(--text-primary)]">{profileData.roadmaps?.length ?? 0}</p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">Available learning paths</p>
-          </article>
-          <article className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Assessments</p>
-            <p className="mt-2 text-3xl font-black text-[var(--text-primary)]">
-              {profileData.scores?.assessmentAttempts ?? 0}
-            </p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">Attempts recorded on your account</p>
-          </article>
-        </section>
-
         <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
-          <h2 className="mb-4 text-lg font-bold text-[var(--text-primary)]">Recent Activity</h2>
+          <h2 className="mb-4 text-lg font-bold text-[var(--text-primary)]">Recent Submissions</h2>
           <div className="space-y-3">
-            {profileData.recentActivity.map((activity) => (
+            {profileData.recentSubmissions.map((sub) => (
               <article
-                key={activity.id}
-                className="flex flex-col gap-3 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 text-sm md:flex-row md:items-center md:justify-between"
+                key={sub.id}
+                className="flex flex-col gap-2 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-semibold text-[var(--text-primary)]">{activity.problemName}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{activity.submittedAt}</p>
+                  <p className="font-semibold text-[var(--text-primary)]">{sub.title}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {sub.difficulty} · {sub.status} · {sub.submittedAt}
+                  </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span
-                    className={`rounded-full px-3 py-1 font-semibold ${
-                      activity.status === 'Accepted'
-                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
-                        : 'bg-amber-500/15 text-amber-600 dark:text-amber-300'
-                    }`}
-                  >
-                    {activity.status}
-                  </span>
-                  <span
-                    className={`rounded-full px-3 py-1 font-semibold ${
-                      activity.difficulty === 'Easy'
-                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
-                        : activity.difficulty === 'Medium'
-                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-300'
-                          : 'bg-rose-500/15 text-rose-600 dark:text-rose-300'
-                    }`}
-                  >
-                    {activity.difficulty}
-                  </span>
-                  <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 font-semibold text-[var(--accent)]">
-                    +{activity.xpEarned} XP
-                  </span>
-                </div>
+                <span className="text-xs font-bold text-[var(--text-secondary)]">
+                  {sub.earned} XP
+                </span>
               </article>
             ))}
           </div>
