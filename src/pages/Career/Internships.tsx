@@ -27,6 +27,7 @@ import {
   type InternshipApplication,
 } from '../../utils/internshipApplications';
 import { industryPostingsAsInternships } from '../../utils/industryStore';
+import { BuildCvCta } from '../../components/BuildCvCta';
 
 export const INTERNSHIPS = [
   {
@@ -420,6 +421,11 @@ export const Internships = () => {
         </span>
       </Link>
 
+      <BuildCvCta
+        title="Build CV for applications"
+        subtitle="Create a resume with free templates and download PDF before you apply."
+        ctaLabel="Build CV"
+      />
       <MyApplicationsPanel />
 
       {recommended.length > 0 && (
