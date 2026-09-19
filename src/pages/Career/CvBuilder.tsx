@@ -15,7 +15,13 @@ const SECTIONS: { id: SectionId; label: string; icon: typeof User }[] = [
   { id: 'design', label: 'Design', icon: Palette },
 ];
 function parseSkills(raw: string) { return raw.split(/[,;\n]/).map(s => s.trim()).filter(Boolean).slice(0, 28); }
-function esc(s: string) { return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); }
+function esc(s: string) {
+  return String(s || '')
+    .replace(/&/g, '&' + 'amp;')
+    .replace(/</g, '&' + 'lt;')
+    .replace(/>/g, '&' + 'gt;')
+    .replace(/"/g, '&' + 'quot;');
+}
 function accentHex(id: CvAccentId) { return ACCENT_COLORS[id]?.hex || '#4f46e5'; }
 function openPrintPreview(data: CvData) {
   const a = accentHex(data.accent); const skills = data.skills.join(' · ');
@@ -108,9 +114,9 @@ export const CvBuilder = () => {
           {section==='summary' && <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
             <div className="flex justify-between"><h2 className="text-lg font-black text-slate-900 dark:text-white">Summary</h2>
               <button type="button" onClick={()=>update({summary:SAMPLE_SUMMARIES[Math.floor(Math.random()*SAMPLE_SUMMARIES.length)]})} className="inline-flex items-center gap-1 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[11px] font-bold text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"><Wand2 className="h-3.5 w-3.5" /> Sample</button></div>
-            <textarea rows={5} value={data.summary} onChange={e=>update({summary:e.target.value})} className={`${inputCls} mt-3`} placeholder="2–4 lines…" /></section>}
+            <textarea rows={5} value={data.summary} onChange={e=>update({summary:e.target.value})} className={`${inputCls} mt-3`} placeholder="2-4 lines..." /></section>}
           {section==='skills' && <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"><h2 className="text-lg font-black text-slate-900 dark:text-white">Skills</h2>
-            <textarea rows={3} value={skillsText} onChange={e=>setSkillsText(e.target.value)} onBlur={applySkills} className={`${inputCls} mt-3`} placeholder="React, TypeScript…" />
+            <textarea rows={3} value={skillsText} onChange={e=>setSkillsText(e.target.value)} onBlur={applySkills} className={`${inputCls} mt-3`} placeholder="React, TypeScript..." />
             <div className="mt-3 flex flex-wrap gap-2">{parseSkills(skillsText).map(s=><span key={s} className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">{s}</span>)}</div>
             <div className="mt-3 flex flex-wrap gap-1.5">{SUGGESTED_SKILLS.filter(s=>!parseSkills(skillsText).includes(s)).slice(0,8).map(s=>(
               <button key={s} type="button" onClick={()=>{const set=new Set(parseSkills(skillsText));set.add(s);const n=[...set].join(', ');setSkillsText(n);update({skills:[...set]});}} className="rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:border-indigo-400 dark:border-slate-600">+ {s}</button>
