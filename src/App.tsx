@@ -92,6 +92,9 @@ const BuddyChat = lazy(() => import('./pages/Buddy/BuddyChat').then((module) => 
 const Leaderboard = lazy(() => import('./pages/Gamification/Leaderboard').then((module) => ({ default: module.Leaderboard })));
 const Rewards = lazy(() => import('./pages/Gamification/Rewards').then((module) => ({ default: module.Rewards })));
 const Internships = lazy(() => import('./pages/Career/Internships').then((module) => ({ default: module.Internships })));
+const FacultyOpportunities = lazy(() =>
+  import('./pages/Career/FacultyOpportunities').then((module) => ({ default: module.FacultyOpportunities })),
+);
 const CompanyDetail = lazy(() => import('./pages/Career/CompanyDetail').then((module) => ({ default: module.CompanyDetail })));
 const Events = lazy(() => import('./pages/Growth/Events').then((module) => ({ default: module.Events })));
 const SoftSkills = lazy(() => import('./pages/Growth/SoftSkills').then((module) => ({ default: module.SoftSkills })));
@@ -131,6 +134,7 @@ const DASHBOARD_ROUTES = [
   '/leaderboard',
   '/rewards',
   '/internships',
+  '/faculty-opportunities',
   '/events',
   '/soft-skills',
   '/dsa-sheet',
@@ -230,6 +234,7 @@ export function App() {
             <Route path="/leaderboard" element={<RoleRoute role="student"><Leaderboard /></RoleRoute>} />
             <Route path="/rewards" element={<RoleRoute role="student"><Rewards /></RoleRoute>} />
             <Route path="/internships" element={<RoleRoute role="student"><Internships /></RoleRoute>} />
+            <Route path="/faculty-opportunities" element={<RoleRoute role="student"><FacultyOpportunities /></RoleRoute>} />
             <Route path="/companies/:id" element={<RoleRoute role="student"><CompanyDetail /></RoleRoute>} />
             <Route path="/events" element={<RoleRoute role="student"><Events /></RoleRoute>} />
             <Route path="/soft-skills" element={<RoleRoute role="student"><SoftSkills /></RoleRoute>} />
