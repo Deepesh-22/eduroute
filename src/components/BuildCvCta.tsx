@@ -18,7 +18,7 @@ export function BuildCvCta({
   return (
     <Link
       to="/cv-builder"
-      className={`mb-6 flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-violet-50 to-white p-5 transition hover:border-indigo-300 hover:shadow-md dark:border-indigo-900/50 dark:from-indigo-950/40 dark:to-slate-900 sm:flex-row sm:items-center sm:justify-between ${className}`}
+      className={`mb-6 flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-violet-50 to-white p-5 transition hover:border-indigo-300 hover:shadow-md dark:border-indigo-700/60 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-900 dark:hover:border-indigo-500/50 sm:flex-row sm:items-center sm:justify-between ${className}`}
     >
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/25">
@@ -26,10 +26,10 @@ export function BuildCvCta({
         </span>
         <div>
           <p className="text-sm font-black text-slate-900 dark:text-white">{title}</p>
-          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">{subtitle}</p>
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">{subtitle}</p>
         </div>
       </div>
-      <span className="inline-flex items-center gap-1 self-start rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white sm:self-center">
+      <span className="inline-flex items-center gap-1 self-start rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/20 sm:self-center">
         {ctaLabel} <ArrowRight className="h-3.5 w-3.5" />
       </span>
     </Link>
