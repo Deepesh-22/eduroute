@@ -180,6 +180,7 @@ export const BuddyChat = () => {
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const networkRetryRef = useRef(0);
   const listeningSessionRef = useRef(0);
+  const committedTranscriptRef = useRef('');
   const dragging = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(SIDEBAR_DEFAULT);
@@ -349,6 +350,7 @@ export const BuddyChat = () => {
     hadSpeechRef.current = false;
     autoSendAfterVoice.current = true;
     networkRetryRef.current = 0;
+    committedTranscriptRef.current = '';
     const sessionId = (listeningSessionRef.current += 1);
 
     const beginRecognition = (attempt: number) => {
@@ -383,28 +385,33 @@ export const BuddyChat = () => {
 
       recognition.onresult = (event) => {
         if (listeningSessionRef.current !== sessionId) return;
+        // Rebuild only NEW finals into committed; show interim on top (no double-append)
         let interim = '';
-        let finalText = '';
+        let newFinals = '';
         for (let i = 0; i < event.results.length; i += 1) {
           const result = event.results[i];
-          const piece = result[0]?.transcript || '';
-          if (result.isFinal) finalText += piece + ' ';
-          else interim += piece;
+          const piece = (result[0]?.transcript || '').trim();
+          if (!piece) continue;
+          if (result.isFinal) newFinals += (newFinals ? ' ' : '') + piece;
+          else interim += (interim ? ' ' : '') + piece;
         }
-        const next = (finalText || interim).trim();
-        if (next) {
+        if (newFinals) {
+          const prev = committedTranscriptRef.current.trim();
+          // Avoid appending the same phrase twice if browser re-emits final
+          if (!prev || !prev.endsWith(newFinals)) {
+            committedTranscriptRef.current = prev ? `${prev} ${newFinals}` : newFinals;
+          }
+        }
+        const display = `${committedTranscriptRef.current} ${interim}`.replace(/\s+/g, ' ').trim();
+        if (display) {
           hadSpeechRef.current = true;
           networkRetryRef.current = 0;
           if (noSpeechTimerRef.current) {
             clearTimeout(noSpeechTimerRef.current);
             noSpeechTimerRef.current = null;
           }
-          const prev = (inputLatest.current || '').trim();
-          const merged = finalText
-            ? `${prev ? prev + ' ' : ''}${finalText}`.replace(/\s+/g, ' ').trim()
-            : next;
-          inputLatest.current = merged || next;
-          setInput(inputLatest.current);
+          inputLatest.current = display;
+          setInput(display);
           armSilenceTimer();
         }
       };
