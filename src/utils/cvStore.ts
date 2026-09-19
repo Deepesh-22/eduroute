@@ -1,8 +1,11 @@
 /**
  * Student CV builder data — client-only (localStorage).
+ * FlowCV-style templates + persistence for EDUROUTE.
  */
 
 export type CvTemplateId = 'classic' | 'modern' | 'minimal' | 'professional';
+
+export type CvAccentId = 'indigo' | 'slate' | 'emerald' | 'rose' | 'amber';
 
 export type CvEducation = {
   id: string;
@@ -30,6 +33,7 @@ export type CvProject = {
 
 export type CvData = {
   template: CvTemplateId;
+  accent: CvAccentId;
   fullName: string;
   email: string;
   phone: string;
@@ -43,34 +47,69 @@ export type CvData = {
   updatedAt: string;
 };
 
-const KEY = 'eduroute:cv-builder-v1';
+const KEY = 'eduroute:cv-builder-v2';
+
+export const ACCENT_COLORS: Record<CvAccentId, { hex: string; label: string }> = {
+  indigo: { hex: '#4f46e5', label: 'Indigo' },
+  slate: { hex: '#0f172a', label: 'Slate' },
+  emerald: { hex: '#059669', label: 'Emerald' },
+  rose: { hex: '#e11d48', label: 'Rose' },
+  amber: { hex: '#d97706', label: 'Amber' },
+};
 
 export const CV_TEMPLATES: {
   id: CvTemplateId;
   name: string;
   blurb: string;
+  tags: string[];
+  layout: 'single' | 'sidebar';
 }[] = [
-  { id: 'classic', name: 'Classic', blurb: 'Clean serif headers, ATS-friendly' },
-  { id: 'modern', name: 'Modern', blurb: 'Bold accent bar, contemporary' },
-  { id: 'minimal', name: 'Minimal', blurb: 'Lots of space, simple type' },
-  { id: 'professional', name: 'Professional', blurb: 'Two-column sidebar layout' },
+  {
+    id: 'classic',
+    name: 'Classic',
+    blurb: 'Clean serif headers · ATS-friendly single column',
+    tags: ['ATS', 'Traditional'],
+    layout: 'single',
+  },
+  {
+    id: 'modern',
+    name: 'Modern',
+    blurb: 'Bold accent bar · contemporary sans-serif',
+    tags: ['Popular', 'Bold'],
+    layout: 'single',
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    blurb: 'Lots of white space · simple type',
+    tags: ['Clean', 'ATS'],
+    layout: 'single',
+  },
+  {
+    id: 'professional',
+    name: 'Professional',
+    blurb: 'Two-column sidebar · skills on the left',
+    tags: ['Sidebar', 'Executive'],
+    layout: 'sidebar',
+  },
 ];
 
 export function emptyEducation(): CvEducation {
-  return { id: `edu-${Date.now()}`, school: '', degree: '', year: '', details: '' };
+  return { id: `edu-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, school: '', degree: '', year: '', details: '' };
 }
 
 export function emptyExperience(): CvExperience {
-  return { id: `exp-${Date.now()}`, role: '', company: '', duration: '', description: '' };
+  return { id: `exp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, role: '', company: '', duration: '', description: '' };
 }
 
 export function emptyProject(): CvProject {
-  return { id: `proj-${Date.now()}`, name: '', tech: '', description: '', link: '' };
+  return { id: `proj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: '', tech: '', description: '', link: '' };
 }
 
 export function defaultCvData(partial?: Partial<CvData>): CvData {
   return {
     template: 'modern',
+    accent: 'indigo',
     fullName: '',
     email: '',
     phone: '',
@@ -89,7 +128,7 @@ export function defaultCvData(partial?: Partial<CvData>): CvData {
 export function readCvData(): CvData {
   if (typeof window === 'undefined') return defaultCvData();
   try {
-    const raw = window.localStorage.getItem(KEY);
+    const raw = window.localStorage.getItem(KEY) || window.localStorage.getItem('eduroute:cv-builder-v1');
     if (!raw) return defaultCvData();
     return { ...defaultCvData(), ...(JSON.parse(raw) as CvData) };
   } catch {
@@ -106,3 +145,24 @@ export function saveCvData(data: CvData): void {
     // ignore
   }
 }
+
+export const SAMPLE_SUMMARIES = [
+  'Motivated computer science student with hands-on experience in full-stack development. Passionate about building user-focused products and continuous learning.',
+  'Detail-oriented engineering student seeking internship opportunities. Strong foundation in data structures, algorithms, and modern web technologies.',
+  'Results-driven learner with project experience in React, Node.js, and cloud tools. Eager to contribute to real-world products and grow with a collaborative team.',
+];
+
+export const SUGGESTED_SKILLS = [
+  'React',
+  'TypeScript',
+  'JavaScript',
+  'Node.js',
+  'Python',
+  'SQL',
+  'Git',
+  'Tailwind CSS',
+  'REST APIs',
+  'Communication',
+  'Problem Solving',
+  'Teamwork',
+];
