@@ -178,6 +178,8 @@ export const BuddyChat = () => {
   const hadSpeechRef = useRef(false);
   const noSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const networkRetryRef = useRef(0);
+  const listeningSessionRef = useRef(0);
   const dragging = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(SIDEBAR_DEFAULT);
@@ -331,6 +333,11 @@ export const BuddyChat = () => {
       setError('Voice input is not supported in this browser. Use Chrome or Edge.');
       return;
     }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setError('You are offline. Connect to the internet to use voice chat.');
+      return;
+    }
+
     stopSpeaking();
     clearVoiceTimers();
     try {
@@ -341,112 +348,179 @@ export const BuddyChat = () => {
 
     hadSpeechRef.current = false;
     autoSendAfterVoice.current = true;
+    networkRetryRef.current = 0;
+    const sessionId = (listeningSessionRef.current += 1);
 
-    const recognition = new Ctor();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = buddyLangToSpeechLang(language);
-    recognitionRef.current = recognition;
+    const beginRecognition = (attempt: number) => {
+      if (listeningSessionRef.current !== sessionId) return;
+      if (!autoSendAfterVoice.current) return;
 
-    const armSilenceTimer = () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = setTimeout(() => {
-        finishListening({ send: true, reason: 'silence' });
-      }, 4000);
-    };
+      const recognition = new Ctor();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = buddyLangToSpeechLang(language);
+      recognitionRef.current = recognition;
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setError('');
-      noSpeechTimerRef.current = setTimeout(() => {
-        if (!hadSpeechRef.current) {
-          finishListening({ send: false, reason: 'no-speech' });
-        }
-      }, 10000);
-    };
+      const armSilenceTimer = () => {
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = setTimeout(() => {
+          finishListening({ send: true, reason: 'silence' });
+        }, 4000);
+      };
 
-    recognition.onresult = (event) => {
-      let interim = '';
-      let finalText = '';
-      for (let i = 0; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        const piece = result[0]?.transcript || '';
-        if (result.isFinal) finalText += piece + ' ';
-        else interim += piece;
-      }
-      const next = (finalText || interim).trim();
-      if (next) {
-        hadSpeechRef.current = true;
-        if (noSpeechTimerRef.current) {
-          clearTimeout(noSpeechTimerRef.current);
-          noSpeechTimerRef.current = null;
-        }
-        inputLatest.current = next;
-        setInput(next);
-        armSilenceTimer();
-      }
-    };
-
-    recognition.onerror = (event) => {
-      const code = event.error || '';
-      if (code === 'no-speech' && hadSpeechRef.current) return;
-      if (code === 'aborted') {
-        setIsListening(false);
-        clearVoiceTimers();
-        return;
-      }
-      clearVoiceTimers();
-      setIsListening(false);
-      autoSendAfterVoice.current = false;
-      if (code === 'not-allowed' || code === 'service-not-allowed') {
-        setError('Microphone permission denied. Allow mic access in the browser.');
-      } else if (code === 'no-speech') {
-        setError('No speech detected. Tap the mic and try again.');
-      } else {
-        setError(`Voice error: ${code}`);
-      }
-    };
-
-    recognition.onend = () => {
-      clearVoiceTimers();
-      if (!autoSendAfterVoice.current) {
-        setIsListening(false);
-        return;
-      }
-      if (hadSpeechRef.current) {
-        setIsListening(false);
-        const shouldSend = autoSendAfterVoice.current;
-        autoSendAfterVoice.current = false;
-        if (shouldSend) {
-          setTimeout(() => {
-            const value = (inputLatest.current || '').trim();
-            if (value) {
-              const form = inputRef.current?.closest('form');
-              if (form) form.requestSubmit();
+      recognition.onstart = () => {
+        if (listeningSessionRef.current !== sessionId) return;
+        setIsListening(true);
+        setError('');
+        if (!noSpeechTimerRef.current && !hadSpeechRef.current) {
+          noSpeechTimerRef.current = setTimeout(() => {
+            if (!hadSpeechRef.current) {
+              finishListening({ send: false, reason: 'no-speech' });
             }
-          }, 120);
+          }, 10000);
         }
-        return;
-      }
-      if (recognitionRef.current === recognition) {
-        try {
-          recognition.start();
+      };
+
+      recognition.onresult = (event) => {
+        if (listeningSessionRef.current !== sessionId) return;
+        let interim = '';
+        let finalText = '';
+        for (let i = 0; i < event.results.length; i += 1) {
+          const result = event.results[i];
+          const piece = result[0]?.transcript || '';
+          if (result.isFinal) finalText += piece + ' ';
+          else interim += piece;
+        }
+        const next = (finalText || interim).trim();
+        if (next) {
+          hadSpeechRef.current = true;
+          networkRetryRef.current = 0;
+          if (noSpeechTimerRef.current) {
+            clearTimeout(noSpeechTimerRef.current);
+            noSpeechTimerRef.current = null;
+          }
+          const prev = (inputLatest.current || '').trim();
+          const merged = finalText
+            ? `${prev ? prev + ' ' : ''}${finalText}`.replace(/\s+/g, ' ').trim()
+            : next;
+          inputLatest.current = merged || next;
+          setInput(inputLatest.current);
+          armSilenceTimer();
+        }
+      };
+
+      recognition.onerror = (event) => {
+        if (listeningSessionRef.current !== sessionId) return;
+        const code = event.error || '';
+
+        if (code === 'aborted') return;
+        if (code === 'no-speech') return;
+
+        if (code === 'not-allowed' || code === 'service-not-allowed') {
+          clearVoiceTimers();
+          setIsListening(false);
+          autoSendAfterVoice.current = false;
+          setError('Microphone permission denied. Click the lock icon in the address bar → allow Microphone, then try again.');
           return;
-        } catch {
-          /* fall through */
         }
+        if (code === 'network') {
+          if (attempt < 2 && autoSendAfterVoice.current) {
+            networkRetryRef.current = attempt + 1;
+            setError('Voice service reconnecting…');
+            setTimeout(() => {
+              if (listeningSessionRef.current === sessionId && autoSendAfterVoice.current) {
+                try {
+                  beginRecognition(attempt + 1);
+                } catch {
+                  setIsListening(false);
+                  autoSendAfterVoice.current = false;
+                  setError('Voice service unreachable. Check your internet connection and try again in Chrome.');
+                }
+              }
+            }, 600);
+            return;
+          }
+          clearVoiceTimers();
+          setIsListening(false);
+          autoSendAfterVoice.current = false;
+          setError(
+            'Voice service unreachable (network). Use Chrome/Edge on a stable internet connection, or type your message.',
+          );
+          return;
+        }
+        if (code === 'audio-capture') {
+          clearVoiceTimers();
+          setIsListening(false);
+          autoSendAfterVoice.current = false;
+          setError('No microphone found. Plug in a mic or check system sound settings.');
+          return;
+        }
+        clearVoiceTimers();
+        setIsListening(false);
+        autoSendAfterVoice.current = false;
+        setError(`Voice error: ${code}. Try typing instead, or refresh and allow the mic.`);
+      };
+
+      recognition.onend = () => {
+        if (listeningSessionRef.current !== sessionId) return;
+        if (!autoSendAfterVoice.current) {
+          setIsListening(false);
+          clearVoiceTimers();
+          return;
+        }
+
+        if (hadSpeechRef.current) {
+          if (silenceTimerRef.current) {
+            try {
+              recognition.start();
+              return;
+            } catch {
+              /* fall through to send */
+            }
+          }
+          setIsListening(false);
+          const shouldSend = autoSendAfterVoice.current;
+          autoSendAfterVoice.current = false;
+          clearVoiceTimers();
+          if (shouldSend) {
+            setTimeout(() => {
+              const value = (inputLatest.current || '').trim();
+              if (value) {
+                const form = inputRef.current?.closest('form');
+                if (form) form.requestSubmit();
+              }
+            }, 120);
+          }
+          return;
+        }
+
+        if (noSpeechTimerRef.current) {
+          try {
+            recognition.start();
+            return;
+          } catch {
+            /* fall through */
+          }
+        }
+        setIsListening(false);
+        autoSendAfterVoice.current = false;
+        clearVoiceTimers();
+      };
+
+      try {
+        recognition.start();
+      } catch {
+        if (attempt < 2) {
+          setTimeout(() => beginRecognition(attempt + 1), 400);
+          return;
+        }
+        setError('Could not start microphone. Check browser permissions and try again.');
+        setIsListening(false);
+        autoSendAfterVoice.current = false;
       }
-      setIsListening(false);
-      autoSendAfterVoice.current = false;
     };
 
-    try {
-      recognition.start();
-    } catch {
-      setError('Could not start microphone. Check browser permissions.');
-      setIsListening(false);
-      autoSendAfterVoice.current = false;
-    }
+    beginRecognition(0);
   }, [isTyping, language, clearVoiceTimers, finishListening]);
 
   const toggleListening = useCallback(() => {
@@ -667,6 +741,9 @@ export const BuddyChat = () => {
           )}
           {error && !isListening && (
             <p className="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-950/40 dark:text-red-300">{error}</p>
+          )}
+          {error && isListening && error.includes('reconnect') && (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">{error}</p>
           )}
         </div>
 
