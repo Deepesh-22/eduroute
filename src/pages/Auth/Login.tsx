@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Mail, ArrowRight, UserCog, GraduationCap, Building2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, UserCog, GraduationCap, Building2, BookOpen } from 'lucide-react';
+
 import { apiRoleLogin } from '../../utils/authApi';
 import { saveAuthSession, type UserRole } from '../../utils/rbacAuth';
 import { setAdminSession, validateAdminPassword } from '../../utils/adminSession';
 import { isAuthDbConfigError, localDemoLogin } from '../../utils/localDemoAuth';
 import { INDUSTRY_DEMO_CREDENTIALS } from '../../utils/industryStore';
+import { FACULTY_DEMO_CREDENTIALS } from '../../utils/facultyStore';
 import { COLLEGE_DEMO_CREDENTIALS } from '../../utils/placementDashboard';
 
 const LOCAL_STAFF = {
@@ -58,6 +60,15 @@ export const Login = () => {
     return true;
   };
 
+  const enterFaculty = (email: string, password: string) => {
+    const emailOk = email.trim().toLowerCase() === FACULTY_DEMO_CREDENTIALS.email;
+    const passOk = password === FACULTY_DEMO_CREDENTIALS.password;
+    if (!emailOk || !passOk) return false;
+    saveAuthSession(`faculty-${Date.now()}`, FACULTY_DEMO_CREDENTIALS.user);
+    navigate('/faculty', { replace: true });
+    return true;
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -65,6 +76,16 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
+      if (role === 'faculty') {
+        const ok = enterFaculty(formData.email, formData.password);
+        if (ok) {
+          setUsedDemoMode(true);
+          return;
+        }
+        setError('Faculty login failed. Use faculty@gmail.com / faculty');
+        return;
+      }
+
       if (role === 'industry') {
         const ok = enterIndustry(formData.email, formData.password);
         if (ok) {
@@ -167,7 +188,7 @@ export const Login = () => {
           Role based login
         </h2>
         <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
-          Student · Industry · College · Staff — demo credentials when MySQL is offline
+          Student · Industry · Faculty · College · Staff — demo credentials when MySQL is offline
         </p>
       </div>
 
@@ -177,7 +198,7 @@ export const Login = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white dark:bg-slate-900 py-8 px-4 shadow-xl shadow-slate-200/50 dark:shadow-none sm:rounded-3xl sm:px-10 border border-slate-100 dark:border-slate-800"
         >
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-5">
             <button
               type="button"
               onClick={() => {
@@ -210,6 +231,21 @@ export const Login = () => {
             <button
               type="button"
               onClick={() => {
+                setRole('faculty');
+                setError('');
+                setFormData({ email: 'faculty@gmail.com', password: 'faculty' });
+              }}
+              className={`rounded-lg py-2 text-xs sm:text-sm font-bold transition ${
+                role === 'faculty'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              <BookOpen className="h-3.5 w-3.5 inline mr-0.5" /> Faculty
+            </button>
+            <button
+              type="button"
+              onClick={() => {
                 setRole('college');
                 setError('');
                 setFormData({ email: 'college@gmail.com', password: 'student' });
@@ -238,6 +274,12 @@ export const Login = () => {
               <UserCog className="h-3.5 w-3.5 inline mr-0.5" /> Staff
             </button>
           </div>
+
+          {role === 'faculty' && (
+            <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 px-3 py-2">
+              Faculty: <strong>faculty@gmail.com</strong> / <strong>faculty</strong>
+            </p>
+          )}
 
           {role === 'industry' && (
             <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 px-3 py-2">
