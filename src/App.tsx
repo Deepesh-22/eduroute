@@ -106,7 +106,11 @@ const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard').then((m
 const PendingApprovals = lazy(() => import('./pages/Admin/PendingApprovals').then((module) => ({ default: module.PendingApprovals })));
 const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin').then((module) => ({ default: module.AdminLogin })));
 const CourseManager = lazy(() => import('./pages/Admin/CourseManager').then((module) => ({ default: module.CourseManager })));
-const ProfileDashboard = lazy(() => import('./pages/Profile/ProfileDashboard').then((module) => ({ default: module.ProfileDashboard })));
+const ProfileDashboard = lazy(() =>
+  import('./pages/Profile/ProfileDashboard').then((module) => ({
+    default: module.ProfileDashboard ?? module.default,
+  })),
+);
 const DSASheet = lazy(() => import('./pages/DSASheet').then((module) => ({ default: module.DSASheet })));
 const SkillProfile = lazy(() => import('./pages/SkillProfile').then((module) => ({ default: module.SkillProfile })));
 const IndustryWorkspace = lazy(() =>
