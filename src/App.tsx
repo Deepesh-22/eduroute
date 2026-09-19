@@ -16,7 +16,7 @@ const RoleRoute = ({
   role,
 }: {
   children: ReactElement;
-  role: 'student' | 'admin' | 'industry' | 'college';
+  role: 'student' | 'admin' | 'industry' | 'college' | 'faculty';
 }) => {
   const user = getAuthUser();
   if (!user) {
@@ -26,6 +26,7 @@ const RoleRoute = ({
     if (user.role === 'college') return <Navigate to="/college/placements" replace />;
     if (user.role === 'admin') return <Navigate to="/admin/pending-approvals" replace />;
     if (user.role === 'industry') return <Navigate to="/industry" replace />;
+    if (user.role === 'faculty') return <Navigate to="/faculty" replace />;
     return <Navigate to="/dashboard" replace />;
   }
   return children;
@@ -46,6 +47,7 @@ const AdminAccessRoute = ({ children }: { children: ReactElement }) => {
   if (isAuthenticated()) {
     const u = getAuthUser();
     if (u?.role === 'industry') return <Navigate to="/industry" replace />;
+    if (u?.role === 'faculty') return <Navigate to="/faculty" replace />;
     return <Navigate to="/dashboard" replace />;
   }
   return <Navigate to="/admin-login" replace />;
@@ -57,6 +59,7 @@ const PublicOnlyRoute = ({ children }: { children: ReactElement }) => {
     if (user?.role === 'college') return <Navigate to="/college/placements" replace />;
     if (user?.role === 'admin') return <Navigate to="/admin/pending-approvals" replace />;
     if (user?.role === 'industry') return <Navigate to="/industry" replace />;
+    if (user?.role === 'faculty') return <Navigate to="/faculty" replace />;
     return <Navigate to="/dashboard" replace />;
   }
   return children;
@@ -102,6 +105,9 @@ const SkillProfile = lazy(() => import('./pages/SkillProfile').then((module) => 
 const IndustryWorkspace = lazy(() =>
   import('./pages/Industry/IndustryWorkspace').then((module) => ({ default: module.IndustryWorkspace })),
 );
+const FacultyWorkspace = lazy(() =>
+  import('./pages/Faculty/FacultyWorkspace').then((module) => ({ default: module.FacultyWorkspace })),
+);
 const PlacementDashboard = lazy(() =>
   import('./pages/Admin/PlacementDashboard').then((module) => ({ default: module.PlacementDashboard })),
 );
@@ -133,6 +139,7 @@ const DASHBOARD_ROUTES = [
   '/skill-profile',
   '/industry',
   '/college',
+  '/faculty',
 ];
 
 const GlobalThemeButton = () => {
@@ -183,6 +190,17 @@ export function App() {
               <ProtectedRoute>
                 <RoleRoute role="industry">
                   <IndustryWorkspace />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/faculty"
+            element={
+              <ProtectedRoute>
+                <RoleRoute role="faculty">
+                  <FacultyWorkspace />
                 </RoleRoute>
               </ProtectedRoute>
             }
