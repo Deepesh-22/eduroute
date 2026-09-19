@@ -59,11 +59,33 @@ export const ProfileDashboard = () => {
       : null;
 
     const loadData = async () => {
+      // Always start from mock so arrays/fields exist (API is optional / often incomplete on Netlify)
+      const base = { ...PROFILE_DASHBOARD_MOCK };
       try {
         const payload = await getProfileDashboardData();
-        setProfileData(userIdentity ? { ...payload, ...userIdentity } : payload);
+        const merged = {
+          ...base,
+          ...(payload && typeof payload === 'object' ? payload : {}),
+          badges: Array.isArray((payload as any)?.badges) ? (payload as any).badges : base.badges,
+          activityHeatmap: Array.isArray((payload as any)?.activityHeatmap)
+            ? (payload as any).activityHeatmap
+            : base.activityHeatmap,
+          recentActivity: Array.isArray((payload as any)?.recentActivity)
+            ? (payload as any).recentActivity
+            : Array.isArray((payload as any)?.recentSubmissions)
+              ? (payload as any).recentSubmissions
+              : base.recentActivity,
+          rank: { ...base.rank, ...((payload as any)?.rank || {}) },
+          xp: { ...base.xp, ...((payload as any)?.xp || {}) },
+          solved: { ...base.solved, ...((payload as any)?.solved || {}) },
+          streak: {
+            current: (payload as any)?.streak?.current ?? base.streak.current,
+            max: (payload as any)?.streak?.max ?? (payload as any)?.streak?.best ?? base.streak.max,
+          },
+        };
+        setProfileData(userIdentity ? { ...merged, ...userIdentity } : merged);
       } catch {
-        setProfileData(userIdentity ? { ...PROFILE_DASHBOARD_MOCK, ...userIdentity } : null);
+        setProfileData(userIdentity ? { ...base, ...userIdentity } : base);
       }
     };
 
@@ -73,18 +95,19 @@ export const ProfileDashboard = () => {
   }, []);
 
   const progressPercent = useMemo(() => {
-    if (!profileData) return 0;
-    const levelSpan = profileData.xp.nextLevelXp - profileData.xp.currentLevelXp;
-    const earned = profileData.xp.total - profileData.xp.currentLevelXp;
+    if (!profileData?.xp) return 0;
+    const levelSpan = (profileData.xp.nextLevelXp || 0) - (profileData.xp.currentLevelXp || 0);
+    if (levelSpan <= 0) return 0;
+    const earned = (profileData.xp.total || 0) - (profileData.xp.currentLevelXp || 0);
     return Math.max(0, Math.min(100, Math.round((earned / levelSpan) * 100)));
   }, [profileData]);
 
   const chartData = useMemo(() => {
-    if (!profileData) return [];
+    if (!profileData?.solved) return [];
     return [
-      { name: 'Easy', value: profileData.solved.easy, color: difficultyColors.easy },
-      { name: 'Medium', value: profileData.solved.medium, color: difficultyColors.medium },
-      { name: 'Hard', value: profileData.solved.hard, color: difficultyColors.hard },
+      { name: 'Easy', value: profileData.solved.easy || 0, color: difficultyColors.easy },
+      { name: 'Medium', value: profileData.solved.medium || 0, color: difficultyColors.medium },
+      { name: 'Hard', value: profileData.solved.hard || 0, color: difficultyColors.hard },
     ];
   }, [profileData]);
 
@@ -96,7 +119,7 @@ export const ProfileDashboard = () => {
     );
   }
 
-  const avatarFallback = profileData.username.charAt(0).toUpperCase();
+  const avatarFallback = (profileData.username || profileData.fullName || 'U').charAt(0).toUpperCase();
 
   const openEditor = () => {
     setEditName(profileData.fullName);
@@ -286,10 +309,10 @@ export const ProfileDashboard = () => {
           {statsMeta.map((item) => {
             const Icon = item.icon;
             const valueMap: Record<string, string> = {
-              totalProblems: String(profileData.solved.total),
-              rank: `#${profileData.rank.global.toLocaleString()}`,
-              xp: profileData.xp.total.toLocaleString(),
-              badges: String(profileData.badges.length),
+              totalProblems: String(profileData.solved?.total ?? 0),
+              rank: `#${(profileData.rank?.global ?? 0).toLocaleString()}`,
+              xp: (profileData.xp?.total ?? 0).toLocaleString(),
+              badges: String((profileData.badges || []).length),
             };
 
             return (
@@ -343,10 +366,10 @@ export const ProfileDashboard = () => {
           <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)] xl:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Badges Earned</h2>
-              <span className="text-xs text-[var(--text-muted)]">{profileData.badges.length} total</span>
+              <span className="text-xs text-[var(--text-muted)]">{(profileData.badges || []).length} total</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {profileData.badges.map((badge) => (
+              {(profileData.badges || []).map((badge) => (
                 <article
                   key={badge.id}
                   className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 hover:border-[var(--accent)]"
@@ -364,7 +387,7 @@ export const ProfileDashboard = () => {
           <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)] xl:col-span-2">
             <h2 className="mb-4 text-lg font-bold text-[var(--text-primary)]">Activity Heatmap</h2>
             <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-2">
-              {profileData.activityHeatmap.map((cell) => {
+              {(profileData.activityHeatmap || []).map((cell) => {
                 const tone =
                   cell.count === 0
                     ? 'bg-[var(--bg-elevated)]'
@@ -397,19 +420,19 @@ export const ProfileDashboard = () => {
             <h2 className="text-lg font-bold text-[var(--text-primary)]">Rank & Streak</h2>
             <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
               <p className="text-xs uppercase text-[var(--text-muted)]">Global Rank</p>
-              <p className="mt-1 text-2xl font-black text-[var(--accent)]">#{profileData.rank.global.toLocaleString()}</p>
+              <p className="mt-1 text-2xl font-black text-[var(--accent)]">#{(profileData.rank?.global ?? 0).toLocaleString()}</p>
             </div>
             <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
               <p className="text-xs uppercase text-[var(--text-muted)]">Platform Rank</p>
-              <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">#{profileData.rank.platform.toLocaleString()}</p>
+              <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">#{(profileData.rank?.platform ?? 0).toLocaleString()}</p>
             </div>
             <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
               <div className="flex items-center gap-2">
                 <Flame className="h-5 w-5 text-orange-500" />
                 <p className="text-xs uppercase text-[var(--text-muted)]">Current Streak</p>
               </div>
-              <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">{profileData.streak.current} days</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Best: {profileData.streak.best} days</p>
+              <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">{profileData.streak?.current ?? 0} days</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Best: {profileData.streak?.max ?? 0} days</p>
             </div>
           </section>
         </div>
@@ -417,19 +440,19 @@ export const ProfileDashboard = () => {
         <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
           <h2 className="mb-4 text-lg font-bold text-[var(--text-primary)]">Recent Submissions</h2>
           <div className="space-y-3">
-            {profileData.recentSubmissions.map((sub) => (
+            {(profileData.recentActivity || []).map((sub) => (
               <article
                 key={sub.id}
                 className="flex flex-col gap-2 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-semibold text-[var(--text-primary)]">{sub.title}</p>
+                  <p className="font-semibold text-[var(--text-primary)]">{sub.problemName}</p>
                   <p className="text-xs text-[var(--text-muted)]">
                     {sub.difficulty} · {sub.status} · {sub.submittedAt}
                   </p>
                 </div>
                 <span className="text-xs font-bold text-[var(--text-secondary)]">
-                  {sub.earned} XP
+                  {sub.xpEarned} XP
                 </span>
               </article>
             ))}
