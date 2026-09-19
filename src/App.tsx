@@ -95,7 +95,9 @@ const FacultyOpportunities = lazy(() =>
   import('./pages/Career/FacultyOpportunities').then((module) => ({ default: module.FacultyOpportunities })),
 );
 const CvBuilder = lazy(() =>
-  import('./pages/Career/CvBuilder').then((module) => ({ default: module.CvBuilder })),
+  import('./pages/Career/CvBuilder').then((module) => ({
+    default: module.CvBuilder ?? module.default,
+  })),
 );
 const CompanyDetail = lazy(() => import('./pages/Career/CompanyDetail').then((module) => ({ default: module.CompanyDetail })));
 const Events = lazy(() => import('./pages/Growth/Events').then((module) => ({ default: module.Events })));
