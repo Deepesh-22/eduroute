@@ -32,7 +32,6 @@ const RoleRoute = ({
   return children;
 };
 
-/** Staff JWT admin OR password session (timepass) can open the admin panel. */
 const AdminAccessRoute = ({ children }: { children: ReactElement }) => {
   const user = getAuthUser();
   if (user?.role === 'college') {
@@ -95,6 +94,9 @@ const Internships = lazy(() => import('./pages/Career/Internships').then((module
 const FacultyOpportunities = lazy(() =>
   import('./pages/Career/FacultyOpportunities').then((module) => ({ default: module.FacultyOpportunities })),
 );
+const CvBuilder = lazy(() =>
+  import('./pages/Career/CvBuilder').then((module) => ({ default: module.CvBuilder })),
+);
 const CompanyDetail = lazy(() => import('./pages/Career/CompanyDetail').then((module) => ({ default: module.CompanyDetail })));
 const Events = lazy(() => import('./pages/Growth/Events').then((module) => ({ default: module.Events })));
 const SoftSkills = lazy(() => import('./pages/Growth/SoftSkills').then((module) => ({ default: module.SoftSkills })));
@@ -135,6 +137,7 @@ const DASHBOARD_ROUTES = [
   '/rewards',
   '/internships',
   '/faculty-opportunities',
+  '/cv-builder',
   '/events',
   '/soft-skills',
   '/dsa-sheet',
@@ -235,6 +238,7 @@ export function App() {
             <Route path="/rewards" element={<RoleRoute role="student"><Rewards /></RoleRoute>} />
             <Route path="/internships" element={<RoleRoute role="student"><Internships /></RoleRoute>} />
             <Route path="/faculty-opportunities" element={<RoleRoute role="student"><FacultyOpportunities /></RoleRoute>} />
+            <Route path="/cv-builder" element={<RoleRoute role="student"><CvBuilder /></RoleRoute>} />
             <Route path="/companies/:id" element={<RoleRoute role="student"><CompanyDetail /></RoleRoute>} />
             <Route path="/events" element={<RoleRoute role="student"><Events /></RoleRoute>} />
             <Route path="/soft-skills" element={<RoleRoute role="student"><SoftSkills /></RoleRoute>} />
