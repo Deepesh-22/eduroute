@@ -9,6 +9,8 @@ import {
   Lightbulb,
   Map,
   MessageSquare,
+  Mic,
+  MicOff,
   MoreHorizontal,
   Paperclip,
   Plus,
@@ -16,6 +18,8 @@ import {
   Sparkles,
   Trash2,
   UserRound,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { fetchBuddyProgress, sendBuddyMessage } from '../../services/buddyApi';
 import type { BuddyLanguage, BuddyMessage, BuddyProgress } from '../../types/buddy';
@@ -75,6 +79,76 @@ const SIDEBAR_MAX = 360;
 const SIDEBAR_DEFAULT = 300;
 const SIDEBAR_COLLAPSED = 0;
 
+/* ── Browser Speech APIs (ChatGPT-style voice) ─────────────────────────── */
+type SpeechRecognitionResultLike = { readonly isFinal: boolean; readonly 0: { transcript: string } };
+type SpeechRecognitionEventLike = { readonly results: ArrayLike<SpeechRecognitionResultLike> };
+type SpeechRecognitionLike = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: ((ev: Event) => void) | null;
+  onresult: ((ev: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((ev: { error: string }) => void) | null;
+  onend: ((ev: Event) => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
+
+function getSpeechRecognitionCtor(): (new () => SpeechRecognitionLike) | null {
+  if (typeof window === 'undefined') return null;
+  const w = window as Window & {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  };
+  return w.SpeechRecognition || w.webkitSpeechRecognition || null;
+}
+
+function isSpeechRecognitionSupported() {
+  return Boolean(getSpeechRecognitionCtor());
+}
+
+function isSpeechSynthesisSupported() {
+  return typeof window !== 'undefined' && typeof window.speechSynthesis !== 'undefined';
+}
+
+function buddyLangToSpeechLang(lang: BuddyLanguage): string {
+  if (lang === 'hindi') return 'hi-IN';
+  if (lang === 'hinglish') return 'en-IN';
+  return 'en-IN';
+}
+
+function speakText(text: string, lang: BuddyLanguage) {
+  if (!isSpeechSynthesisSupported()) return;
+  try {
+    window.speechSynthesis.cancel();
+    const clean = String(text || '')
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/[*_#`>]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 1200);
+    if (!clean) return;
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = buddyLangToSpeechLang(lang);
+    u.rate = 1.02;
+    u.pitch = 1;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* ignore TTS errors */
+  }
+}
+
+function stopSpeaking() {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 export const BuddyChat = () => {
   const authUser = getAuthUser();
   const currentUserId = authUser?.id || 'demo-student-101';
@@ -84,15 +158,23 @@ export const BuddyChat = () => {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<BuddyMessage[]>(() => [welcomeMessage(firstName)]);
   const [input, setInput] = useState('');
+  const inputLatest = useRef('');
   const [isTyping, setIsTyping] = useState(false);
   const [language, setLanguage] = useState<BuddyLanguage>('english');
   const [progress, setProgress] = useState<BuddyProgress | null>(null);
   const [error, setError] = useState('');
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported] = useState(() => isSpeechRecognitionSupported());
+  const [ttsSupported] = useState(() => isSpeechSynthesisSupported());
+  const [autoSpeak, setAutoSpeak] = useState(false);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const autoSendAfterVoice = useRef(false);
   const dragging = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(SIDEBAR_DEFAULT);
@@ -136,6 +218,17 @@ export const BuddyChat = () => {
     return () => window.removeEventListener('eduroute:buddy-messages-updated', refresh);
   }, [currentUserId, firstName]);
 
+  useEffect(() => {
+    return () => {
+      try {
+        recognitionRef.current?.abort();
+      } catch {
+        /* ignore */
+      }
+      stopSpeaking();
+    };
+  }, []);
+
   const onDragStart = (e: ReactPointerEvent) => {
     dragging.current = true;
     startX.current = e.clientX;
@@ -175,10 +268,130 @@ export const BuddyChat = () => {
     }
   };
 
+  const stopListening = useCallback(() => {
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    setIsListening(false);
+  }, []);
+
+  const startListening = useCallback(() => {
+    if (isTyping) return;
+    const Ctor = getSpeechRecognitionCtor();
+    if (!Ctor) {
+      setError('Voice input is not supported in this browser. Use Chrome or Edge.');
+      return;
+    }
+    stopSpeaking();
+    try {
+      recognitionRef.current?.abort();
+    } catch {
+      /* ignore */
+    }
+
+    const recognition = new Ctor();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = buddyLangToSpeechLang(language);
+    recognitionRef.current = recognition;
+    autoSendAfterVoice.current = true;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setError('');
+    };
+
+    recognition.onresult = (event) => {
+      let interim = '';
+      let finalText = '';
+      for (let i = 0; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const piece = result[0]?.transcript || '';
+        if (result.isFinal) finalText += piece;
+        else interim += piece;
+      }
+      const next = (finalText || interim).trim();
+      if (next) {
+        inputLatest.current = next;
+        setInput(next);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      const code = event.error || '';
+      if (code === 'not-allowed' || code === 'service-not-allowed') {
+        setError('Microphone permission denied. Allow mic access in the browser.');
+      } else if (code === 'no-speech') {
+        setError('No speech detected. Tap the mic and try again.');
+      } else if (code !== 'aborted') {
+        setError(`Voice error: ${code}`);
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      if (autoSendAfterVoice.current) {
+        autoSendAfterVoice.current = false;
+        setTimeout(() => {
+          const el = inputRef.current;
+          const value = (inputLatest.current || el?.value || '').trim();
+          if (value) {
+            const form = el?.closest('form');
+            if (form) form.requestSubmit();
+          }
+        }, 120);
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch {
+      setError('Could not start microphone. Check browser permissions.');
+      setIsListening(false);
+    }
+  }, [isTyping, language]);
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      autoSendAfterVoice.current = false;
+      stopListening();
+    } else {
+      startListening();
+    }
+  }, [isListening, startListening, stopListening]);
+
+  const toggleSpeakMessage = useCallback(
+    (id: string, text: string) => {
+      if (!ttsSupported) {
+        setError('Text-to-speech is not supported in this browser.');
+        return;
+      }
+      if (speakingId === id) {
+        stopSpeaking();
+        setSpeakingId(null);
+        return;
+      }
+      stopSpeaking();
+      setSpeakingId(id);
+      speakText(text, language);
+      const ms = Math.min(60000, Math.max(2500, text.length * 45));
+      window.setTimeout(() => {
+        setSpeakingId((cur) => (cur === id ? null : cur));
+      }, ms);
+    },
+    [language, speakingId, ttsSupported],
+  );
+
   const handleSend = async (preset?: string) => {
-    const text = (preset ?? input).trim();
+    const text = (preset ?? inputLatest.current || input).trim();
     if (!text || isTyping) return;
+    stopListening();
+    stopSpeaking();
     setMessages((current) => [...current, { id: Date.now(), role: 'user', text, timestamp: timestamp() }]);
+    inputLatest.current = '';
     setInput('');
     setError('');
     setIsTyping(true);
@@ -205,6 +418,15 @@ export const BuddyChat = () => {
         ...current,
         { id: Date.now() + 1, role: 'ai', text: response.reply, timestamp: timestamp() },
       ]);
+      if (autoSpeak && response.reply) {
+        const speakId = String(Date.now() + 1);
+        setSpeakingId(speakId);
+        speakText(response.reply, language);
+        window.setTimeout(
+          () => setSpeakingId((cur) => (cur === speakId ? null : cur)),
+          Math.min(60000, Math.max(2500, response.reply.length * 45)),
+        );
+      }
       setProgress((current) => ({
         points: response.gamification?.points || current?.points || 0,
         level: response.gamification?.level || current?.level || 1,
@@ -313,9 +535,27 @@ export const BuddyChat = () => {
                 <div className={`rounded-2xl px-4 py-3 text-sm leading-6 ${m.role === 'user' ? 'rounded-br-md bg-violet-600 text-white shadow-sm shadow-violet-200/40 dark:shadow-violet-900/30' : 'rounded-bl-md border border-slate-100 bg-white text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-100'}`}>
                   {m.role === 'ai' ? <BuddyMarkdown text={m.text} /> : m.text}
                 </div>
-                <p className={`mt-1 text-[10px] font-medium text-slate-400 dark:text-slate-500 ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                  {m.timestamp}{m.role === 'user' ? ' ✓' : ''}
-                </p>
+                <div className={`mt-1 flex items-center gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                    {m.timestamp}{m.role === 'user' ? ' ✓' : ''}
+                  </p>
+                  {m.role === 'ai' && ttsSupported && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSpeakMessage(String(m.id), m.text)}
+                      className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition ${
+                        speakingId === String(m.id)
+                          ? 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300'
+                          : 'text-slate-400 hover:bg-slate-100 hover:text-violet-600 dark:hover:bg-slate-800 dark:hover:text-violet-300'
+                      }`}
+                      title={speakingId === String(m.id) ? 'Stop reading' : 'Read aloud'}
+                      aria-label={speakingId === String(m.id) ? 'Stop reading' : 'Read aloud'}
+                    >
+                      <Volume2 className="h-3 w-3" />
+                      {speakingId === String(m.id) ? 'Stop' : 'Speak'}
+                    </button>
+                  )}
+                </div>
               </div>
               {m.role === 'user' && (
                 <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white">{(firstName[0] || 'U').toUpperCase()}</div>
@@ -330,17 +570,87 @@ export const BuddyChat = () => {
               </div>
             </div>
           )}
-          {error && (
+          {error && !isListening && (
             <p className="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-950/40 dark:text-red-300">{error}</p>
           )}
         </div>
+
+        {(isListening || (error && isListening)) && (
+          <div className="px-4 sm:px-5">
+            {isListening && (
+              <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600 dark:bg-rose-950/40 dark:text-rose-300">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+                </span>
+                Listening… speak clearly
+              </span>
+            )}
+          </div>
+        )}
 
         <form onSubmit={onSubmit} className="shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80 sm:px-5">
           <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1.5 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-500/15 dark:border-slate-700 dark:bg-slate-800/80 dark:focus-within:border-violet-500/50">
             <button type="button" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300" aria-label="Attach" title="Attachments coming soon">
               <Paperclip className="h-4 w-4" />
             </button>
-            <input ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask Buddy anything about your learning journey..." className="min-w-0 flex-1 border-0 bg-transparent py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500" />
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => {
+                inputLatest.current = e.target.value;
+                setInput(e.target.value);
+              }}
+              placeholder={isListening ? 'Listening… speak now' : 'Ask Buddy anything — or tap the mic'}
+              className="min-w-0 flex-1 border-0 bg-transparent py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+              aria-label="Message Buddy"
+            />
+            {ttsSupported && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAutoSpeak((v) => {
+                    if (v) stopSpeaking();
+                    return !v;
+                  });
+                }}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${
+                  autoSpeak
+                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300'
+                    : 'text-slate-400 hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300'
+                }`}
+                aria-label={autoSpeak ? 'Auto-speak on' : 'Auto-speak off'}
+                title={autoSpeak ? 'Buddy will read replies aloud (on)' : 'Turn on read-aloud for replies'}
+              >
+                {autoSpeak ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </button>
+            )}
+            {voiceSupported ? (
+              <button
+                type="button"
+                onClick={toggleListening}
+                disabled={isTyping}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${
+                  isListening
+                    ? 'animate-pulse bg-rose-500 text-white shadow-md shadow-rose-500/40'
+                    : 'bg-slate-100 text-slate-600 hover:bg-violet-100 hover:text-violet-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-violet-950/40 dark:hover:text-violet-300'
+                } disabled:opacity-50`}
+                aria-label={isListening ? 'Stop listening' : 'Start voice input'}
+                title={isListening ? 'Listening — tap to stop' : 'Voice chat (speak your question)'}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setError('Voice input needs Chrome or Edge on HTTPS.')}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-300 dark:text-slate-600"
+                aria-label="Voice not supported"
+                title="Voice not supported in this browser"
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+            )}
             <button type="submit" disabled={!input.trim() || isTyping} aria-label="Send" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500">
               <Send className="h-4 w-4" />
             </button>
@@ -371,36 +681,26 @@ export const BuddyChat = () => {
                   <li key={item.label}>
                     <button type="button" onClick={() => void handleSend(item.prompt)} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-xs font-semibold text-slate-700 transition hover:bg-white hover:text-violet-700 hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-violet-300">
                       <item.icon className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                      <span className="text-slate-300 dark:text-slate-600">›</span>
+                      {item.label}
                     </button>
                   </li>
                 ))}
               </ul>
             </section>
-            <section className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/80">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-white"><MessageSquare className="h-4 w-4 text-violet-500" /> Recent Chats</h2>
+            <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/80">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-white"><MessageSquare className="h-4 w-4 text-violet-500" /> Recent</h2>
                 <button type="button" onClick={onNewChat} className="text-[11px] font-semibold text-violet-600 hover:underline dark:text-violet-400">New</button>
               </div>
-              <ul className="space-y-1">
-                {conversations.length === 0 && (
-                  <li className="px-2 py-3 text-xs text-slate-400">No chats yet — start one below.</li>
-                )}
-                {conversations.slice(0, 8).map((c) => {
-                  const active = c.id === activeChatId;
+              <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto">
+                {conversations.map((c) => {
                   const title = c.title || c.messages.find((m) => m.role === 'user')?.text?.slice(0, 42) || 'New conversation';
-                  const when = c.updatedAt
-                    ? new Date(c.updatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                    : '';
+                  const active = c.id === activeChatId;
                   return (
                     <li key={c.id} className="group flex items-stretch gap-0.5">
                       <button type="button" onClick={() => onSelectChat(c.id)} className={`flex min-w-0 flex-1 items-start gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition ${active ? 'bg-violet-50 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200' : 'text-slate-700 hover:bg-white hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-800'}`}>
-                        <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-xs font-semibold">{title}</span>
-                          {when && <span className="mt-0.5 block text-[10px] font-medium text-slate-400 dark:text-slate-500">{when}</span>}
-                        </span>
+                        <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-60" />
+                        <span className="line-clamp-2 text-xs font-semibold leading-snug">{title}</span>
                       </button>
                       <button type="button" onClick={(e) => onDeleteChat(c.id, e)} className="mt-1 shrink-0 self-start rounded-lg p-1.5 text-slate-300 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/40 dark:hover:text-red-400" title="Delete chat" aria-label="Delete chat">
                         <Trash2 className="h-3.5 w-3.5" />
@@ -414,7 +714,7 @@ export const BuddyChat = () => {
         )}
       </aside>
 
-      {!sidebarOpen && (
+      {effectiveWidth === 0 && (
         <button type="button" onClick={toggleSidebar} className="absolute right-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-l-xl border border-r-0 border-slate-200 bg-white px-1.5 py-3 text-slate-500 shadow-md hover:text-violet-600 dark:border-slate-700 dark:bg-slate-900 dark:hover:text-violet-400 lg:flex" title="Show Quick Prompts & Recent Chats" aria-label="Expand side panel">
           <ChevronLeft className="h-4 w-4" />
         </button>
