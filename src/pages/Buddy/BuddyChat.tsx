@@ -12,7 +12,6 @@ import {
   Mic,
   MicOff,
   MoreHorizontal,
-  Paperclip,
   Plus,
   Send,
   Sparkles,
@@ -385,7 +384,6 @@ export const BuddyChat = () => {
 
       recognition.onresult = (event) => {
         if (listeningSessionRef.current !== sessionId) return;
-        // Rebuild only NEW finals into committed; show interim on top (no double-append)
         let interim = '';
         let newFinals = '';
         for (let i = 0; i < event.results.length; i += 1) {
@@ -397,7 +395,6 @@ export const BuddyChat = () => {
         }
         if (newFinals) {
           const prev = committedTranscriptRef.current.trim();
-          // Avoid appending the same phrase twice if browser re-emits final
           if (!prev || !prev.endsWith(newFinals)) {
             committedTranscriptRef.current = prev ? `${prev} ${newFinals}` : newFinals;
           }
@@ -707,7 +704,7 @@ export const BuddyChat = () => {
               {m.role === 'ai' && (
                 <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-sm text-white shadow-sm">🤖</div>
               )}
-              <div className={`max-w-[min(100%,36rem)] ${m.role === 'user' ? 'order-1' : ''}`}>
+              <div className={`max-w-[min(100%,36rem)] ${m.role === 'user' ? 'order-1' : ''`}>
                 <div className={`rounded-2xl px-4 py-3 text-sm leading-6 ${m.role === 'user' ? 'rounded-br-md bg-violet-600 text-white shadow-sm shadow-violet-200/40 dark:shadow-violet-900/30' : 'rounded-bl-md border border-slate-100 bg-white text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-100'}`}>
                   {m.role === 'ai' ? <BuddyMarkdown text={m.text} /> : m.text}
                 </div>
@@ -768,9 +765,6 @@ export const BuddyChat = () => {
 
         <form onSubmit={onSubmit} className="shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80 sm:px-5">
           <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1.5 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-500/15 dark:border-slate-700 dark:bg-slate-800/80 dark:focus-within:border-violet-500/50">
-            <button type="button" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300" aria-label="Attach" title="Attachments coming soon">
-              <Paperclip className="h-4 w-4" />
-            </button>
             <input
               ref={inputRef}
               value={input}
