@@ -386,7 +386,7 @@ export const BuddyChat = () => {
   );
 
   const handleSend = async (preset?: string) => {
-    const text = (preset ?? inputLatest.current || input).trim();
+    const text = (preset ?? (inputLatest.current || input)).trim();
     if (!text || isTyping) return;
     stopListening();
     stopSpeaking();
@@ -575,17 +575,15 @@ export const BuddyChat = () => {
           )}
         </div>
 
-        {(isListening || (error && isListening)) && (
+        {isListening && (
           <div className="px-4 sm:px-5">
-            {isListening && (
-              <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600 dark:bg-rose-950/40 dark:text-rose-300">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
-                </span>
-                Listening… speak clearly
+            <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600 dark:bg-rose-950/40 dark:text-rose-300">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
               </span>
-            )}
+              Listening… speak clearly
+            </span>
           </div>
         )}
 
