@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Code2,
@@ -11,7 +12,7 @@ import {
   Target,
   Search,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 const ROLES = [
   {
@@ -94,18 +95,33 @@ const item = {
   },
 };
 
-/** Dual-side animated sine waves — longer right side, high-intensity continuous motion */
-function UpperWaveBackground() {
+/** Dual-side waves — continuous flow + scroll-driven water drift */
+function UpperWaveBackground({
+  scrollYProgress,
+}: {
+  scrollYProgress: ReturnType<typeof useScroll>['scrollYProgress'];
+}) {
+  const leftFlowX = useTransform(scrollYProgress, [0, 0.55], [0, -80]);
+  const rightFlowX = useTransform(scrollYProgress, [0, 0.55], [0, 100]);
+  const leftFlowY = useTransform(scrollYProgress, [0, 0.55], [0, -28]);
+  const rightFlowY = useTransform(scrollYProgress, [0, 0.55], [0, 36]);
+  const waveOpacity = useTransform(scrollYProgress, [0, 0.15, 0.45], [1, 0.95, 0.25]);
+
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+    <motion.div
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      aria-hidden
+      style={{ opacity: waveOpacity }}
+    >
       <div className="absolute left-[6%] top-8 h-40 w-40 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15" />
       <div className="absolute right-[4%] top-2 h-56 w-56 rounded-full bg-violet-400/12 blur-3xl dark:bg-violet-600/18" />
 
-      <svg
+      <motion.svg
         className="absolute left-0 top-[12%] h-[58%] w-[28%] max-w-[300px] md:w-[30%] lg:max-w-[340px]"
         viewBox="0 0 320 240"
         fill="none"
         preserveAspectRatio="xMinYMid meet"
+        style={{ x: leftFlowX, y: leftFlowY }}
       >
         <defs>
           <linearGradient id="waveFadeLeft" x1="0" y1="0" x2="1" y2="0">
@@ -140,13 +156,14 @@ function UpperWaveBackground() {
             className="text-violet-400/40 dark:text-violet-300/35"
           />
         </g>
-      </svg>
+      </motion.svg>
 
-      <svg
+      <motion.svg
         className="absolute right-0 top-[4%] h-[78%] w-[42%] max-w-[520px] md:w-[44%] lg:max-w-[560px]"
         viewBox="0 0 520 300"
         fill="none"
         preserveAspectRatio="xMaxYMid meet"
+        style={{ x: rightFlowX, y: rightFlowY }}
       >
         <defs>
           <linearGradient id="waveFadeRight" x1="1" y1="0" x2="0" y2="0">
@@ -202,34 +219,34 @@ function UpperWaveBackground() {
             className="text-indigo-300/25 dark:text-indigo-200/22"
           />
         </g>
-      </svg>
+      </motion.svg>
 
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
 
       <style>{`
         @keyframes wave-motion-a {
           0%   { transform: translate3d(0, 0) scaleY(1); }
-          20%  { transform: translate3d(22px, -16px) scaleY(1.08); }
-          40%  { transform: translate3d(-8px, 12px) scaleY(0.94); }
-          60%  { transform: translate3d(18px, -10px) scaleY(1.06); }
-          80%  { transform: translate3d(-14px, 8px) scaleY(0.96); }
+          20%  { transform: translate3d(28px, -18px) scaleY(1.1); }
+          40%  { transform: translate3d(-12px, 14px) scaleY(0.92); }
+          60%  { transform: translate3d(22px, -12px) scaleY(1.08); }
+          80%  { transform: translate3d(-18px, 10px) scaleY(0.94); }
           100% { transform: translate3d(0, 0) scaleY(1); }
         }
         @keyframes wave-motion-b {
           0%   { transform: translate3d(0, 0) scaleY(1); }
-          18%  { transform: translate3d(-26px, 14px) scaleY(1.1); }
-          38%  { transform: translate3d(16px, -18px) scaleY(0.92); }
-          58%  { transform: translate3d(-20px, 10px) scaleY(1.07); }
-          78%  { transform: translate3d(12px, -12px) scaleY(0.95); }
+          18%  { transform: translate3d(-32px, 16px) scaleY(1.12); }
+          38%  { transform: translate3d(20px, -20px) scaleY(0.9); }
+          58%  { transform: translate3d(-24px, 12px) scaleY(1.09); }
+          78%  { transform: translate3d(14px, -14px) scaleY(0.93); }
           100% { transform: translate3d(0, 0) scaleY(1); }
         }
         .wave-motion-a {
-          animation: wave-motion-a 4.5s ease-in-out infinite;
+          animation: wave-motion-a 3.8s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center center;
         }
         .wave-motion-b {
-          animation: wave-motion-b 5.5s ease-in-out infinite;
+          animation: wave-motion-b 4.6s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center center;
         }
@@ -238,18 +255,23 @@ function UpperWaveBackground() {
           .wave-motion-b { animation: none; }
         }
       `}</style>
-    </div>
+    </motion.div>
   );
 }
 
 export const RoadmapList = () => {
   const navigate = useNavigate();
+  const pageRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: pageRef,
+    offset: ['start start', 'end start'],
+  });
 
   return (
-    <div className="relative flex-1 bg-[var(--bg-primary)]">
+    <div ref={pageRef} className="relative flex-1 bg-[var(--bg-primary)]">
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 z-0 max-h-[420px] md:max-h-[460px]">
-          <UpperWaveBackground />
+          <UpperWaveBackground scrollYProgress={scrollYProgress} />
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-6 pt-4 md:px-8 md:pt-8">
