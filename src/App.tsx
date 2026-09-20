@@ -116,6 +116,9 @@ const ProfileDashboard = lazy(() =>
 );
 const DSASheet = lazy(() => import('./pages/DSASheet').then((module) => ({ default: module.DSASheet })));
 const SkillProfile = lazy(() => import('./pages/SkillProfile').then((module) => ({ default: module.SkillProfile })));
+const DigitalPortfolio = lazy(() =>
+  import('./pages/Portfolio/DigitalPortfolio').then((module) => ({ default: module.DigitalPortfolio ?? module.default })),
+);
 const IndustryWorkspace = lazy(() =>
   import('./pages/Industry/IndustryWorkspace').then((module) => ({ default: module.IndustryWorkspace })),
 );
@@ -149,6 +152,7 @@ const DASHBOARD_ROUTES = [
   '/admin',
   '/profile',
   '/skill-profile',
+  '/portfolio',
   '/industry',
   '/college',
   '/faculty',
@@ -268,6 +272,7 @@ export function App() {
             <Route path="/dsa-sheet" element={<RoleRoute role="student"><DSASheet /></RoleRoute>} />
             <Route path="/profile" element={<RoleRoute role="student"><ProfileDashboard /></RoleRoute>} />
             <Route path="/skill-profile" element={<RoleRoute role="student"><SkillProfile /></RoleRoute>} />
+            <Route path="/portfolio" element={<RoleRoute role="student"><DigitalPortfolio /></RoleRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
