@@ -11,8 +11,7 @@ import {
   Target,
   Search,
 } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { motion } from 'framer-motion';
 
 const ROLES = [
   {
@@ -81,125 +80,108 @@ const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.15 },
+    transition: { staggerChildren: 0.09, delayChildren: 0.12 },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 36, scale: 0.94 },
+  hidden: { opacity: 0, y: 28, scale: 0.96 },
   show: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { type: 'spring' as const, stiffness: 320, damping: 26 },
+    transition: { type: 'spring' as const, stiffness: 340, damping: 26 },
   },
 };
 
-/** Soft flowing wave lines — works in light & dark */
-function WaveBackground() {
+/** Animated wave lines — only for the upper hero zone */
+function UpperWaveBackground() {
   return (
-    <div
-      className="pointer-events-none absolute inset-0 overflow-hidden"
-      aria-hidden
-    >
-      {/* Ambient glow blobs */}
-      <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-indigo-400/10 dark:bg-indigo-500/15 blur-3xl" />
-      <div className="absolute -right-24 top-40 h-80 w-80 rounded-full bg-violet-400/10 dark:bg-violet-600/15 blur-3xl" />
-      <div className="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-cyan-400/5 dark:bg-cyan-500/10 blur-3xl" />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      {/* Soft ambient glows (upper only) */}
+      <div className="absolute -left-20 -top-10 h-56 w-56 rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/20" />
+      <div className="absolute -right-16 top-0 h-64 w-64 rounded-full bg-violet-400/12 blur-3xl dark:bg-violet-600/18" />
 
       <svg
         className="absolute inset-0 h-full w-full"
-        viewBox="0 0 1440 900"
+        viewBox="0 0 1440 420"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="xMidYMid slice"
       >
-        {/* Wave group 1 — left side, slow drift */}
-        <g className="career-wave career-wave-1">
+        <g className="career-wave career-wave-a">
           <path
-            d="M-40 220 C 180 140, 320 300, 520 240 S 820 120, 1020 200 S 1280 320, 1520 240"
+            d="M-40 120 C 160 60, 300 180, 500 130 S 820 40, 1020 110 S 1280 200, 1520 130"
             stroke="currentColor"
-            strokeWidth="1.25"
-            className="text-indigo-400/25 dark:text-indigo-400/35"
+            strokeWidth="1.3"
+            className="text-indigo-400/30 dark:text-indigo-400/40"
           />
           <path
-            d="M-40 260 C 200 180, 340 340, 540 280 S 840 160, 1040 240 S 1300 360, 1520 280"
+            d="M-40 155 C 180 95, 320 215, 520 165 S 840 75, 1040 145 S 1300 235, 1520 165"
             stroke="currentColor"
             strokeWidth="1"
-            className="text-violet-400/20 dark:text-violet-400/28"
+            className="text-violet-400/22 dark:text-violet-400/32"
           />
         </g>
 
-        {/* Wave group 2 — mid, opposite phase */}
-        <g className="career-wave career-wave-2">
+        <g className="career-wave career-wave-b">
           <path
-            d="M-60 480 C 160 400, 300 560, 500 500 S 800 380, 1000 460 S 1260 580, 1500 500"
+            d="M-60 240 C 140 180, 280 300, 480 250 S 800 160, 1000 230 S 1260 320, 1500 250"
             stroke="currentColor"
             strokeWidth="1.15"
-            className="text-indigo-300/20 dark:text-indigo-300/30"
+            className="text-sky-400/22 dark:text-sky-400/32"
           />
           <path
-            d="M-60 520 C 180 440, 320 600, 520 540 S 820 420, 1020 500 S 1280 620, 1500 540"
+            d="M-60 275 C 160 215, 300 335, 500 285 S 820 195, 1020 265 S 1280 355, 1500 285"
             stroke="currentColor"
             strokeWidth="0.9"
-            className="text-fuchsia-400/15 dark:text-fuchsia-400/22"
+            className="text-fuchsia-400/15 dark:text-fuchsia-400/25"
           />
         </g>
 
-        {/* Wave group 3 — upper right accent */}
-        <g className="career-wave career-wave-3">
+        <g className="career-wave career-wave-c">
           <path
-            d="M600 80 C 780 20, 900 160, 1080 100 S 1320 40, 1500 120"
+            d="M500 50 C 700 10, 860 110, 1040 70 S 1320 20, 1520 90"
             stroke="currentColor"
             strokeWidth="1.1"
-            className="text-sky-400/20 dark:text-sky-400/30"
-          />
-          <path
-            d="M640 120 C 820 60, 940 200, 1120 140 S 1360 80, 1540 160"
-            stroke="currentColor"
-            strokeWidth="0.85"
-            className="text-indigo-300/15 dark:text-indigo-300/25"
+            className="text-indigo-300/25 dark:text-indigo-300/35"
           />
         </g>
 
-        {/* Soft filled under-wave for depth */}
-        <path
-          d="M0 720 C 240 640, 480 780, 720 700 S 1200 620, 1440 700 L 1440 900 L 0 900 Z"
-          className="fill-indigo-500/[0.03] dark:fill-indigo-400/[0.06]"
-        />
+        {/* Fade waves into page below */}
+        <defs>
+          <linearGradient id="waveFade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="white" stopOpacity="0" />
+            <stop offset="70%" stopColor="white" stopOpacity="0" />
+            <stop offset="100%" stopColor="white" stopOpacity="1" />
+          </linearGradient>
+        </defs>
+        <rect width="1440" height="420" fill="url(#waveFade)" className="opacity-0 dark:opacity-0" />
       </svg>
 
+      {/* Bottom fade so waves stay upper-only */}
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
+
       <style>{`
-        @keyframes career-wave-drift {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          50% { transform: translateX(18px) translateY(-10px); }
+        @keyframes career-wave-a {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(16px, -8px); }
         }
-        @keyframes career-wave-drift-alt {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          50% { transform: translateX(-22px) translateY(8px); }
+        @keyframes career-wave-b {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(-18px, 6px); }
         }
-        @keyframes career-wave-drift-slow {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          50% { transform: translateX(12px) translateY(-6px); }
+        @keyframes career-wave-c {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(10px, -5px); }
         }
-        .career-wave-1 {
-          animation: career-wave-drift 14s ease-in-out infinite;
-          transform-origin: center;
-        }
-        .career-wave-2 {
-          animation: career-wave-drift-alt 18s ease-in-out infinite;
-          transform-origin: center;
-        }
-        .career-wave-3 {
-          animation: career-wave-drift-slow 20s ease-in-out infinite;
-          transform-origin: center;
-        }
+        .career-wave-a { animation: career-wave-a 12s ease-in-out infinite; }
+        .career-wave-b { animation: career-wave-b 16s ease-in-out infinite; }
+        .career-wave-c { animation: career-wave-c 20s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .career-wave-1,
-          .career-wave-2,
-          .career-wave-3 {
-            animation: none;
-          }
+          .career-wave-a,
+          .career-wave-b,
+          .career-wave-c { animation: none; }
         }
       `}</style>
     </div>
@@ -208,78 +190,65 @@ function WaveBackground() {
 
 export const RoadmapList = () => {
   const navigate = useNavigate();
-  const pageRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: pageRef,
-    offset: ['start start', 'end start'],
-  });
-  const waveY = useTransform(scrollYProgress, [0, 1], [0, 80]);
-  const waveOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0.45]);
 
   return (
-    <div
-      ref={pageRef}
-      className="relative flex-1 overflow-hidden bg-[var(--bg-primary)]"
-    >
-      {/* Parallax wave layer */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{ y: waveY, opacity: waveOpacity }}
-      >
-        <WaveBackground />
-      </motion.div>
+    <div className="relative flex-1 bg-[var(--bg-primary)]">
+      {/* UPPER ZONE ONLY — waves + hero */}
+      <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 z-0 max-h-[420px] md:max-h-[460px]">
+          <UpperWaveBackground />
+        </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl p-4 md:p-8">
-        {/* Header — scroll reveal */}
-        <motion.header
-          className="mb-14 md:mb-16"
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-2xl bg-indigo-100 p-3 text-indigo-600 shadow-sm dark:bg-indigo-500/20 dark:text-indigo-300">
-              <Target className="h-6 w-6" />
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pb-6 pt-4 md:px-8 md:pt-8">
+          <motion.header
+            className="mb-10 md:mb-12"
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="mb-6 flex items-center gap-3">
+              <div className="rounded-2xl bg-indigo-100 p-3 text-indigo-600 shadow-sm dark:bg-indigo-500/20 dark:text-indigo-300">
+                <Target className="h-6 w-6" />
+              </div>
+              <span className="text-sm font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
+                Career Paths
+              </span>
             </div>
-            <span className="text-sm font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
-              Career Paths
-            </span>
-          </div>
-          <h1 className="mb-6 text-4xl font-black leading-tight text-slate-900 dark:text-white md:text-5xl">
-            Your Career Journey,{' '}
-            <span className="bg-gradient-to-r from-indigo-600 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent dark:from-indigo-300 dark:via-violet-300 dark:to-fuchsia-300">
-              Visualized.
-            </span>
-          </h1>
-          <p className="max-w-2xl text-lg font-medium leading-relaxed text-slate-500 dark:text-slate-400 md:text-xl">
-            Follow industry-standard paths designed to take you from absolute zero
-            to a professional role. Each step is verified by experts.
-          </p>
-        </motion.header>
+            <h1 className="mb-5 text-4xl font-black leading-tight text-slate-900 dark:text-white md:text-5xl">
+              Your Career Journey,{' '}
+              <span className="bg-gradient-to-r from-indigo-600 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent dark:from-indigo-300 dark:via-violet-300 dark:to-fuchsia-300">
+                Visualized.
+              </span>
+            </h1>
+            <p className="max-w-2xl text-lg font-medium leading-relaxed text-slate-500 dark:text-slate-400 md:text-xl">
+              Follow industry-standard paths designed to take you from absolute zero
+              to a professional role. Each step is verified by experts.
+            </p>
+          </motion.header>
 
-        {/* Search */}
-        <motion.div
-          className="relative mb-12 max-w-2xl"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.45, delay: 0.08 }}
-        >
-          <Search className="absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search career paths..."
-            className="w-full rounded-[28px] border border-slate-100 bg-white/90 py-5 pl-16 pr-6 text-lg font-medium text-slate-900 shadow-xl shadow-slate-200/50 outline-none backdrop-blur-sm transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-800 dark:bg-slate-900/90 dark:text-white dark:shadow-black/40"
-          />
-        </motion.div>
+          <motion.div
+            className="relative mb-4 max-w-2xl"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.08 }}
+          >
+            <Search className="absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search career paths..."
+              className="w-full rounded-[28px] border border-slate-100 bg-white/90 py-5 pl-16 pr-6 text-lg font-medium text-slate-900 shadow-xl shadow-slate-200/50 outline-none backdrop-blur-sm transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-800 dark:bg-slate-900/90 dark:text-white dark:shadow-black/40"
+            />
+          </motion.div>
+        </div>
+      </section>
 
-        {/* Cards grid */}
+      {/* CARDS — no wave behind this zone */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-10 pt-6 md:px-8 md:pb-12">
         <motion.div
           variants={container}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.15 }}
+          viewport={{ once: true, amount: 0.12 }}
           className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3"
         >
           {ROLES.map((role) => {
@@ -288,15 +257,15 @@ export const RoadmapList = () => {
               <motion.div
                 key={role.id}
                 variants={item}
-                whileHover={{ y: -10, scale: 1.02 }}
+                whileHover={{ y: -8, scale: 1.015 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate(`/roadmaps/${role.id}`)}
-                className="group cursor-pointer rounded-[32px] border border-slate-100/80 bg-white/90 p-7 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/90 dark:hover:shadow-indigo-950/40 md:p-8"
+                className="group cursor-pointer rounded-[32px] border border-slate-100 bg-white p-7 shadow-sm transition-shadow duration-300 hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-indigo-950/40 md:p-8"
               >
                 <div className="mb-6 flex items-start justify-between">
                   <motion.div
                     className={`flex h-14 w-14 items-center justify-center rounded-2xl ${role.color} text-white shadow-lg`}
-                    whileHover={{ scale: 1.12, rotate: -4 }}
+                    whileHover={{ scale: 1.1, rotate: -3 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 18 }}
                   >
                     <Icon className="h-7 w-7" />
@@ -325,13 +294,12 @@ export const RoadmapList = () => {
           })}
         </motion.div>
 
-        {/* Bottom CTA */}
         <motion.div
-          className="mt-14 flex justify-center"
-          initial={{ opacity: 0, y: 16 }}
+          className="mt-12 flex justify-center"
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
         >
           <button
             type="button"
