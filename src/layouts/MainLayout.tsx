@@ -19,6 +19,7 @@ import {
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
+  FolderOpen,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -34,6 +35,7 @@ const NAVIGATION = [
   { name: 'Rewards', path: '/rewards', icon: Gift },
   { name: 'Internships', path: '/internships', icon: Briefcase },
   { name: 'Certifications', path: '/certifications', icon: Award },
+  { name: 'Portfolio', path: '/portfolio', icon: FolderOpen },
   { name: 'Growth', path: '/events', icon: TrendingUp },
 ];
 
