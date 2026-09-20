@@ -6,8 +6,6 @@ import {
   Briefcase,
   CheckCircle2,
   Code2,
-  Download,
-  ExternalLink,
   FolderGit2,
   GraduationCap,
   Share2,
@@ -198,13 +196,6 @@ export const DigitalPortfolio = () => {
               className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
               <Share2 className="h-4 w-4" /> Share
-            </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-500"
-            >
-              <Download className="h-4 w-4" /> Export / Print
             </button>
           </div>
         </div>
