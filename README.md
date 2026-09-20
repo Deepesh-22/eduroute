@@ -64,7 +64,9 @@ flowchart LR
 | Application & tracking | Apply → Applied → Shortlisted → Interview → Hired |
 | Industry collaboration | Industry workspace (`/industry`) |
 | Institution visibility | College placement dashboard (`/college/placements`) |
-| Learning support (value-add) | Roadmaps, DSA Sheet, Assessments, Buddy AI mentor |
+| Learning support (value-add) | Roadmaps (animated Career Paths), DSA Sheet, Assessments, Buddy AI mentor |
+| Student portfolio | Digital portfolio (skills, certs, projects, achievements) |
+| Faculty collaboration | Faculty opportunities with official portal links (FDP / internship portals) |
 
 ---
 
@@ -84,7 +86,7 @@ flowchart TB
 
 | Role | Key screens |
 |------|-------------|
-| **Student** | Dashboard, Skill Profile, Internships, My Applications, Roadmaps, DSA, Buddy AI |
+| **Student** | Dashboard, Skill Profile, Internships, My Applications, Roadmaps (animated), Portfolio, DSA, Buddy AI |
 | **Industry** | Post opening, applicant list, shortlist with match % |
 | **College** | Placement counts, status funnel, cohort skill-gap snapshot |
 
@@ -127,12 +129,25 @@ EDUROUTE
 │   ├── AI onboarding (track + gap quiz)
 │   ├── Skill Profile (scores, gaps, next steps)
 │   ├── Dashboard (progress, applications shortcut)
-│   ├── Internships (match %, recommended, apply)
+│   ├── Internships
+│   │   ├── Discrete match % (per-role scoring)
+│   │   ├── Recommended for you
+│   │   ├── Hero network constellation background
+│   │   ├── Scroll + card entrance animations
+│   │   └── Light / dark theme cards
 │   ├── My Applications (status pipeline)
-│   ├── Roadmaps / Pathways / Courses
+│   ├── Roadmaps / Career Paths
+│   │   ├── Dual-side animated sine waves (upper hero)
+│   │   ├── Continuous up–down wave oscillation
+│   │   ├── Scroll-linked water drift
+│   │   └── Staggered role cards (light / dark)
+│   ├── Digital Portfolio (skills, certs, projects, internships)
 │   ├── DSA Sheet (100 beginner problems)
 │   ├── Assessments, Leaderboard, Rewards
 │   └── Buddy AI + floating assistant
+├── Faculty
+│   ├── Faculty workspace & opportunities
+│   └── Official portal links (AICTE ATAL, Internship, etc.)
 ├── Industry
 │   ├── Workspace login
 │   ├── Post internship / job (skills, stipend, location)
@@ -141,6 +156,43 @@ EDUROUTE
     ├── Placement dashboard (funnel metrics)
     └── Admin panel (approvals, courses)
 ```
+
+---
+
+## 6.1 PR #67 highlights (this branch)
+
+Features implemented and polished on **PR #67** (`feature/onboarding-interest-gap`):
+
+| Area | What judges will see |
+|------|----------------------|
+| **Career Paths / Roadmaps** | Animated dual-side sine waves in the upper hero; continuous **up–down oscillation** with clear intensity; waves also **drift while scrolling** (water-like flow); light & dark stroke colors; no arrow glyph |
+| **Internships** | Hero-only network constellation background; card scroll / entrance animations; **discrete match scores** (not the same % on every card); recommended list; full light / dark theme support on cards |
+| **Faculty opportunities** | Demo opportunities with **real official portal links** (e.g. AICTE ATAL Academy, AICTE Internship) for live jury walkthroughs |
+| **Student portfolio** | Digital portfolio page (skills, certifications, projects, internships, achievements) linked from the sidebar |
+| **Onboarding / skill gap** | Interest tracks + gap questions feeding Skill Profile and match recommendations |
+| **Themes** | Roadmap waves and internship cards work in **light and dark** mode |
+
+**Live preview:** https://deploy-preview-67--eduroutee.netlify.app  
+
+**Suggested jury path on this preview**
+
+1. Open **Roadmaps** → watch continuous wave motion and scroll the page  
+2. Open **Internships** → check varied match %, recommended cards, theme toggle  
+3. Faculty login → open an opportunity → **Official portal** link  
+4. **Portfolio** from sidebar → skills / projects summary  
+
+---
+
+## 10. Why this approach wins for SIH
+
+| Jury lens | How EDUROUTE responds |
+|-----------|------------------------|
+| **Problem clarity** | Directly addresses academia–industry skill gap |
+| **Completeness** | Student + Industry + College in one product |
+| **Working demo** | Full apply → shortlist → placement path |
+| **Innovation** | Skill gap onboarding + match scoring + AI mentor |
+| **Feasibility** | Built on standard web stack; deployable today |
+| **Impact** | Employability, internship quality, college visibility |
 
 ---
 
@@ -205,19 +257,6 @@ eduroute_/
 ├── netlify/functions/             # Auth, buddy, proxies
 └── package.json
 ```
-
----
-
-## 10. Why this approach wins for SIH
-
-| Jury lens | How EDUROUTE responds |
-|-----------|------------------------|
-| **Problem clarity** | Directly addresses academia–industry skill gap |
-| **Completeness** | Student + Industry + College in one product |
-| **Working demo** | Full apply → shortlist → placement path |
-| **Innovation** | Skill gap onboarding + match scoring + AI mentor |
-| **Feasibility** | Built on standard web stack; deployable today |
-| **Impact** | Employability, internship quality, college visibility |
 
 ---
 
