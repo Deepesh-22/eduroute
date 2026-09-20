@@ -1,20 +1,21 @@
 /**
- * Institution placement metrics from internship apply-tracker (localStorage).
- * Demo-friendly: falls back to sample cohort numbers when few real apps exist.
+ * Institution placement metrics — demo + cohort localStorage.
  */
 
 import type { ApplicationStatus, InternshipApplication } from './internshipApplications';
 import type { AuthUser } from './rbacAuth';
 import { readOnboarding } from './onboardingStore';
+import { readIndustryApplicants, readIndustryPostings } from './industryStore';
 
-const GLOBAL_KEY = 'eduroute:internship-applications-v1';
-const BY_EMAIL_PREFIX = 'eduroute:internship-applications-v1:';
+const GLOBAL_KEY = 'eduroute:internship-applications-v2';
+const BY_EMAIL_PREFIX = 'eduroute:internship-applications-v2:';
 
 export type PlacementKpis = {
   applications: number;
   shortlisted: number;
   interviews: number;
   hired: number;
+  offers: number;
   applicationsDelta: number;
   shortlistedDelta: number;
   interviewsDelta: number;
@@ -26,6 +27,12 @@ export type SkillGapRow = {
   name: string;
   percent: number;
   color: string;
+};
+
+export type SkillDemandRow = {
+  name: string;
+  demand: number;
+  trend: 'up' | 'steady' | 'down';
 };
 
 export type HiringCompany = {
@@ -49,8 +56,13 @@ export type PlacementDashboardData = {
   periodLabel: string;
   kpis: PlacementKpis;
   skillGaps: SkillGapRow[];
+  skillDemand: SkillDemandRow[];
   companies: HiringCompany[];
   trends: MonthlyTrendPoint[];
+  readinessScore: number;
+  placementRate: number;
+  openJobs: number;
+  openInternships: number;
   source: 'live' | 'demo-seed';
 };
 
@@ -59,6 +71,7 @@ const DEMO_KPIS: PlacementKpis = {
   shortlisted: 198,
   interviews: 142,
   hired: 86,
+  offers: 102,
   applicationsDelta: 18,
   shortlistedDelta: 24,
   interviewsDelta: 32,
@@ -71,6 +84,14 @@ const DEMO_SKILL_GAPS: SkillGapRow[] = [
   { rank: 3, name: 'System Design', percent: 41, color: '#14b8a6' },
   { rank: 4, name: 'Java', percent: 35, color: '#f59e0b' },
   { rank: 5, name: 'Communication', percent: 28, color: '#ec4899' },
+];
+
+const DEMO_SKILL_DEMAND: SkillDemandRow[] = [
+  { name: 'DSA / Problem solving', demand: 92, trend: 'up' },
+  { name: 'Full-stack (React + Node)', demand: 84, trend: 'up' },
+  { name: 'Cloud (AWS / Azure)', demand: 78, trend: 'up' },
+  { name: 'Data analytics / SQL', demand: 71, trend: 'steady' },
+  { name: 'Cybersecurity basics', demand: 63, trend: 'up' },
 ];
 
 const DEMO_COMPANIES: HiringCompany[] = [
@@ -100,11 +121,9 @@ function parseList(raw: string | null): InternshipApplication[] {
   }
 }
 
-/** Collect applications across global + per-email keys (institution view). */
 export function readCohortApplications(): InternshipApplication[] {
   if (typeof window === 'undefined') return [];
   const byId = new Map<string, InternshipApplication>();
-
   const push = (list: InternshipApplication[]) => {
     for (const app of list) {
       if (!app?.internshipId) continue;
@@ -112,19 +131,20 @@ export function readCohortApplications(): InternshipApplication[] {
       if (!byId.has(key)) byId.set(key, app);
     }
   };
-
   push(parseList(localStorage.getItem(GLOBAL_KEY)));
-
+  // also v1 keys
+  push(parseList(localStorage.getItem('eduroute:internship-applications-v1')));
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (!k || !k.startsWith(BY_EMAIL_PREFIX)) continue;
-      push(parseList(localStorage.getItem(k)));
+      if (!k) continue;
+      if (k.startsWith(BY_EMAIL_PREFIX) || k.startsWith('eduroute:internship-applications-v1:')) {
+        push(parseList(localStorage.getItem(k)));
+      }
     }
   } catch {
     /* private mode */
   }
-
   return Array.from(byId.values());
 }
 
@@ -137,14 +157,25 @@ function funnelCounts(apps: InternshipApplication[]): PlacementKpis {
   const shortlisted =
     countByStatus(apps, 'Shortlisted') +
     countByStatus(apps, 'Interview') +
-    countByStatus(apps, 'Hired');
-  const interviews = countByStatus(apps, 'Interview') + countByStatus(apps, 'Hired');
-  const hired = countByStatus(apps, 'Hired');
+    countByStatus(apps, 'Offer') +
+    countByStatus(apps, 'Hired') +
+    countByStatus(apps, 'Completed');
+  const interviews =
+    countByStatus(apps, 'Interview') +
+    countByStatus(apps, 'Offer') +
+    countByStatus(apps, 'Hired') +
+    countByStatus(apps, 'Completed');
+  const offers =
+    countByStatus(apps, 'Offer') +
+    countByStatus(apps, 'Hired') +
+    countByStatus(apps, 'Completed');
+  const hired = countByStatus(apps, 'Hired') + countByStatus(apps, 'Completed');
   return {
     applications: total,
     shortlisted,
     interviews,
     hired,
+    offers,
     applicationsDelta: 12,
     shortlistedDelta: 18,
     interviewsDelta: 22,
@@ -153,11 +184,9 @@ function funnelCounts(apps: InternshipApplication[]): PlacementKpis {
 }
 
 function companyHires(apps: InternshipApplication[]): HiringCompany[] {
-  const hired = apps.filter((a) => a.status === 'Hired');
+  const hired = apps.filter((a) => a.status === 'Hired' || a.status === 'Completed');
   const map = new Map<string, number>();
-  for (const a of hired) {
-    map.set(a.company, (map.get(a.company) || 0) + 1);
-  }
+  for (const a of hired) map.set(a.company, (map.get(a.company) || 0) + 1);
   const rows = Array.from(map.entries())
     .map(([name, hires], i) => ({
       id: `c-${i}`,
@@ -189,23 +218,75 @@ function skillGapsFromOnboarding(): SkillGapRow[] {
   }
 }
 
-export function getPlacementDashboardData(institutionName = 'Modi Institute of Technology'): PlacementDashboardData {
+function skillDemandFromPostings(): SkillDemandRow[] {
+  try {
+    const postings = readIndustryPostings();
+    const freq = new Map<string, number>();
+    for (const p of postings) {
+      for (const s of p.skills) {
+        const k = s.trim();
+        if (!k) continue;
+        freq.set(k, (freq.get(k) || 0) + 1);
+      }
+    }
+    const rows = Array.from(freq.entries())
+      .map(([name, count]) => ({
+        name,
+        demand: Math.min(99, 50 + count * 12),
+        trend: (count >= 2 ? 'up' : 'steady') as 'up' | 'steady' | 'down',
+      }))
+      .sort((a, b) => b.demand - a.demand)
+      .slice(0, 5);
+    return rows.length ? rows : DEMO_SKILL_DEMAND;
+  } catch {
+    return DEMO_SKILL_DEMAND;
+  }
+}
+
+export function getPlacementDashboardData(
+  institutionName = 'Modi Institute of Technology',
+): PlacementDashboardData {
   const apps = readCohortApplications().filter((a) => !a.isDemo);
-  const useLive = apps.length >= 8;
-  const kpis = useLive ? funnelCounts(apps) : DEMO_KPIS;
+  const industryApps = readIndustryApplicants();
+  const useLive = apps.length >= 8 || industryApps.length >= 5;
+  const kpis = useLive && apps.length >= 8 ? funnelCounts(apps) : DEMO_KPIS;
+
+  const placementRate =
+    kpis.applications > 0 ? Math.round((kpis.hired / kpis.applications) * 100) : 18;
+
+  // Readiness: inverse of top skill-gap pressure + placement momentum
+  const gaps = skillGapsFromOnboarding();
+  const avgGap = gaps.reduce((s, g) => s + g.percent, 0) / Math.max(1, gaps.length);
+  const readinessScore = Math.max(35, Math.min(95, Math.round(100 - avgGap * 0.55 + placementRate * 0.25)));
+
+  let openJobs = 0;
+  let openInternships = 0;
+  try {
+    for (const p of readIndustryPostings()) {
+      if (p.roleCategory === 'full-time') openJobs += 1;
+      else openInternships += 1;
+    }
+  } catch {
+    openJobs = 1;
+    openInternships = 2;
+  }
 
   return {
     institutionName,
     periodLabel: 'Aug 2025 – Dec 2025',
     kpis,
-    skillGaps: skillGapsFromOnboarding(),
-    companies: useLive ? companyHires(apps) : DEMO_COMPANIES,
+    skillGaps: gaps,
+    skillDemand: skillDemandFromPostings(),
+    companies: useLive && apps.length >= 8 ? companyHires(apps) : DEMO_COMPANIES,
     trends: DEMO_TRENDS,
+    readinessScore,
+    placementRate,
+    openJobs,
+    openInternships,
     source: useLive ? 'live' : 'demo-seed',
   };
 }
 
-/** College institution demo — separate role from staff admin. */
 export const COLLEGE_DEMO_CREDENTIALS = {
   email: 'college@gmail.com',
   password: 'student',
