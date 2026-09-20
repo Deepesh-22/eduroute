@@ -95,16 +95,16 @@ const item = {
   },
 };
 
-/** Dual-side waves — continuous flow + scroll-driven water drift */
+/** Dual-side waves — slow water-like continuous flow + soft scroll drift */
 function UpperWaveBackground({
   scrollYProgress,
 }: {
   scrollYProgress: ReturnType<typeof useScroll>['scrollYProgress'];
 }) {
-  const leftFlowX = useTransform(scrollYProgress, [0, 0.55], [0, -80]);
-  const rightFlowX = useTransform(scrollYProgress, [0, 0.55], [0, 100]);
-  const leftFlowY = useTransform(scrollYProgress, [0, 0.55], [0, -28]);
-  const rightFlowY = useTransform(scrollYProgress, [0, 0.55], [0, 36]);
+  const leftFlowX = useTransform(scrollYProgress, [0, 0.7], [0, -48]);
+  const rightFlowX = useTransform(scrollYProgress, [0, 0.7], [0, 56]);
+  const leftFlowY = useTransform(scrollYProgress, [0, 0.7], [0, -16]);
+  const rightFlowY = useTransform(scrollYProgress, [0, 0.7], [0, 20]);
   const waveOpacity = useTransform(scrollYProgress, [0, 0.15, 0.45], [1, 0.95, 0.25]);
 
   return (
@@ -224,29 +224,28 @@ function UpperWaveBackground({
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
 
       <style>{`
+        /* Slow water-like flow */
         @keyframes wave-motion-a {
           0%   { transform: translate3d(0, 0) scaleY(1); }
-          20%  { transform: translate3d(28px, -18px) scaleY(1.1); }
-          40%  { transform: translate3d(-12px, 14px) scaleY(0.92); }
-          60%  { transform: translate3d(22px, -12px) scaleY(1.08); }
-          80%  { transform: translate3d(-18px, 10px) scaleY(0.94); }
+          25%  { transform: translate3d(18px, -10px) scaleY(1.04); }
+          50%  { transform: translate3d(-8px, 8px) scaleY(0.97); }
+          75%  { transform: translate3d(12px, -6px) scaleY(1.03); }
           100% { transform: translate3d(0, 0) scaleY(1); }
         }
         @keyframes wave-motion-b {
           0%   { transform: translate3d(0, 0) scaleY(1); }
-          18%  { transform: translate3d(-32px, 16px) scaleY(1.12); }
-          38%  { transform: translate3d(20px, -20px) scaleY(0.9); }
-          58%  { transform: translate3d(-24px, 12px) scaleY(1.09); }
-          78%  { transform: translate3d(14px, -14px) scaleY(0.93); }
+          25%  { transform: translate3d(-20px, 10px) scaleY(1.05); }
+          50%  { transform: translate3d(12px, -12px) scaleY(0.96); }
+          75%  { transform: translate3d(-14px, 7px) scaleY(1.03); }
           100% { transform: translate3d(0, 0) scaleY(1); }
         }
         .wave-motion-a {
-          animation: wave-motion-a 3.8s ease-in-out infinite;
+          animation: wave-motion-a 14s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center center;
         }
         .wave-motion-b {
-          animation: wave-motion-b 4.6s ease-in-out infinite;
+          animation: wave-motion-b 18s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center center;
         }
