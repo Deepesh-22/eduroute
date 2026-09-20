@@ -38,7 +38,7 @@ const CERT_COURSES: CertCourse[] = [
     description: 'Foundational IT skills — troubleshooting, customer service, networking, and security.',
     url: 'https://www.coursera.org/professional-certificates/google-it-support',
     free: true,
-    tags: ['it', 'support', 'networking', 'troubleshooting', 'hardware', 'software', 'helpdesk', 'security'],
+    tags: ['it-support', 'networking', 'troubleshooting', 'hardware', 'helpdesk', 'security', 'cyber', 'cybersecurity'],
   },
   {
     id: 'google-data',
@@ -50,7 +50,7 @@ const CERT_COURSES: CertCourse[] = [
     description: 'Data cleaning, analysis, and visualization with spreadsheets, SQL, R, and Tableau.',
     url: 'https://www.coursera.org/professional-certificates/google-data-analytics',
     free: true,
-    tags: ['data', 'analytics', 'sql', 'excel', 'tableau', 'spreadsheet', 'r', 'visualization', 'data analyst'],
+    tags: ['data', 'analytics', 'sql', 'excel', 'tableau', 'spreadsheet', 'visualization', 'data-analyst', 'data-analysis'],
   },
   {
     id: 'google-cloud',
@@ -62,7 +62,7 @@ const CERT_COURSES: CertCourse[] = [
     description: 'Hands-on cloud labs and skill badges. Start free with public courses and free trial credits.',
     url: 'https://www.cloudskillsboost.google/',
     free: true,
-    tags: ['cloud', 'gcp', 'google cloud', 'devops', 'kubernetes', 'containers'],
+    tags: ['cloud', 'gcp', 'google-cloud', 'devops', 'kubernetes', 'containers'],
   },
   {
     id: 'ms-learn',
@@ -74,7 +74,7 @@ const CERT_COURSES: CertCourse[] = [
     description: 'Free modules for Azure, Power Platform, security, and developer tools. Exam prep paths included.',
     url: 'https://learn.microsoft.com/training/',
     free: true,
-    tags: ['microsoft', 'azure', 'cloud', 'power platform', 'security', 'developer'],
+    tags: ['microsoft', 'azure', 'cloud', 'power-platform', 'security', 'developer'],
   },
   {
     id: 'ms-azure-fundamentals',
@@ -98,7 +98,7 @@ const CERT_COURSES: CertCourse[] = [
     description: 'Free AWS cloud courses and learning plans for cloud practitioner and developer tracks.',
     url: 'https://skillbuilder.aws/',
     free: true,
-    tags: ['aws', 'amazon', 'cloud', 'devops', 's3', 'ec2', 'lambda'],
+    tags: ['aws', 'amazon', 'cloud', 'devops', 'lambda'],
   },
   {
     id: 'aws-cloud-essentials',
@@ -110,7 +110,7 @@ const CERT_COURSES: CertCourse[] = [
     description: 'Free foundational AWS course covering core services, security, pricing, and architecture.',
     url: 'https://explore.skillbuilder.aws/learn/course/external/view/elearning/134/aws-cloud-practitioner-essentials',
     free: true,
-    tags: ['aws', 'cloud practitioner', 'cloud', 'architecture', 'security'],
+    tags: ['aws', 'cloud-practitioner', 'cloud', 'architecture'],
   },
   {
     id: 'meta-frontend',
@@ -134,7 +134,7 @@ const CERT_COURSES: CertCourse[] = [
     description: 'Free AI, cybersecurity, data, and professional skills courses with digital credentials.',
     url: 'https://skillsbuild.org/',
     free: true,
-    tags: ['ai', 'cybersecurity', 'security', 'career', 'soft skills', 'ibm'],
+    tags: ['ai', 'cybersecurity', 'cyber', 'security', 'ethical-hacking', 'infosec', 'career', 'ibm'],
   },
   {
     id: 'ibm-data',
@@ -146,7 +146,7 @@ const CERT_COURSES: CertCourse[] = [
     description: 'Python, SQL, data analysis, and machine learning foundations (Coursera; audit options).',
     url: 'https://www.coursera.org/professional-certificates/ibm-data-science',
     free: true,
-    tags: ['data science', 'python', 'sql', 'machine learning', 'ml', 'pandas', 'data analyst'],
+    tags: ['data-science', 'python', 'sql', 'machine-learning', 'ml', 'pandas', 'data-analyst'],
   },
   {
     id: 'freecodecamp',
@@ -176,6 +176,28 @@ const CERT_COURSES: CertCourse[] = [
 
 const CATEGORIES = ['All', 'Cloud', 'Data', 'Development', 'IT Support', 'Business', 'Career'] as const;
 
+const STOP = new Set([
+  'i', 'me', 'my', 'a', 'an', 'the', 'and', 'or', 'to', 'for', 'of', 'in', 'on', 'at', 'is', 'am', 'are',
+  'want', 'wanna', 'need', 'looking', 'find', 'course', 'courses', 'cert', 'certificate', 'certificates',
+  'related', 'please', 'some', 'any', 'with', 'about', 'based', 'into', 'from', 'this', 'that',
+  'learn', 'learning', 'study', 'interested', 'interest', 'interests', 'skill', 'skills', 'gap', 'gaps',
+]);
+
+/** Allowed short tech tokens (length 2) */
+const SHORT_OK = new Set(['ui', 'ux', 'ml', 'ai', 'js', 'ts', 'sql', 'aws', 'gcp', 'it']);
+
+/** Expand natural phrases → catalog tags (so “cyber related” finds security courses) */
+const INTENT_MAP: { test: RegExp; expand: string[] }[] = [
+  { test: /\bcyber\b|\bcyber\s*sec|\binfosec\b|\bhacking\b|\bpenetration\b|\bpentest\b/i, expand: ['cybersecurity', 'cyber', 'security', 'ethical-hacking', 'infosec'] },
+  { test: /\bfront\s*-?end\b|\bfrontend\b|\breact\b|\bjavascript\b|\bui\/?ux\b/i, expand: ['frontend', 'react', 'javascript', 'html', 'css', 'web'] },
+  { test: /\bback\s*-?end\b|\bbackend\b|\bnode\b|\bapi\b/i, expand: ['backend', 'programming', 'software', 'developer'] },
+  { test: /\bdata\s*(scien|analy)|\banalytics\b|\bsql\b|\bpython\b/i, expand: ['data', 'analytics', 'data-science', 'sql', 'python', 'data-analyst'] },
+  { test: /\bcloud\b|\baws\b|\bazure\b|\bgcp\b|\bdevops\b/i, expand: ['cloud', 'aws', 'azure', 'gcp', 'devops'] },
+  { test: /\bmarket(ing)?\b|\bsales\b|\binbound\b/i, expand: ['marketing', 'sales', 'inbound', 'business'] },
+  { test: /\bai\b|\bmachine\s*learning\b|\bml\b/i, expand: ['ai', 'machine-learning', 'ml', 'python'] },
+  { test: /\bsoftware\b|\bdeveloper\b|\bcoding\b|\bprogramming\b/i, expand: ['software', 'developer', 'programming', 'coding', 'web'] },
+];
+
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.06 } },
@@ -191,23 +213,67 @@ const cardAnim = {
   },
 };
 
-function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9+#.\s-]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length > 1);
+function normalizeToken(t: string): string {
+  return t.toLowerCase().replace(/[^a-z0-9+-]/g, '');
 }
 
-function scoreCourse(course: CertCourse, tokens: string[]): number {
-  if (!tokens.length) return 0;
+function extractKeywords(prompt: string): string[] {
+  const lower = prompt.toLowerCase();
+  const expanded: string[] = [];
+
+  for (const { test, expand } of INTENT_MAP) {
+    if (test.test(lower)) expanded.push(...expand);
+  }
+
+  const raw = lower
+    .replace(/[^a-z0-9+#.\s/-]/g, ' ')
+    .split(/[\s/,;]+/)
+    .map(normalizeToken)
+    .filter(Boolean);
+
+  const tokens: string[] = [];
+  for (const t of raw) {
+    if (STOP.has(t)) continue;
+    if (t.length < 2) continue;
+    if (t.length === 2 && !SHORT_OK.has(t)) continue;
+    if (t.length < 3 && !SHORT_OK.has(t)) continue;
+    tokens.push(t);
+  }
+
+  return [...new Set([...expanded, ...tokens])];
+}
+
+function wholeWordOrPhrase(hay: string, needle: string): boolean {
+  if (!needle) return false;
+  if (needle.includes('-') || needle.includes(' ')) {
+    return hay.includes(needle.replace(/-/g, ' ')) || hay.includes(needle);
+  }
+  // whole-word style: avoid "r" matching inside "cyber"
+  const re = new RegExp(`(^|[^a-z0-9])${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`, 'i');
+  return re.test(hay);
+}
+
+function scoreCourse(course: CertCourse, keywords: string[]): { score: number; matched: string[] } {
+  if (!keywords.length) return { score: 0, matched: [] };
   const hay = `${course.title} ${course.description} ${course.category} ${course.provider} ${course.tags.join(' ')}`.toLowerCase();
   let score = 0;
-  for (const t of tokens) {
-    if (course.tags.some((tag) => tag === t || tag.includes(t) || t.includes(tag))) score += 4;
-    else if (hay.includes(t)) score += 2;
+  const matched: string[] = [];
+
+  for (const k of keywords) {
+    const tagHit = course.tags.some(
+      (tag) => tag === k || tag.replace(/-/g, '') === k.replace(/-/g, '') || tag.includes(k) && k.length >= 4,
+    );
+    if (tagHit) {
+      score += 6;
+      matched.push(k);
+      continue;
+    }
+    if (wholeWordOrPhrase(hay, k) && k.length >= 3) {
+      score += 3;
+      matched.push(k);
+    }
   }
-  return score;
+  return { score, matched: [...new Set(matched)] };
 }
 
 function buildDefaultPrompt(): string {
@@ -228,19 +294,20 @@ function buildDefaultPrompt(): string {
 type Suggestion = { course: CertCourse; score: number; reason: string };
 
 function suggestFromCatalog(prompt: string): Suggestion[] {
-  const tokens = tokenize(prompt);
-  if (!tokens.length) return [];
+  const keywords = extractKeywords(prompt);
+  if (!keywords.length) return [];
+
   const ranked = CERT_COURSES.map((course) => {
-    const score = scoreCourse(course, tokens);
-    const matchedTags = course.tags.filter((tag) => tokens.some((t) => tag.includes(t) || t.includes(tag)));
+    const { score, matched } = scoreCourse(course, keywords);
     const reason =
-      matchedTags.length > 0
-        ? `Matches your gaps: ${matchedTags.slice(0, 4).join(', ')}`
-        : `Related to ${course.category.toLowerCase()} skills you mentioned`;
+      matched.length > 0
+        ? `Matches your interest: ${matched.slice(0, 4).join(', ')}`
+        : `Related to ${course.category.toLowerCase()}`;
     return { course, score, reason };
   })
-    .filter((s) => s.score > 0)
+    .filter((s) => s.score >= 6)
     .sort((a, b) => b.score - a.score);
+
   return ranked.slice(0, 2);
 }
 
@@ -276,7 +343,7 @@ export const Certifications = () => {
   const runSuggest = () => {
     const text = aiPrompt.trim();
     if (!text) {
-      setSuggestNote('Describe your skill gaps or target role (same style as Buddy AI).');
+      setSuggestNote('Type what you want, e.g. “cyber related course” or “frontend with React”.');
       setSuggestions(null);
       return;
     }
@@ -286,12 +353,12 @@ export const Certifications = () => {
       const results = suggestFromCatalog(text);
       setSuggestions(results);
       if (results.length === 0) {
-        setSuggestNote('No strong match in our free catalog. Try keywords like React, Python, AWS, data, or cybersecurity.');
+        setSuggestNote('No strong match. Try: cyber, frontend, data, cloud, AWS, Python, marketing…');
       } else {
-        setSuggestNote(`Suggested ${results.length} course${results.length > 1 ? 's' : ''} from EDUROUTE’s free industry list (not random).`);
+        setSuggestNote(`Found ${results.length} course${results.length > 1 ? 's' : ''} from our free list based on your interest.`);
       }
       setSuggesting(false);
-    }, 450);
+    }, 400);
   };
 
   return (
@@ -309,8 +376,7 @@ export const Certifications = () => {
           Courses &amp; Certificates
         </h1>
         <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl leading-relaxed">
-          Start free certification paths from Google, Microsoft, AWS, Meta, IBM, and more. Use{' '}
-          <strong className="text-slate-700 dark:text-slate-200">AI Suggest</strong> to get 1–2 courses from this list based on your skill gaps.
+          Ask in plain language (e.g. “cyber related course”). AI Suggest returns 1–2 courses from this free list only.
         </p>
       </header>
 
@@ -327,19 +393,25 @@ export const Certifications = () => {
               </span>
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Paste skill gaps, target role, or interests (like you tell Buddy). We only recommend courses from the free list below — never random outside links.
+              Type your interest naturally — e.g. “I want cyber related course” or “frontend React”. Only our free catalog is used.
             </p>
           </div>
         </div>
 
         <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
-          Your details / skill gaps
+          What do you want to learn?
         </label>
         <textarea
           value={aiPrompt}
           onChange={(e) => setAiPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              runSuggest();
+            }
+          }}
           rows={3}
-          placeholder="e.g. I want frontend developer role. Gaps: React, JavaScript, CSS. Also interested in cloud basics."
+          placeholder="e.g. I want cyber related course"
           className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950/60 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-500/30 resize-y min-h-[88px]"
         />
 
