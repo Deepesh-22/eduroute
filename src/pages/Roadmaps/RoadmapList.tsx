@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Code2,
@@ -12,7 +11,7 @@ import {
   Target,
   Search,
 } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const ROLES = [
   {
@@ -95,188 +94,131 @@ const item = {
   },
 };
 
-/** Elegant dual-side sine waves — matches Career Paths hero design */
-const SIDEBAR_KEY = 'eduroute-sidebar-collapsed';
-
-function useSidebarCollapsed() {
-  const [collapsed, setCollapsed] = useState(false);
-  useEffect(() => {
-    const read = () => {
-      try {
-        setCollapsed(localStorage.getItem(SIDEBAR_KEY) === '1');
-      } catch {
-        setCollapsed(false);
-      }
-    };
-    read();
-    const onCustom = (e: Event) => {
-      const detail = (e as CustomEvent<{ collapsed?: boolean }>).detail;
-      if (typeof detail?.collapsed === 'boolean') setCollapsed(detail.collapsed);
-      else read();
-    };
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === SIDEBAR_KEY) read();
-    };
-    window.addEventListener('eduroute:sidebar-collapsed', onCustom);
-    window.addEventListener('storage', onStorage);
-    return () => {
-      window.removeEventListener('eduroute:sidebar-collapsed', onCustom);
-      window.removeEventListener('storage', onStorage);
-    };
-  }, []);
-  return collapsed;
-}
-
-function UpperWaveBackground({ scrollYProgress }: { scrollYProgress: ReturnType<typeof useScroll>['scrollYProgress'] }) {
-  const sidebarCollapsed = useSidebarCollapsed();
-  const shiftX = sidebarCollapsed ? -20 : 8;
-
-  const leftY = useTransform(scrollYProgress, [0, 0.4], [0, -36]);
-  const rightY = useTransform(scrollYProgress, [0, 0.4], [0, 28]);
-  const leftX = useTransform(scrollYProgress, [0, 0.4], [0, -24]);
-  const rightX = useTransform(scrollYProgress, [0, 0.4], [0, 32]);
-  const opacity = useTransform(scrollYProgress, [0, 0.35], [1, 0.35]);
-
+/** Dual-side animated sine waves — upper hero only, continuous motion (no arrow) */
+function UpperWaveBackground() {
   return (
-    <motion.div
-      className="pointer-events-none absolute inset-0 overflow-hidden"
-      aria-hidden
-      style={{ opacity }}
-      animate={{ x: shiftX }}
-      transition={{ type: 'spring', stiffness: 180, damping: 24 }}
-    >
-      <div className="absolute left-[8%] top-8 h-48 w-48 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15" />
-      <div className="absolute right-[5%] top-4 h-56 w-56 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-600/15" />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="absolute left-[8%] top-6 h-44 w-44 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15" />
+      <div className="absolute right-[6%] top-2 h-52 w-52 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-600/15" />
 
-      <motion.svg
-        className="absolute left-0 top-[8%] h-[70%] w-[38%] max-w-[420px]"
-        viewBox="0 0 420 280"
+      {/* LEFT — thin flowing waves */}
+      <svg
+        className="absolute left-0 top-[10%] h-[65%] w-[36%] max-w-[400px]"
+        viewBox="0 0 400 260"
         fill="none"
-        style={{ x: leftX, y: leftY }}
       >
-        <g className="wave-drift wave-drift-a">
+        <g className="wave-motion wave-motion-a">
           <path
-            d="M-10 140 C 60 90, 120 190, 190 140 S 320 70, 430 130"
+            d="M-10 130 C 55 85, 110 180, 175 130 S 300 70, 420 125"
             stroke="currentColor"
             strokeWidth="1.35"
+            strokeLinecap="round"
+            className="text-slate-400/50 dark:text-slate-400/42"
+          />
+          <path
+            d="M-10 155 C 65 110, 120 200, 185 150 S 310 90, 420 150"
+            stroke="currentColor"
+            strokeWidth="1.1"
+            strokeLinecap="round"
+            className="text-indigo-400/45 dark:text-indigo-300/38"
+          />
+          <path
+            d="M-10 108 C 50 70, 105 155, 170 115 S 290 55, 420 105"
+            stroke="currentColor"
+            strokeWidth="0.95"
+            strokeLinecap="round"
+            className="text-violet-400/35 dark:text-violet-300/30"
+          />
+        </g>
+      </svg>
+
+      {/* RIGHT — mixed multi-wave cluster */}
+      <svg
+        className="absolute right-0 top-[6%] h-[72%] w-[40%] max-w-[460px]"
+        viewBox="0 0 460 290"
+        fill="none"
+      >
+        <g className="wave-motion wave-motion-b">
+          <path
+            d="M-20 95 C 75 50, 140 155, 225 95 S 360 40, 480 90"
+            stroke="currentColor"
+            strokeWidth="1.4"
             strokeLinecap="round"
             className="text-slate-400/45 dark:text-slate-400/40"
           />
           <path
-            d="M-10 165 C 70 115, 130 210, 200 160 S 330 95, 430 155"
+            d="M-20 125 C 85 80, 150 185, 235 125 S 370 70, 480 120"
             stroke="currentColor"
-            strokeWidth="1.1"
+            strokeWidth="1.15"
             strokeLinecap="round"
             className="text-indigo-400/40 dark:text-indigo-300/35"
           />
           <path
-            d="M-10 115 C 55 70, 115 160, 185 120 S 310 55, 430 110"
-            stroke="currentColor"
-            strokeWidth="0.95"
-            strokeLinecap="round"
-            className="text-violet-400/30 dark:text-violet-300/28"
-          />
-        </g>
-        <path
-          d="M360 148 L 390 148"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          className="text-slate-400/50 dark:text-slate-500/45"
-        />
-        <path
-          d="M382 140 L 396 148 L 382 156"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-          className="text-slate-400/50 dark:text-slate-500/45"
-        />
-      </motion.svg>
-
-      <motion.svg
-        className="absolute right-0 top-[5%] h-[75%] w-[42%] max-w-[480px]"
-        viewBox="0 0 480 300"
-        fill="none"
-        style={{ x: rightX, y: rightY }}
-      >
-        <g className="wave-drift wave-drift-b">
-          <path
-            d="M-20 100 C 80 50, 150 160, 240 100 S 380 40, 500 95"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            className="text-slate-400/40 dark:text-slate-400/38"
-          />
-          <path
-            d="M-20 130 C 90 80, 160 190, 250 130 S 390 70, 500 125"
-            stroke="currentColor"
-            strokeWidth="1.15"
-            strokeLinecap="round"
-            className="text-indigo-400/35 dark:text-indigo-300/32"
-          />
-          <path
-            d="M-20 160 C 100 110, 170 220, 260 160 S 400 100, 500 155"
+            d="M-20 155 C 95 110, 160 215, 245 155 S 380 100, 480 150"
             stroke="currentColor"
             strokeWidth="1"
             strokeLinecap="round"
-            className="text-violet-400/30 dark:text-violet-300/28"
+            className="text-violet-400/32 dark:text-violet-300/28"
           />
           <path
-            d="M-20 80 C 70 40, 140 140, 230 85 S 370 30, 500 80"
+            d="M-20 75 C 65 40, 130 135, 215 80 S 350 30, 480 75"
             stroke="currentColor"
             strokeWidth="0.9"
             strokeLinecap="round"
-            className="text-sky-400/25 dark:text-sky-300/22"
+            className="text-sky-400/28 dark:text-sky-300/24"
           />
           <path
-            d="M40 190 C 130 150, 200 240, 290 185 S 420 130, 500 180"
+            d="M30 185 C 120 145, 185 230, 270 180 S 400 125, 480 175"
             stroke="currentColor"
             strokeWidth="0.85"
             strokeLinecap="round"
-            className="text-fuchsia-400/20 dark:text-fuchsia-300/20"
+            className="text-fuchsia-400/22 dark:text-fuchsia-300/20"
           />
         </g>
-      </motion.svg>
+      </svg>
 
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
 
       <style>{`
-        @keyframes wave-drift-a {
-          0%, 100% { transform: translate3d(0, 0); }
-          33% { transform: translate3d(10px, -8px); }
-          66% { transform: translate3d(-6px, 5px); }
+        @keyframes wave-motion-a {
+          0%   { transform: translate3d(0, 0); }
+          25%  { transform: translate3d(14px, -10px); }
+          50%  { transform: translate3d(4px, 6px); }
+          75%  { transform: translate3d(-10px, -5px); }
+          100% { transform: translate3d(0, 0); }
         }
-        @keyframes wave-drift-b {
-          0%, 100% { transform: translate3d(0, 0); }
-          40% { transform: translate3d(-12px, 7px); }
-          70% { transform: translate3d(8px, -6px); }
+        @keyframes wave-motion-b {
+          0%   { transform: translate3d(0, 0); }
+          30%  { transform: translate3d(-16px, 8px); }
+          55%  { transform: translate3d(10px, -9px); }
+          80%  { transform: translate3d(-6px, 4px); }
+          100% { transform: translate3d(0, 0); }
         }
-        .wave-drift-a { animation: wave-drift-a 10s ease-in-out infinite; }
-        .wave-drift-b { animation: wave-drift-b 13s ease-in-out infinite; }
+        .wave-motion-a {
+          animation: wave-motion-a 8s ease-in-out infinite;
+          transform-box: fill-box;
+        }
+        .wave-motion-b {
+          animation: wave-motion-b 11s ease-in-out infinite;
+          transform-box: fill-box;
+        }
         @media (prefers-reduced-motion: reduce) {
-          .wave-drift-a,
-          .wave-drift-b { animation: none; }
+          .wave-motion-a,
+          .wave-motion-b { animation: none; }
         }
       `}</style>
-    </motion.div>
+    </div>
   );
 }
 
 export const RoadmapList = () => {
   const navigate = useNavigate();
-  const pageRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: pageRef,
-    offset: ['start start', 'end start'],
-  });
 
   return (
-    <div ref={pageRef} className="relative flex-1 bg-[var(--bg-primary)]">
+    <div className="relative flex-1 bg-[var(--bg-primary)]">
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 z-0 max-h-[420px] md:max-h-[460px]">
-          <UpperWaveBackground scrollYProgress={scrollYProgress} />
+          <UpperWaveBackground />
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-6 pt-4 md:px-8 md:pt-8">
