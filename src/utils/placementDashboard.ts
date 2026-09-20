@@ -86,13 +86,42 @@ const DEMO_SKILL_GAPS: SkillGapRow[] = [
   { rank: 5, name: 'Communication', percent: 28, color: '#ec4899' },
 ];
 
+/** Baseline market demand — used when few posts, or merged for genuine variety */
 const DEMO_SKILL_DEMAND: SkillDemandRow[] = [
-  { name: 'DSA / Problem solving', demand: 92, trend: 'up' },
-  { name: 'Full-stack (React + Node)', demand: 84, trend: 'up' },
-  { name: 'Cloud (AWS / Azure)', demand: 78, trend: 'up' },
-  { name: 'Data analytics / SQL', demand: 71, trend: 'steady' },
-  { name: 'Cybersecurity basics', demand: 63, trend: 'up' },
+  { name: 'DSA / Problem solving', demand: 94, trend: 'up' },
+  { name: 'Full-stack (React + Node)', demand: 87, trend: 'up' },
+  { name: 'Cloud (AWS / Azure)', demand: 81, trend: 'up' },
+  { name: 'Data analytics / SQL', demand: 73, trend: 'steady' },
+  { name: 'Cybersecurity basics', demand: 66, trend: 'up' },
+  { name: 'System design', demand: 58, trend: 'steady' },
+  { name: 'Communication & soft skills', demand: 52, trend: 'down' },
 ];
+
+/** Market weight hints so common skills don’t all land on the same % */
+const SKILL_WEIGHT: Record<string, number> = {
+  dsa: 96,
+  'data structures': 94,
+  algorithms: 93,
+  java: 88,
+  'system design': 85,
+  react: 90,
+  typescript: 82,
+  javascript: 80,
+  node: 84,
+  'node.js': 84,
+  python: 86,
+  sql: 79,
+  postgresql: 72,
+  linux: 70,
+  networking: 68,
+  siem: 61,
+  cybersecurity: 74,
+  aws: 83,
+  azure: 77,
+  cloud: 81,
+  excel: 55,
+  communication: 50,
+};
 
 const DEMO_COMPANIES: HiringCompany[] = [
   { id: 'tcs', name: 'TCS', subtitle: 'Tata Consultancy Services', hires: 18, tag: 'Top Recruiter', logoSeed: 'TCS' },
@@ -132,7 +161,6 @@ export function readCohortApplications(): InternshipApplication[] {
     }
   };
   push(parseList(localStorage.getItem(GLOBAL_KEY)));
-  // also v1 keys
   push(parseList(localStorage.getItem('eduroute:internship-applications-v1')));
   try {
     for (let i = 0; i < localStorage.length; i++) {
@@ -218,28 +246,88 @@ function skillGapsFromOnboarding(): SkillGapRow[] {
   }
 }
 
+function hashSpread(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return h % 17; // 0–16 spread so bars never all match
+}
+
+function baseWeightForSkill(skill: string): number {
+  const key = skill.toLowerCase().trim();
+  if (SKILL_WEIGHT[key] != null) return SKILL_WEIGHT[key];
+  for (const [k, w] of Object.entries(SKILL_WEIGHT)) {
+    if (key.includes(k) || k.includes(key)) return w;
+  }
+  // Unknown skill: stable but varied base 48–76
+  return 48 + hashSpread(key) * 1.6;
+}
+
 function skillDemandFromPostings(): SkillDemandRow[] {
   try {
     const postings = readIndustryPostings();
-    const freq = new Map<string, number>();
+    if (!postings.length) return DEMO_SKILL_DEMAND.slice(0, 5);
+
+    type Agg = { display: string; weight: number; fullTimeHits: number; internHits: number };
+    const agg = new Map<string, Agg>();
+
     for (const p of postings) {
+      const isFt = p.roleCategory === 'full-time';
       for (const s of p.skills) {
-        const k = s.trim();
-        if (!k) continue;
-        freq.set(k, (freq.get(k) || 0) + 1);
+        const raw = s.trim();
+        if (!raw) continue;
+        const key = raw.toLowerCase();
+        const prev = agg.get(key) || { display: raw, weight: 0, fullTimeHits: 0, internHits: 0 };
+        // Full-time roles count more toward placement demand
+        prev.weight += isFt ? 2.4 : 1;
+        if (isFt) prev.fullTimeHits += 1;
+        else prev.internHits += 1;
+        if (raw.length > prev.display.length) prev.display = raw;
+        agg.set(key, prev);
       }
     }
-    const rows = Array.from(freq.entries())
-      .map(([name, count]) => ({
-        name,
-        demand: Math.min(99, 50 + count * 12),
-        trend: (count >= 2 ? 'up' : 'steady') as 'up' | 'steady' | 'down',
-      }))
-      .sort((a, b) => b.demand - a.demand)
-      .slice(0, 5);
-    return rows.length ? rows : DEMO_SKILL_DEMAND;
+
+    if (agg.size === 0) return DEMO_SKILL_DEMAND.slice(0, 5);
+
+    const maxW = Math.max(...Array.from(agg.values()).map((a) => a.weight), 1);
+
+    const rows: SkillDemandRow[] = Array.from(agg.values()).map((a) => {
+      const market = baseWeightForSkill(a.display);
+      const freqBoost = (a.weight / maxW) * 22; // 0–22 from how often it appears
+      const ftBoost = a.fullTimeHits > 0 ? 6 : 0;
+      const spread = hashSpread(a.display) - 8; // -8..+8 so neighbors differ
+      let demand = Math.round(market * 0.55 + freqBoost + ftBoost + spread);
+      demand = Math.max(38, Math.min(97, demand));
+
+      let trend: 'up' | 'steady' | 'down' = 'steady';
+      if (a.fullTimeHits >= 1 || a.weight >= maxW * 0.7) trend = 'up';
+      else if (a.weight <= 1 && market < 60) trend = 'down';
+
+      return { name: a.display, demand, trend };
+    });
+
+    rows.sort((a, b) => b.demand - a.demand);
+
+    // Ensure visual variety: if two consecutive equal, nudge second down
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i].demand >= rows[i - 1].demand) {
+        rows[i].demand = Math.max(35, rows[i - 1].demand - (3 + (i % 4)));
+      }
+    }
+
+    // Top 5 from posts; if fewer than 4, pad with demo market skills not already listed
+    const top = rows.slice(0, 5);
+    if (top.length < 4) {
+      const have = new Set(top.map((r) => r.name.toLowerCase()));
+      for (const d of DEMO_SKILL_DEMAND) {
+        if (have.has(d.name.toLowerCase())) continue;
+        top.push(d);
+        if (top.length >= 5) break;
+      }
+    }
+
+    return top.slice(0, 5);
   } catch {
-    return DEMO_SKILL_DEMAND;
+    return DEMO_SKILL_DEMAND.slice(0, 5);
   }
 }
 
@@ -254,10 +342,12 @@ export function getPlacementDashboardData(
   const placementRate =
     kpis.applications > 0 ? Math.round((kpis.hired / kpis.applications) * 100) : 18;
 
-  // Readiness: inverse of top skill-gap pressure + placement momentum
   const gaps = skillGapsFromOnboarding();
   const avgGap = gaps.reduce((s, g) => s + g.percent, 0) / Math.max(1, gaps.length);
-  const readinessScore = Math.max(35, Math.min(95, Math.round(100 - avgGap * 0.55 + placementRate * 0.25)));
+  const readinessScore = Math.max(
+    35,
+    Math.min(95, Math.round(100 - avgGap * 0.55 + placementRate * 0.25)),
+  );
 
   let openJobs = 0;
   let openInternships = 0;
