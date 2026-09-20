@@ -38,7 +38,8 @@ export const INTERNSHIPS = [
     fastTrack: true,
     employeeCount: '200-500',
     companylink: '#',
-    description: 'Build UI features with the product team.',
+    description: 'Build modern UI features with the product engineering team.',
+    generalMatch: 86,
   },
   {
     id: 'ih-data',
@@ -57,7 +58,8 @@ export const INTERNSHIPS = [
     fastTrack: false,
     employeeCount: '50-200',
     companylink: '#',
-    description: 'Support analytics and dashboarding for growth teams.',
+    description: 'Support analytics, reporting, and dashboarding for growth teams.',
+    generalMatch: 78,
   },
   {
     id: 'so-cyber',
@@ -76,7 +78,68 @@ export const INTERNSHIPS = [
     fastTrack: true,
     employeeCount: '100-300',
     companylink: '#',
-    description: 'Assist SOC with triage and vulnerability scans.',
+    description: 'Assist the SOC with alert triage and vulnerability scans.',
+    generalMatch: 72,
+  },
+  {
+    id: 'np-fullstack',
+    role: 'Full Stack Developer Intern',
+    company: 'NovaPath Labs',
+    location: 'Pune, India',
+    stipend: '₹28,000 / mo',
+    type: 'Internship',
+    duration: '6 Months',
+    mode: 'Hybrid',
+    posted: '4 days ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=NP',
+    tags: ['React', 'Node.js', 'MongoDB'],
+    sector: 'software',
+    verified: true,
+    fastTrack: true,
+    employeeCount: '100-250',
+    companylink: '#',
+    description: 'Ship features across web frontend and Node APIs in an agile squad.',
+    generalMatch: 81,
+  },
+  {
+    id: 'ql-ml',
+    role: 'ML Engineering Intern',
+    company: 'QuantLeaf AI',
+    location: 'Hyderabad, India',
+    stipend: '₹30,000 / mo',
+    type: 'Internship',
+    duration: '5 Months',
+    mode: 'Remote',
+    posted: '5 days ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=QL',
+    tags: ['Python', 'ML', 'PyTorch'],
+    sector: 'data',
+    verified: true,
+    fastTrack: false,
+    employeeCount: '50-150',
+    companylink: '#',
+    description: 'Prototype models, evaluate metrics, and support production ML pipelines.',
+    generalMatch: 74,
+  },
+  {
+    id: 'cx-cloud',
+    role: 'Cloud & DevOps Intern',
+    company: 'CloudNest',
+    location: 'Mumbai, India',
+    stipend: '₹24,000 / mo',
+    type: 'Internship',
+    duration: '3 Months',
+    mode: 'Onsite',
+    posted: '6 days ago',
+    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=CN',
+    tags: ['AWS', 'Docker', 'Linux'],
+    sector: 'software',
+    verified: true,
+    fastTrack: false,
+    employeeCount: '200-400',
+    companylink: '#',
+    description: 'Help maintain CI/CD pipelines and cloud infrastructure with the platform team.',
+    generalMatch: 69,
   },
 ];
 
@@ -135,18 +198,12 @@ function computeMatchScore(tags: string[], profile: ReturnType<typeof getStudent
   return Math.min(99, Math.max(12, pct));
 }
 
-function matchBadgeClasses(score: number) {
-  if (score >= 75) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300';
-  if (score >= 50) return 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200';
-  return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
-}
-
 function matchesSectorFilter(job: { sector?: string; tags: string[] }, filter: string) {
   if (filter === 'all') return true;
   if (job.sector === filter) return true;
   const blob = job.tags.join(' ').toLowerCase();
-  if (filter === 'software') return /react|typescript|node|frontend|backend|full.?stack|javascript/.test(blob);
-  if (filter === 'data') return /data|sql|python|analytics/.test(blob);
+  if (filter === 'software') return /react|typescript|node|frontend|backend|full.?stack|javascript|docker|aws/.test(blob);
+  if (filter === 'data') return /data|sql|python|analytics|ml|pytorch/.test(blob);
   if (filter === 'cyber') return /cyber|security|linux|network|siem/.test(blob);
   return true;
 }
@@ -237,7 +294,69 @@ type JobCard = {
   fromIndustry?: boolean;
   eligibility?: string;
   roleCategory?: string;
+  /** Stable demo match % when student profile is empty */
+  generalMatch?: number;
 };
+
+/** Shared constellation / network backdrop matching the Internships hero look */
+function NetworkBackdrop({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={`pointer-events-none absolute inset-0 h-full w-full ${className}`}
+      viewBox="0 0 800 400"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden
+    >
+      <defs>
+        <radialGradient id="netGlow" cx="70%" cy="40%" r="55%">
+          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.45" />
+          <stop offset="55%" stopColor="#312e81" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="800" height="400" fill="url(#netGlow)" />
+      <g stroke="#60a5fa" strokeOpacity="0.35" strokeWidth="1">
+        <line x1="520" y1="40" x2="620" y2="90" />
+        <line x1="620" y1="90" x2="720" y2="70" />
+        <line x1="620" y1="90" x2="680" y2="160" />
+        <line x1="680" y1="160" x2="740" y2="220" />
+        <line x1="520" y1="40" x2="560" y2="140" />
+        <line x1="560" y1="140" x2="640" y2="200" />
+        <line x1="640" y1="200" x2="720" y2="280" />
+        <line x1="480" y1="180" x2="560" y2="140" />
+        <line x1="480" y1="180" x2="540" y2="260" />
+        <line x1="540" y1="260" x2="640" y2="200" />
+        <line x1="700" y1="120" x2="760" y2="180" />
+        <line x1="700" y1="120" x2="680" y2="160" />
+        <line x1="600" y1="300" x2="680" y2="260" />
+        <line x1="680" y1="260" x2="740" y2="220" />
+      </g>
+      <g fill="#93c5fd">
+        <circle cx="520" cy="40" r="3.5" opacity="0.9" />
+        <circle cx="620" cy="90" r="5" opacity="1" />
+        <circle cx="720" cy="70" r="3" opacity="0.8" />
+        <circle cx="680" cy="160" r="4" opacity="0.95" />
+        <circle cx="740" cy="220" r="3.5" opacity="0.85" />
+        <circle cx="560" cy="140" r="3.5" opacity="0.9" />
+        <circle cx="640" cy="200" r="4.5" opacity="1" />
+        <circle cx="720" cy="280" r="3" opacity="0.75" />
+        <circle cx="480" cy="180" r="3" opacity="0.8" />
+        <circle cx="540" cy="260" r="3.5" opacity="0.85" />
+        <circle cx="700" cy="120" r="3" opacity="0.8" />
+        <circle cx="760" cy="180" r="2.5" opacity="0.7" />
+        <circle cx="600" cy="300" r="3" opacity="0.75" />
+        <circle cx="680" cy="260" r="3.5" opacity="0.85" />
+      </g>
+      <g fill="#a5b4fc" opacity="0.55">
+        <circle cx="500" cy="100" r="2" />
+        <circle cx="660" cy="50" r="2" />
+        <circle cx="780" cy="140" r="2" />
+        <circle cx="580" cy="220" r="2" />
+        <circle cx="750" cy="320" r="2" />
+      </g>
+    </svg>
+  );
+}
 
 function InternshipCard({
   job,
@@ -273,59 +392,58 @@ function InternshipCard({
       transition={{ type: 'spring' as const, stiffness: 260, damping: 24 }}
       whileHover={{ y: -10, scale: 1.02 }}
       whileTap={{ scale: 0.985 }}
-      className="group relative flex flex-col overflow-hidden rounded-[28px] border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/80 p-6 shadow-sm transition-shadow duration-300 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-200/40 dark:border-slate-700/80 dark:from-slate-900 dark:to-slate-950 dark:hover:border-indigo-500/40 dark:hover:shadow-indigo-950/50"
+      className="group relative flex flex-col overflow-hidden rounded-[28px] border border-indigo-500/25 bg-[#0b1224] p-6 text-white shadow-lg shadow-indigo-950/40 transition-shadow duration-300 hover:border-indigo-400/50 hover:shadow-2xl hover:shadow-indigo-900/50"
     >
-      <div
-        className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 opacity-80 transition-opacity group-hover:opacity-100"
-        aria-hidden
-      />
-      <div className="mb-4 flex items-start justify-between gap-3 pt-1">
+      <NetworkBackdrop />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#0b1224]/75 via-[#0f1a33]/55 to-transparent" aria-hidden />
+
+      <div className="relative z-10 mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative">
             <img
               src={job.logo}
               alt=""
-              className="h-12 w-12 rounded-2xl bg-slate-100 object-cover ring-2 ring-white shadow-md transition-transform duration-300 group-hover:scale-110 dark:bg-slate-800 dark:ring-slate-800"
+              className="h-12 w-12 rounded-2xl bg-white/10 object-cover ring-2 ring-white/20 shadow-md transition-transform duration-300 group-hover:scale-110"
             />
             {job.verified && (
-              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[8px] text-white ring-2 ring-white dark:ring-slate-900">
+              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[8px] text-white ring-2 ring-[#0b1224]">
                 ✓
               </span>
             )}
           </div>
           <div>
-            <h3 className="font-black leading-snug text-slate-900 dark:text-white">{job.role}</h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{job.company}</p>
+            <h3 className="font-black leading-snug text-white">{job.role}</h3>
+            <p className="text-sm font-medium text-indigo-200/80">{job.company}</p>
           </div>
         </div>
         {showScore && matchScore > 0 && (
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${matchBadgeClasses(matchScore)}`}>
+          <span className="shrink-0 rounded-full bg-indigo-500/25 px-2.5 py-1 text-[10px] font-black text-indigo-100 ring-1 ring-indigo-400/40">
             {matchScore}% MATCH
           </span>
         )}
       </div>
-      <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{job.description}</p>
-      <div className="mb-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100/80 px-2 py-1 dark:bg-slate-800/80">
-          <MapPin className="h-3.5 w-3.5 text-indigo-500" /> {job.location}
+      <p className="relative z-10 mb-4 line-clamp-2 text-sm leading-relaxed text-slate-300">{job.description}</p>
+      <div className="relative z-10 mb-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
+        <span className="inline-flex items-center gap-1 rounded-lg bg-white/8 px-2 py-1 ring-1 ring-white/10">
+          <MapPin className="h-3.5 w-3.5 text-indigo-300" /> {job.location}
         </span>
-        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100/80 px-2 py-1 dark:bg-slate-800/80">
-          <IndianRupee className="h-3.5 w-3.5 text-emerald-500" /> {job.stipend}
+        <span className="inline-flex items-center gap-1 rounded-lg bg-white/8 px-2 py-1 ring-1 ring-white/10">
+          <IndianRupee className="h-3.5 w-3.5 text-emerald-300" /> {job.stipend}
         </span>
-        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100/80 px-2 py-1 dark:bg-slate-800/80">
-          <Clock className="h-3.5 w-3.5 text-amber-500" /> {job.duration}
+        <span className="inline-flex items-center gap-1 rounded-lg bg-white/8 px-2 py-1 ring-1 ring-white/10">
+          <Clock className="h-3.5 w-3.5 text-amber-300" /> {job.duration}
         </span>
         {job.mode && (
-          <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-1 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-500/20 px-2 py-1 text-indigo-100 ring-1 ring-indigo-400/30">
             <Building2 className="h-3.5 w-3.5" /> {job.mode}
           </span>
         )}
       </div>
-      <div className="mb-5 flex flex-wrap gap-1.5">
+      <div className="relative z-10 mb-5 flex flex-wrap gap-1.5">
         {job.tags.map((t) => (
           <span
             key={t}
-            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            className="rounded-full border border-white/15 bg-white/8 px-2.5 py-1 text-[10px] font-bold text-indigo-100"
           >
             {t}
           </span>
@@ -335,10 +453,10 @@ function InternshipCard({
         type="button"
         disabled={applied}
         onClick={onApply}
-        className={`mt-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition ${
+        className={`relative z-10 mt-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition ${
           applied
-            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300'
-            : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/25 hover:from-indigo-500 hover:to-violet-500'
+            ? 'bg-emerald-500/25 text-emerald-200 ring-1 ring-emerald-400/40'
+            : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-600/40 hover:from-indigo-400 hover:to-violet-500'
         }`}
       >
         {applied ? (
@@ -371,10 +489,15 @@ export const Internships = () => {
 
   const scored = useMemo(
     () =>
-      allJobs.map((job) => ({
-        job,
-        matchScore: computeMatchScore(job.tags, skillProfile),
-      })),
+      allJobs.map((job) => {
+        const profileScore = computeMatchScore(job.tags, skillProfile);
+        const general =
+          typeof (job as JobCard & { generalMatch?: number }).generalMatch === 'number'
+            ? (job as JobCard & { generalMatch?: number }).generalMatch!
+            : 65;
+        const matchScore = skillProfile.hasProfile && profileScore > 0 ? profileScore : general;
+        return { job, matchScore };
+      }),
     [allJobs, skillProfile],
   );
 
@@ -401,25 +524,19 @@ export const Internships = () => {
         className="pointer-events-none absolute -right-24 top-24 h-96 w-96 rounded-full bg-violet-400/12 blur-3xl dark:bg-violet-600/18"
         aria-hidden
       />
-      <div
-        className="pointer-events-none absolute bottom-20 left-1/3 h-64 w-64 rounded-full bg-fuchsia-400/10 blur-3xl dark:bg-fuchsia-600/10"
-        aria-hidden
-      />
 
       <motion.header
-        className="relative mb-10 overflow-hidden rounded-[32px] border border-indigo-100/60 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/40 dark:via-slate-900 dark:to-violet-950/30 md:p-8"
+        className="relative mb-10 overflow-hidden rounded-[32px] border border-indigo-500/30 bg-[#0b1224] p-6 shadow-xl shadow-indigo-950/40 md:p-8"
         initial={{ opacity: 0, y: 28 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.35 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div
-          className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-indigo-400/20 blur-2xl dark:bg-indigo-500/25"
-          aria-hidden
-        />
-        <div className="relative mb-4 flex items-center gap-3">
+        <NetworkBackdrop />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0b1224] via-[#0b1224]/85 to-transparent" aria-hidden />
+        <div className="relative z-10 mb-4 flex items-center gap-3">
           <motion.div
-            className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 p-3 text-white shadow-lg shadow-indigo-600/30"
+            className="rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 p-3 text-white shadow-lg shadow-violet-600/40"
             initial={{ scale: 0.8, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
@@ -427,12 +544,10 @@ export const Internships = () => {
           >
             <Briefcase className="h-6 w-6" />
           </motion.div>
-          <span className="text-sm font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
-            Career
-          </span>
+          <span className="text-sm font-black uppercase tracking-[0.22em] text-violet-300">Career</span>
         </div>
         <motion.h1
-          className="relative mb-2 text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl"
+          className="relative z-10 mb-2 text-4xl font-black tracking-tight text-white md:text-5xl"
           initial={{ opacity: 0, x: -16 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
@@ -441,7 +556,7 @@ export const Internships = () => {
           Internships
         </motion.h1>
         <motion.p
-          className="relative max-w-2xl text-lg text-slate-600 dark:text-slate-300"
+          className="relative z-10 max-w-2xl text-lg text-slate-300"
           initial={{ opacity: 0, x: -12 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
@@ -473,7 +588,7 @@ export const Internships = () => {
         <MyApplicationsPanel />
       </motion.div>
 
-      {skillProfile.hasProfile && recommended.some((r) => r.matchScore > 0) && (
+      {recommended.some((r) => r.matchScore > 0) && (
         <motion.section
           className="mb-10"
           initial={{ opacity: 0, y: 20 }}
@@ -523,12 +638,7 @@ export const Internships = () => {
 
       <div key={filter} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(({ job, matchScore }) => (
-          <InternshipCard
-            key={job.id}
-            job={job}
-            matchScore={matchScore}
-            showScore={skillProfile.hasProfile}
-          />
+          <InternshipCard key={job.id} job={job} matchScore={matchScore} showScore />
         ))}
       </div>
       {filtered.length === 0 && (
