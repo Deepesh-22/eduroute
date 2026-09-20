@@ -63,11 +63,13 @@ const COMPANY_LINKS = [
 function StaggerText({
   text,
   className = '',
+  letterClassName = '',
   baseDelay = 0,
   step = 0.028,
 }: {
   text: string;
   className?: string;
+  letterClassName?: string;
   baseDelay?: number;
   step?: number;
 }) {
@@ -81,7 +83,7 @@ function StaggerText({
         ) : (
           <span
             key={i}
-            className="hero-letter"
+            className={`hero-letter ${letterClassName}`}
             style={{ animationDelay: `${baseDelay + i * step}s` }}
             aria-hidden
           >
@@ -209,13 +211,15 @@ export const LandingPage = () => {
             <h1 className="text-5xl font-black leading-[0.95] tracking-tight drop-shadow-sm sm:text-6xl lg:text-7xl">
               <StaggerText
                 text="Build Skills."
-                className="block text-slate-900 dark:text-white"
+                className="block"
+                letterClassName="text-slate-900 dark:text-white"
                 baseDelay={0.05}
                 step={0.03}
               />
               <StaggerText
                 text="Get Hired."
-                className="block bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent dark:from-violet-400 dark:to-indigo-400"
+                className="block"
+                letterClassName="text-violet-600 dark:text-violet-400"
                 baseDelay={0.42}
                 step={0.03}
               />
