@@ -101,7 +101,6 @@ function UpperWaveBackground() {
       <div className="absolute left-[6%] top-8 h-40 w-40 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15" />
       <div className="absolute right-[4%] top-2 h-56 w-56 rounded-full bg-violet-400/12 blur-3xl dark:bg-violet-600/18" />
 
-      {/* LEFT — shorter waves that stop before the title words */}
       <svg
         className="absolute left-0 top-[12%] h-[58%] w-[28%] max-w-[300px] md:w-[30%] lg:max-w-[340px]"
         viewBox="0 0 320 240"
@@ -115,7 +114,7 @@ function UpperWaveBackground() {
             <stop offset="100%" stopColor="white" stopOpacity="0" />
           </linearGradient>
           <mask id="waveMaskLeft">
-            <rect width="320" height="240" fill="url(#waveMaskLeft)" />
+            <rect width="320" height="240" fill="url(#waveFadeLeft)" />
           </mask>
         </defs>
         <g className="wave-motion wave-motion-a" mask="url(#waveMaskLeft)">
@@ -143,7 +142,6 @@ function UpperWaveBackground() {
         </g>
       </svg>
 
-      {/* RIGHT — longer multi-wave cluster */}
       <svg
         className="absolute right-0 top-[4%] h-[78%] w-[42%] max-w-[520px] md:w-[44%] lg:max-w-[560px]"
         viewBox="0 0 520 300"
