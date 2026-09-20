@@ -72,91 +72,67 @@ const AdminSessionRoute = ({ children }: { children: ReactElement }) => {
 };
 
 const PageLoader = () => (
-  <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)]">
-    Loading…
+  <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+    <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
   </div>
 );
 
-const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage ?? m.default })));
-const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login ?? m.default })));
-const Signup = lazy(() => import('./pages/Auth/Signup').then((m) => ({ default: m.Signup ?? m.default })));
-const VerifyOTP = lazy(() => import('./pages/Auth/VerifyOTP').then((m) => ({ default: m.VerifyOTP ?? m.default })));
-const VerifyCollege = lazy(() =>
-  import('./pages/Auth/VerifyCollege').then((m) => ({ default: m.VerifyCollege ?? m.default })),
-);
-const OnboardingAnalyze = lazy(() =>
-  import('./pages/Auth/OnboardingAnalyze').then((m) => ({ default: m.OnboardingAnalyze ?? m.default })),
-);
-const DashboardLayout = lazy(() =>
-  import('./layouts/DashboardLayout').then((m) => ({ default: m.DashboardLayout ?? m.default })),
-);
-const CollegeLayout = lazy(() =>
-  import('./layouts/CollegeLayout').then((m) => ({ default: m.CollegeLayout ?? m.default })),
-);
-const StudentDashboard = lazy(() =>
-  import('./pages/Dashboard/StudentDashboard').then((m) => ({ default: m.StudentDashboard ?? m.default })),
-);
-const RoadmapList = lazy(() =>
-  import('./pages/Roadmaps/RoadmapList').then((m) => ({ default: m.RoadmapList ?? m.default })),
-);
-const RoadmapDetail = lazy(() =>
-  import('./pages/Roadmaps/RoadmapDetail').then((m) => ({ default: m.RoadmapDetail ?? m.default })),
-);
-const Assessments = lazy(() =>
-  import('./pages/Assessments/Assessments').then((m) => ({ default: m.Assessments ?? m.default })),
-);
-const BuddyChat = lazy(() => import('./pages/Buddy/BuddyChat').then((m) => ({ default: m.BuddyChat ?? m.default })));
-const Leaderboard = lazy(() =>
-  import('./pages/Gamification/Leaderboard').then((m) => ({ default: m.Leaderboard ?? m.default })),
-);
-const Rewards = lazy(() => import('./pages/Gamification/Rewards').then((m) => ({ default: m.Rewards ?? m.default })));
-const Internships = lazy(() =>
-  import('./pages/Career/Internships').then((m) => ({ default: m.Internships ?? m.default })),
-);
+const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then((module) => ({ default: module.Dashboard })));
+const MyCourses = lazy(() => import('./pages/MyCourses').then((module) => ({ default: module.MyCourses })));
+const BrowseCourses = lazy(() => import('./pages/BrowseCourses').then((module) => ({ default: module.BrowseCourses })));
+const CourseDetails = lazy(() => import('./pages/CourseDetails').then((module) => ({ default: module.CourseDetails })));
+const Pathways = lazy(() => import('./pages/Pathways').then((module) => ({ default: module.Pathways })));
+const MainLayout = lazy(() => import('./layouts/MainLayout').then((module) => ({ default: module.MainLayout })));
+const AdminLayout = lazy(() => import('./layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
+const Signup = lazy(() => import('./pages/Auth/Signup').then((module) => ({ default: module.Signup })));
+const Login = lazy(() => import('./pages/Auth/Login').then((module) => ({ default: module.Login })));
+const VerifyOTP = lazy(() => import('./pages/Auth/VerifyOTP').then((module) => ({ default: module.VerifyOTP })));
+const VerifyCollege = lazy(() => import('./pages/Auth/VerifyCollege').then((module) => ({ default: module.VerifyCollege })));
+const OnboardingAnalyze = lazy(() => import('./pages/Auth/OnboardingAnalyze').then((module) => ({ default: module.OnboardingAnalyze })));
+const RoadmapList = lazy(() => import('./pages/Roadmaps/RoadmapList').then((module) => ({ default: module.RoadmapList })));
+const RoadmapDetail = lazy(() => import('./pages/Roadmaps/RoadmapDetail').then((module) => ({ default: module.RoadmapDetail })));
+const Assessments = lazy(() => import('./pages/Assessments/Assessments').then((module) => ({ default: module.Assessments })));
+const BuddyChat = lazy(() => import('./pages/Buddy/BuddyChat').then((module) => ({ default: module.BuddyChat })));
+const Leaderboard = lazy(() => import('./pages/Gamification/Leaderboard').then((module) => ({ default: module.Leaderboard })));
+const Rewards = lazy(() => import('./pages/Gamification/Rewards').then((module) => ({ default: module.Rewards })));
+const Internships = lazy(() => import('./pages/Career/Internships').then((module) => ({ default: module.Internships })));
 const FacultyOpportunities = lazy(() =>
-  import('./pages/Career/FacultyOpportunities').then((m) => ({ default: m.FacultyOpportunities ?? m.default })),
+  import('./pages/Career/FacultyOpportunities').then((module) => ({ default: module.FacultyOpportunities })),
 );
 const CvBuilder = lazy(() =>
-  import('./pages/Career/CvBuilder').then((m) => ({ default: m.CvBuilder ?? m.default })),
+  import('./pages/Career/CvBuilder').then((module) => ({ default: module.CvBuilder ?? module.default })),
 );
-const CompanyDetail = lazy(() =>
-  import('./pages/Career/CompanyDetail').then((m) => ({ default: m.CompanyDetail ?? m.default })),
-);
-const Events = lazy(() => import('./pages/Growth/Events').then((m) => ({ default: m.Events ?? m.default })));
-const SoftSkills = lazy(() =>
-  import('./pages/Growth/SoftSkills').then((m) => ({ default: m.SoftSkills ?? m.default })),
-);
-const AdminDashboard = lazy(() =>
-  import('./pages/Admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard ?? m.default })),
-);
-const PendingApprovals = lazy(() =>
-  import('./pages/Admin/PendingApprovals').then((m) => ({ default: m.PendingApprovals ?? m.default })),
-);
-const AdminLogin = lazy(() =>
-  import('./pages/Admin/AdminLogin').then((m) => ({ default: m.AdminLogin ?? m.default })),
-);
-const CourseManager = lazy(() =>
-  import('./pages/Admin/CourseManager').then((m) => ({ default: m.CourseManager ?? m.default })),
-);
+const CompanyDetail = lazy(() => import('./pages/Career/CompanyDetail').then((module) => ({ default: module.CompanyDetail })));
+const Events = lazy(() => import('./pages/Growth/Events').then((module) => ({ default: module.Events })));
+const SoftSkills = lazy(() => import('./pages/Growth/SoftSkills').then((module) => ({ default: module.SoftSkills })));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
+const PendingApprovals = lazy(() => import('./pages/Admin/PendingApprovals').then((module) => ({ default: module.PendingApprovals })));
+const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin').then((module) => ({ default: module.AdminLogin })));
+const CourseManager = lazy(() => import('./pages/Admin/CourseManager').then((module) => ({ default: module.CourseManager })));
 const ProfileDashboard = lazy(() =>
-  import('./pages/Profile/ProfileDashboard').then((m) => ({ default: m.ProfileDashboard ?? m.default })),
+  import('./pages/Profile/ProfileDashboard').then((module) => ({ default: module.ProfileDashboard ?? module.default })),
 );
-const DSASheet = lazy(() => import('./pages/DSASheet').then((m) => ({ default: m.DSASheet ?? m.default })));
-const SkillProfile = lazy(() =>
-  import('./pages/SkillProfile').then((m) => ({ default: m.SkillProfile ?? m.default })),
-);
+const DSASheet = lazy(() => import('./pages/DSASheet').then((module) => ({ default: module.DSASheet })));
+const SkillProfile = lazy(() => import('./pages/SkillProfile').then((module) => ({ default: module.SkillProfile })));
 const IndustryWorkspace = lazy(() =>
-  import('./pages/Industry/IndustryWorkspace').then((m) => ({ default: m.IndustryWorkspace ?? m.default })),
+  import('./pages/Industry/IndustryWorkspace').then((module) => ({ default: module.IndustryWorkspace })),
 );
 const FacultyWorkspace = lazy(() =>
-  import('./pages/Faculty/FacultyWorkspace').then((m) => ({ default: m.FacultyWorkspace ?? m.default })),
+  import('./pages/Faculty/FacultyWorkspace').then((module) => ({ default: module.FacultyWorkspace })),
+);
+const CollegeLayout = lazy(() =>
+  import('./layouts/CollegeLayout').then((module) => ({ default: module.CollegeLayout })),
 );
 const PlacementDashboard = lazy(() =>
-  import('./pages/Admin/PlacementDashboard').then((m) => ({ default: m.PlacementDashboard ?? m.default })),
+  import('./pages/Admin/PlacementDashboard').then((module) => ({ default: module.PlacementDashboard })),
 );
 
 const DASHBOARD_ROUTES = [
   '/dashboard',
+  '/my-courses',
+  '/browse',
+  '/pathways',
   '/roadmaps',
   '/assessments',
   '/buddy',
@@ -257,15 +233,12 @@ export function App() {
             }
           />
 
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="dashboard" element={<StudentDashboard />} />
+          <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="my-courses" element={<MyCourses />} />
+            <Route path="browse" element={<BrowseCourses />} />
+            <Route path="course/:id" element={<CourseDetails />} />
+            <Route path="pathways" element={<Pathways />} />
             <Route path="roadmaps" element={<RoadmapList />} />
             <Route path="roadmaps/:id" element={<RoadmapDetail />} />
             <Route path="assessments" element={<Assessments />} />
@@ -287,7 +260,7 @@ export function App() {
             path="/admin"
             element={
               <AdminAccessRoute>
-                <DashboardLayout />
+                <AdminLayout />
               </AdminAccessRoute>
             }
           >
