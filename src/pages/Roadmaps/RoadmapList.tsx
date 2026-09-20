@@ -95,16 +95,56 @@ const item = {
   },
 };
 
-/** Dual-side waves — rope/water up-down oscillation + scroll drift */
+/** Dual-side waves — sound-wave phase oscillation + scroll drift */
+function SoundWavePath({
+  d0,
+  d1,
+  d2,
+  duration,
+  delay,
+  strokeWidth,
+  className,
+}: {
+  d0: string;
+  d1: string;
+  d2: string;
+  duration: string;
+  delay?: string;
+  strokeWidth: number;
+  className: string;
+}) {
+  return (
+    <path
+      d={d0}
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      fill="none"
+      className={className}
+    >
+      <animate
+        attributeName="d"
+        values={`${d0};${d1};${d2};${d1};${d0}`}
+        dur={duration}
+        begin={delay || '0s'}
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
+        keyTimes="0;0.25;0.5;0.75;1"
+      />
+    </path>
+  );
+}
+
 function UpperWaveBackground({
   scrollYProgress,
 }: {
   scrollYProgress: ReturnType<typeof useScroll>['scrollYProgress'];
 }) {
-  const leftFlowX = useTransform(scrollYProgress, [0, 0.7], [0, -40]);
-  const rightFlowX = useTransform(scrollYProgress, [0, 0.7], [0, 48]);
-  const leftFlowY = useTransform(scrollYProgress, [0, 0.7], [0, -12]);
-  const rightFlowY = useTransform(scrollYProgress, [0, 0.7], [0, 16]);
+  const leftFlowX = useTransform(scrollYProgress, [0, 0.7], [0, -36]);
+  const rightFlowX = useTransform(scrollYProgress, [0, 0.7], [0, 42]);
+  const leftFlowY = useTransform(scrollYProgress, [0, 0.7], [0, -10]);
+  const rightFlowY = useTransform(scrollYProgress, [0, 0.7], [0, 12]);
   const waveOpacity = useTransform(scrollYProgress, [0, 0.15, 0.45], [1, 0.95, 0.28]);
 
   return (
@@ -134,33 +174,32 @@ function UpperWaveBackground({
           </mask>
         </defs>
         <g mask="url(#waveMaskLeft)">
-          <g className="rope-wave rope-wave-a">
-            <path
-              d="M-8 130 C 55 70, 100 190, 160 130 S 250 60, 340 125"
-              stroke="currentColor"
-              strokeWidth="1.45"
-              strokeLinecap="round"
-              className="text-slate-400/55 dark:text-slate-400/50"
-            />
-          </g>
-          <g className="rope-wave rope-wave-a-delay">
-            <path
-              d="M-8 155 C 60 95, 110 210, 170 155 S 260 85, 340 150"
-              stroke="currentColor"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-              className="text-indigo-400/50 dark:text-indigo-300/45"
-            />
-          </g>
-          <g className="rope-wave rope-wave-a">
-            <path
-              d="M-8 105 C 50 55, 95 165, 155 110 S 245 50, 340 105"
-              stroke="currentColor"
-              strokeWidth="1.05"
-              strokeLinecap="round"
-              className="text-violet-400/40 dark:text-violet-300/38"
-            />
-          </g>
+          <SoundWavePath
+            d0="M-8 130 C 50 70, 100 190, 160 130 S 250 70, 340 130"
+            d1="M-8 130 C 50 190, 100 70, 160 130 S 250 190, 340 130"
+            d2="M-8 130 C 50 80, 100 180, 160 130 S 250 80, 340 130"
+            duration="3.2s"
+            strokeWidth={1.45}
+            className="text-slate-400/55 dark:text-slate-400/50"
+          />
+          <SoundWavePath
+            d0="M-8 155 C 55 95, 105 210, 170 155 S 260 95, 340 155"
+            d1="M-8 155 C 55 210, 105 95, 170 155 S 260 210, 340 155"
+            d2="M-8 155 C 55 105, 105 200, 170 155 S 260 105, 340 155"
+            duration="3.6s"
+            delay="-0.8s"
+            strokeWidth={1.2}
+            className="text-indigo-400/50 dark:text-indigo-300/45"
+          />
+          <SoundWavePath
+            d0="M-8 105 C 48 55, 95 160, 155 105 S 245 55, 340 105"
+            d1="M-8 105 C 48 160, 95 55, 155 105 S 245 160, 340 105"
+            d2="M-8 105 C 48 65, 95 150, 155 105 S 245 65, 340 105"
+            duration="4s"
+            delay="-1.2s"
+            strokeWidth={1.05}
+            className="text-violet-400/40 dark:text-violet-300/38"
+          />
         </g>
       </motion.svg>
 
@@ -182,104 +221,63 @@ function UpperWaveBackground({
           </mask>
         </defs>
         <g mask="url(#waveMaskRight)">
-          <g className="rope-wave rope-wave-b">
-            <path
-              d="M20 100 C 120 30, 200 175, 310 100 S 450 25, 580 95"
-              stroke="currentColor"
-              strokeWidth="1.55"
-              strokeLinecap="round"
-              className="text-slate-400/55 dark:text-slate-400/52"
-            />
-          </g>
-          <g className="rope-wave rope-wave-b-delay">
-            <path
-              d="M20 135 C 130 65, 210 205, 320 135 S 460 60, 580 130"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              className="text-indigo-400/48 dark:text-indigo-300/45"
-            />
-          </g>
-          <g className="rope-wave rope-wave-b">
-            <path
-              d="M20 170 C 135 100, 220 235, 330 170 S 470 95, 580 165"
-              stroke="currentColor"
-              strokeWidth="1.15"
-              strokeLinecap="round"
-              className="text-violet-400/42 dark:text-violet-300/40"
-            />
-          </g>
-          <g className="rope-wave rope-wave-b-delay">
-            <path
-              d="M30 75 C 125 20, 205 155, 305 80 S 445 15, 580 72"
-              stroke="currentColor"
-              strokeWidth="1.05"
-              strokeLinecap="round"
-              className="text-sky-400/38 dark:text-sky-300/35"
-            />
-          </g>
-          <g className="rope-wave rope-wave-b">
-            <path
-              d="M40 205 C 145 145, 230 265, 340 200 S 480 125, 580 195"
-              stroke="currentColor"
-              strokeWidth="1"
-              strokeLinecap="round"
-              className="text-fuchsia-400/32 dark:text-fuchsia-300/30"
-            />
-          </g>
-          <g className="rope-wave rope-wave-b-delay">
-            <path
-              d="M50 235 C 155 180, 245 290, 355 230 S 490 155, 580 225"
-              stroke="currentColor"
-              strokeWidth="0.9"
-              strokeLinecap="round"
-              className="text-indigo-300/28 dark:text-indigo-200/26"
-            />
-          </g>
+          <SoundWavePath
+            d0="M20 100 C 120 35, 200 170, 310 100 S 450 35, 580 100"
+            d1="M20 100 C 120 170, 200 35, 310 100 S 450 170, 580 100"
+            d2="M20 100 C 120 45, 200 160, 310 100 S 450 45, 580 100"
+            duration="3s"
+            strokeWidth={1.55}
+            className="text-slate-400/55 dark:text-slate-400/52"
+          />
+          <SoundWavePath
+            d0="M20 135 C 130 70, 210 200, 320 135 S 460 70, 580 135"
+            d1="M20 135 C 130 200, 210 70, 320 135 S 460 200, 580 135"
+            d2="M20 135 C 130 80, 210 190, 320 135 S 460 80, 580 135"
+            duration="3.5s"
+            delay="-0.6s"
+            strokeWidth={1.3}
+            className="text-indigo-400/48 dark:text-indigo-300/45"
+          />
+          <SoundWavePath
+            d0="M20 170 C 135 105, 220 230, 330 170 S 470 105, 580 170"
+            d1="M20 170 C 135 230, 220 105, 330 170 S 470 230, 580 170"
+            d2="M20 170 C 135 115, 220 220, 330 170 S 470 115, 580 170"
+            duration="4s"
+            delay="-1s"
+            strokeWidth={1.15}
+            className="text-violet-400/42 dark:text-violet-300/40"
+          />
+          <SoundWavePath
+            d0="M30 75 C 125 25, 205 150, 305 75 S 445 25, 580 75"
+            d1="M30 75 C 125 150, 205 25, 305 75 S 445 150, 580 75"
+            d2="M30 75 C 125 35, 205 140, 305 75 S 445 35, 580 75"
+            duration="3.3s"
+            delay="-0.4s"
+            strokeWidth={1.05}
+            className="text-sky-400/38 dark:text-sky-300/35"
+          />
+          <SoundWavePath
+            d0="M40 205 C 145 150, 230 260, 340 205 S 480 150, 580 205"
+            d1="M40 205 C 145 260, 230 150, 340 205 S 480 260, 580 205"
+            d2="M40 205 C 145 160, 230 250, 340 205 S 480 160, 580 205"
+            duration="3.8s"
+            delay="-1.4s"
+            strokeWidth={1}
+            className="text-fuchsia-400/32 dark:text-fuchsia-300/30"
+          />
+          <SoundWavePath
+            d0="M50 235 C 155 185, 245 285, 355 235 S 490 185, 580 235"
+            d1="M50 235 C 155 285, 245 185, 355 235 S 490 285, 580 235"
+            d2="M50 235 C 155 195, 245 275, 355 235 S 490 195, 580 235"
+            duration="4.2s"
+            delay="-0.9s"
+            strokeWidth={0.9}
+            className="text-indigo-300/28 dark:text-indigo-200/26"
+          />
         </g>
       </motion.svg>
 
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
-
-      <style>{`
-        @keyframes rope-osc-a {
-          0%, 100% { transform: translateY(0); }
-          25%      { transform: translateY(-30px); }
-          50%      { transform: translateY(26px); }
-          75%      { transform: translateY(-22px); }
-        }
-        @keyframes rope-osc-b {
-          0%, 100% { transform: translateY(0); }
-          25%      { transform: translateY(32px); }
-          50%      { transform: translateY(-28px); }
-          75%      { transform: translateY(24px); }
-        }
-        .rope-wave {
-          transform-box: fill-box;
-          transform-origin: center center;
-          will-change: transform;
-        }
-        .rope-wave-a {
-          animation: rope-osc-a 4.2s ease-in-out infinite;
-        }
-        .rope-wave-a-delay {
-          animation: rope-osc-a 4.2s ease-in-out infinite;
-          animation-delay: -1.4s;
-        }
-        .rope-wave-b {
-          animation: rope-osc-b 5s ease-in-out infinite;
-        }
-        .rope-wave-b-delay {
-          animation: rope-osc-b 5s ease-in-out infinite;
-          animation-delay: -1.7s;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .rope-wave-a,
-          .rope-wave-a-delay,
-          .rope-wave-b,
-          .rope-wave-b-delay { animation: none; }
-        }
-      `}</style>
     </motion.div>
   );
 }
