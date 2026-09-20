@@ -94,36 +94,47 @@ const item = {
   },
 };
 
-/** Dual-side animated sine waves — upper hero only, continuous motion (no arrow) */
+/** Dual-side animated sine waves — spaced from title, continuous motion */
 function UpperWaveBackground() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute left-[8%] top-6 h-44 w-44 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15" />
-      <div className="absolute right-[6%] top-2 h-52 w-52 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-600/15" />
+      <div className="absolute left-[6%] top-8 h-40 w-40 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15" />
+      <div className="absolute right-[5%] top-4 h-48 w-48 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-600/15" />
 
-      {/* LEFT — thin flowing waves */}
+      {/* LEFT — shorter waves that stop before the title words */}
       <svg
-        className="absolute left-0 top-[10%] h-[65%] w-[36%] max-w-[400px]"
-        viewBox="0 0 400 260"
+        className="absolute left-0 top-[12%] h-[58%] w-[28%] max-w-[300px] md:w-[30%] lg:max-w-[340px]"
+        viewBox="0 0 320 240"
         fill="none"
+        preserveAspectRatio="xMinYMid meet"
       >
-        <g className="wave-motion wave-motion-a">
+        <defs>
+          <linearGradient id="waveFadeLeft" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="white" stopOpacity="1" />
+            <stop offset="70%" stopColor="white" stopOpacity="1" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </linearGradient>
+          <mask id="waveMaskLeft">
+            <rect width="320" height="240" fill="url(#waveFadeLeft)" />
+          </mask>
+        </defs>
+        <g className="wave-motion wave-motion-a" mask="url(#waveMaskLeft)">
           <path
-            d="M-10 130 C 55 85, 110 180, 175 130 S 300 70, 420 125"
+            d="M-8 120 C 50 78, 95 165, 150 120 S 230 70, 300 118"
             stroke="currentColor"
             strokeWidth="1.35"
             strokeLinecap="round"
             className="text-slate-400/50 dark:text-slate-400/42"
           />
           <path
-            d="M-10 155 C 65 110, 120 200, 185 150 S 310 90, 420 150"
+            d="M-8 142 C 55 100, 100 185, 155 140 S 235 88, 300 140"
             stroke="currentColor"
             strokeWidth="1.1"
             strokeLinecap="round"
             className="text-indigo-400/45 dark:text-indigo-300/38"
           />
           <path
-            d="M-10 108 C 50 70, 105 155, 170 115 S 290 55, 420 105"
+            d="M-8 100 C 45 65, 90 145, 145 108 S 225 55, 300 100"
             stroke="currentColor"
             strokeWidth="0.95"
             strokeLinecap="round"
@@ -132,43 +143,54 @@ function UpperWaveBackground() {
         </g>
       </svg>
 
-      {/* RIGHT — mixed multi-wave cluster */}
+      {/* RIGHT — shorter mixed waves with gap from title */}
       <svg
-        className="absolute right-0 top-[6%] h-[72%] w-[40%] max-w-[460px]"
-        viewBox="0 0 460 290"
+        className="absolute right-0 top-[8%] h-[62%] w-[30%] max-w-[320px] md:w-[32%] lg:max-w-[360px]"
+        viewBox="0 0 340 260"
         fill="none"
+        preserveAspectRatio="xMaxYMid meet"
       >
-        <g className="wave-motion wave-motion-b">
+        <defs>
+          <linearGradient id="waveFadeRight" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stopColor="white" stopOpacity="1" />
+            <stop offset="70%" stopColor="white" stopOpacity="1" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </linearGradient>
+          <mask id="waveMaskRight">
+            <rect width="340" height="260" fill="url(#waveFadeRight)" />
+          </mask>
+        </defs>
+        <g className="wave-motion wave-motion-b" mask="url(#waveMaskRight)">
           <path
-            d="M-20 95 C 75 50, 140 155, 225 95 S 360 40, 480 90"
+            d="M40 90 C 100 50, 150 145, 210 90 S 290 45, 360 88"
             stroke="currentColor"
             strokeWidth="1.4"
             strokeLinecap="round"
             className="text-slate-400/45 dark:text-slate-400/40"
           />
           <path
-            d="M-20 125 C 85 80, 150 185, 235 125 S 370 70, 480 120"
+            d="M40 118 C 105 78, 155 172, 215 118 S 295 72, 360 116"
             stroke="currentColor"
             strokeWidth="1.15"
             strokeLinecap="round"
             className="text-indigo-400/40 dark:text-indigo-300/35"
           />
           <path
-            d="M-20 155 C 95 110, 160 215, 245 155 S 380 100, 480 150"
+            d="M40 145 C 110 105, 160 200, 220 145 S 300 100, 360 142"
             stroke="currentColor"
             strokeWidth="1"
             strokeLinecap="round"
             className="text-violet-400/32 dark:text-violet-300/28"
           />
           <path
-            d="M-20 75 C 65 40, 130 135, 215 80 S 350 30, 480 75"
+            d="M50 72 C 100 40, 145 125, 200 78 S 280 38, 360 72"
             stroke="currentColor"
             strokeWidth="0.9"
             strokeLinecap="round"
             className="text-sky-400/28 dark:text-sky-300/24"
           />
           <path
-            d="M30 185 C 120 145, 185 230, 270 180 S 400 125, 480 175"
+            d="M60 172 C 120 138, 170 215, 230 170 S 310 125, 360 168"
             stroke="currentColor"
             strokeWidth="0.85"
             strokeLinecap="round"
@@ -182,24 +204,24 @@ function UpperWaveBackground() {
       <style>{`
         @keyframes wave-motion-a {
           0%   { transform: translate3d(0, 0); }
-          25%  { transform: translate3d(14px, -10px); }
-          50%  { transform: translate3d(4px, 6px); }
-          75%  { transform: translate3d(-10px, -5px); }
+          25%  { transform: translate3d(12px, -9px); }
+          50%  { transform: translate3d(3px, 5px); }
+          75%  { transform: translate3d(-9px, -4px); }
           100% { transform: translate3d(0, 0); }
         }
         @keyframes wave-motion-b {
           0%   { transform: translate3d(0, 0); }
-          30%  { transform: translate3d(-16px, 8px); }
-          55%  { transform: translate3d(10px, -9px); }
-          80%  { transform: translate3d(-6px, 4px); }
+          30%  { transform: translate3d(-14px, 7px); }
+          55%  { transform: translate3d(9px, -8px); }
+          80%  { transform: translate3d(-5px, 4px); }
           100% { transform: translate3d(0, 0); }
         }
         .wave-motion-a {
-          animation: wave-motion-a 8s ease-in-out infinite;
+          animation: wave-motion-a 7.5s ease-in-out infinite;
           transform-box: fill-box;
         }
         .wave-motion-b {
-          animation: wave-motion-b 11s ease-in-out infinite;
+          animation: wave-motion-b 10s ease-in-out infinite;
           transform-box: fill-box;
         }
         @media (prefers-reduced-motion: reduce) {
