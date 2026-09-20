@@ -164,7 +164,7 @@ function MyApplicationsPanel() {
   }, []);
   if (apps.length === 0) return null;
   return (
-    <section className="mb-10 rounded-[28px] border border-slate-200 bg-white/95 p-6 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95">
+    <section className="mb-10 rounded-[28px] border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/90 p-6 shadow-sm backdrop-blur-sm dark:border-slate-700/80 dark:from-slate-900 dark:to-slate-950">
       <div className="mb-4 flex items-center justify-between gap-2">
         <h2 className="text-lg font-black text-slate-900 dark:text-white">My Applications</h2>
         <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{apps.length} total</span>
@@ -267,50 +267,56 @@ function InternshipCard({
   return (
     <motion.article
       layout
-      variants={{
-        hidden: { opacity: 0, y: 28, scale: 0.97 },
-        show: {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          transition: { type: 'spring' as const, stiffness: 320, damping: 26 },
-        },
-      }}
-      whileHover={{ y: -8, scale: 1.015 }}
-      whileTap={{ scale: 0.99 }}
-      className="group flex flex-col rounded-[28px] border border-slate-100/90 bg-white/95 p-6 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-indigo-100/40 dark:border-slate-800 dark:bg-slate-900/95 dark:hover:shadow-indigo-950/30"
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2, margin: '0px 0px -40px 0px' }}
+      transition={{ type: 'spring' as const, stiffness: 260, damping: 24 }}
+      whileHover={{ y: -10, scale: 1.02 }}
+      whileTap={{ scale: 0.985 }}
+      className="group relative flex flex-col overflow-hidden rounded-[28px] border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/80 p-6 shadow-sm transition-shadow duration-300 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-200/40 dark:border-slate-700/80 dark:from-slate-900 dark:to-slate-950 dark:hover:border-indigo-500/40 dark:hover:shadow-indigo-950/50"
     >
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div
+        className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 opacity-80 transition-opacity group-hover:opacity-100"
+        aria-hidden
+      />
+      <div className="mb-4 flex items-start justify-between gap-3 pt-1">
         <div className="flex items-center gap-3">
-          <img
-            src={job.logo}
-            alt=""
-            className="h-12 w-12 rounded-2xl bg-slate-100 object-cover transition-transform duration-300 group-hover:scale-105 dark:bg-slate-800"
-          />
+          <div className="relative">
+            <img
+              src={job.logo}
+              alt=""
+              className="h-12 w-12 rounded-2xl bg-slate-100 object-cover ring-2 ring-white shadow-md transition-transform duration-300 group-hover:scale-110 dark:bg-slate-800 dark:ring-slate-800"
+            />
+            {job.verified && (
+              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[8px] text-white ring-2 ring-white dark:ring-slate-900">
+                ✓
+              </span>
+            )}
+          </div>
           <div>
-            <h3 className="font-black text-slate-900 dark:text-white">{job.role}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{job.company}</p>
+            <h3 className="font-black leading-snug text-slate-900 dark:text-white">{job.role}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{job.company}</p>
           </div>
         </div>
         {showScore && matchScore > 0 && (
-          <span className={`rounded-full px-2.5 py-1 text-[10px] font-black ${matchBadgeClasses(matchScore)}`}>
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${matchBadgeClasses(matchScore)}`}>
             {matchScore}% MATCH
           </span>
         )}
       </div>
-      <p className="mb-4 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">{job.description}</p>
-      <div className="mb-4 flex flex-wrap gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
-        <span className="inline-flex items-center gap-1">
-          <MapPin className="h-3.5 w-3.5" /> {job.location}
+      <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{job.description}</p>
+      <div className="mb-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100/80 px-2 py-1 dark:bg-slate-800/80">
+          <MapPin className="h-3.5 w-3.5 text-indigo-500" /> {job.location}
         </span>
-        <span className="inline-flex items-center gap-1">
-          <IndianRupee className="h-3.5 w-3.5" /> {job.stipend}
+        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100/80 px-2 py-1 dark:bg-slate-800/80">
+          <IndianRupee className="h-3.5 w-3.5 text-emerald-500" /> {job.stipend}
         </span>
-        <span className="inline-flex items-center gap-1">
-          <Clock className="h-3.5 w-3.5" /> {job.duration}
+        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100/80 px-2 py-1 dark:bg-slate-800/80">
+          <Clock className="h-3.5 w-3.5 text-amber-500" /> {job.duration}
         </span>
         {job.mode && (
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-1 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
             <Building2 className="h-3.5 w-3.5" /> {job.mode}
           </span>
         )}
@@ -319,7 +325,7 @@ function InternshipCard({
         {job.tags.map((t) => (
           <span
             key={t}
-            className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
           >
             {t}
           </span>
@@ -329,10 +335,10 @@ function InternshipCard({
         type="button"
         disabled={applied}
         onClick={onApply}
-        className={`mt-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold ${
+        className={`mt-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition ${
           applied
             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300'
-            : 'bg-indigo-600 text-white hover:bg-indigo-500'
+            : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/25 hover:from-indigo-500 hover:to-violet-500'
         }`}
       >
         {applied ? (
@@ -385,52 +391,72 @@ export const Internships = () => {
     [scored],
   );
 
-  const gridVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.08, delayChildren: 0.06 },
-    },
-  };
-
   return (
     <div className="relative mx-auto max-w-7xl flex-1 overflow-hidden p-4 md:p-8">
       <div
-        className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15"
+        className="pointer-events-none absolute -left-32 -top-10 h-80 w-80 rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/20"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -right-20 top-32 h-72 w-72 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-600/15"
+        className="pointer-events-none absolute -right-24 top-24 h-96 w-96 rounded-full bg-violet-400/12 blur-3xl dark:bg-violet-600/18"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute bottom-20 left-1/3 h-64 w-64 rounded-full bg-fuchsia-400/10 blur-3xl dark:bg-fuchsia-600/10"
         aria-hidden
       />
 
       <motion.header
-        className="relative mb-10"
-        initial={{ opacity: 0, y: 20 }}
+        className="relative mb-10 overflow-hidden rounded-[32px] border border-indigo-100/60 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/40 dark:via-slate-900 dark:to-violet-950/30 md:p-8"
+        initial={{ opacity: 0, y: 28 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.35 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="mb-3 flex items-center gap-3">
-          <div className="rounded-2xl bg-indigo-100 p-3 text-indigo-600 shadow-sm dark:bg-indigo-500/20 dark:text-indigo-300">
+        <div
+          className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-indigo-400/20 blur-2xl dark:bg-indigo-500/25"
+          aria-hidden
+        />
+        <div className="relative mb-4 flex items-center gap-3">
+          <motion.div
+            className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 p-3 text-white shadow-lg shadow-indigo-600/30"
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.1 }}
+          >
             <Briefcase className="h-6 w-6" />
-          </div>
+          </motion.div>
           <span className="text-sm font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
             Career
           </span>
         </div>
-        <h1 className="mb-2 text-4xl font-black text-slate-900 dark:text-white md:text-5xl">Internships</h1>
-        <p className="max-w-2xl text-lg text-slate-500 dark:text-slate-400">
+        <motion.h1
+          className="relative mb-2 text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl"
+          initial={{ opacity: 0, x: -16 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45, delay: 0.12 }}
+        >
+          Internships
+        </motion.h1>
+        <motion.p
+          className="relative max-w-2xl text-lg text-slate-600 dark:text-slate-300"
+          initial={{ opacity: 0, x: -12 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45, delay: 0.18 }}
+        >
           Browse openings matched to your skill profile when available. Includes openings posted by industry
           partners.
-        </p>
+        </motion.p>
       </motion.header>
 
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: 0.04 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.4 }}
       >
         <BuildCvCta
           title="Build your CV before you apply"
@@ -439,10 +465,10 @@ export const Internships = () => {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: 0.06 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
       >
         <MyApplicationsPanel />
       </motion.div>
@@ -450,29 +476,26 @@ export const Internships = () => {
       {skillProfile.hasProfile && recommended.some((r) => r.matchScore > 0) && (
         <motion.section
           className="mb-10"
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.4 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.45 }}
         >
-          <h2 className="mb-4 text-lg font-black text-slate-900 dark:text-white">Recommended for you</h2>
-          <motion.div
-            variants={gridVariants}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.12 }}
-            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          >
+          <div className="mb-4 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-indigo-500" />
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">Recommended for you</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {recommended.map(({ job, matchScore }) => (
               <InternshipCard key={`rec-${job.id}`} job={job} matchScore={matchScore} showScore />
             ))}
-          </motion.div>
+          </div>
         </motion.section>
       )}
 
       <motion.div
         className="mb-6 flex flex-wrap gap-2"
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.35 }}
@@ -487,10 +510,10 @@ export const Internships = () => {
             key={f.id}
             type="button"
             onClick={() => setFilter(f.id)}
-            className={`rounded-2xl px-4 py-2 text-xs font-black uppercase transition ${
+            className={`rounded-2xl px-4 py-2.5 text-xs font-black uppercase tracking-wide transition ${
               filter === f.id
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
+                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/30'
+                : 'border border-slate-200 bg-white/90 text-slate-600 backdrop-blur hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40'
             }`}
           >
             {f.label}
@@ -498,14 +521,7 @@ export const Internships = () => {
         ))}
       </motion.div>
 
-      <motion.div
-        key={filter}
-        variants={gridVariants}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.08 }}
-        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-      >
+      <div key={filter} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(({ job, matchScore }) => (
           <InternshipCard
             key={job.id}
@@ -514,11 +530,15 @@ export const Internships = () => {
             showScore={skillProfile.hasProfile}
           />
         ))}
-      </motion.div>
+      </div>
       {filtered.length === 0 && (
-        <p className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+        <motion.p
+          className="py-16 text-center text-sm text-slate-500 dark:text-slate-400"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
           No internships match your filters.
-        </p>
+        </motion.p>
       )}
     </div>
   );
