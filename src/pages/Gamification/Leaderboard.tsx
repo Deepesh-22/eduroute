@@ -17,7 +17,7 @@ const LEADERBOARD_LIST = [
   { rank: 8, name: 'Zoya Khan', points: 6420, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoya', college: 'MSU Baroda' },
 ];
 
-/** Vanta CLOUDS-style foggy layers (soft mist, not hard bubbles) */
+/** Soft horizontal mist layers — flowing, not clumped puffs */
 function CloudsBackdrop() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -33,56 +33,66 @@ function CloudsBackdrop() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let t = 0;
 
-    // Soft fog puffs: wide, low, low-opacity radial blobs that drift slowly
-    type Puff = {
+    type MistBand = {
+      y: number;
+      hBand: number;
+      speed: number;
+      phase: number;
+      opacity: number;
+      // horizontal wave params for organic shape
+      waveAmp: number;
+      waveFreq: number;
+      offset: number;
+    };
+
+    type SoftOrb = {
       x: number;
       y: number;
-      rx: number; // horizontal radius (wide)
-      ry: number; // vertical radius (flat)
+      rx: number;
+      ry: number;
       vx: number;
       phase: number;
       amp: number;
-      baseOpacity: number;
+      opacity: number;
     };
 
-    let puffs: Puff[] = [];
+    let bands: MistBand[] = [];
+    let orbs: SoftOrb[] = [];
 
     const isDark = () => document.documentElement.classList.contains('dark');
 
     const seed = () => {
-      puffs = [];
+      bands = [];
+      orbs = [];
       const dark = isDark();
-      // Dense soft layers — continuous fog banks (higher opacity so clouds are visible)
-      const layers = 6;
-      for (let layer = 0; layer < layers; layer++) {
-        const bandY = (h * (0.15 + layer * 0.14)) % (h * 0.95);
-        const count = 4 + Math.floor(layer * 0.6);
-        for (let i = 0; i < count; i++) {
-          const scale = 0.9 + layer * 0.25 + Math.random() * 0.5;
-          puffs.push({
-            x: (w * (i + 0.3 + Math.random() * 0.4)) / count,
-            y: bandY + (Math.random() - 0.5) * h * 0.08,
-            rx: (120 + Math.random() * 160) * scale,
-            ry: (40 + Math.random() * 50) * scale * 0.55,
-            vx: 0.15 + Math.random() * 0.28 + layer * 0.025,
-            phase: Math.random() * Math.PI * 2,
-            amp: 6 + Math.random() * 12,
-            // Visible white/soft clouds in both themes
-            baseOpacity: (dark ? 0.22 : 0.38) + Math.random() * 0.12,
-          });
-        }
-      }
-      // Extra large horizon fog bank
-      for (let i = 0; i < 3; i++) {
-        puffs.push({
-          x: w * (0.2 + i * 0.3),
-          y: h * (0.72 + Math.random() * 0.12),
-          rx: w * (0.35 + Math.random() * 0.2),
-          ry: h * 0.12,
-          vx: 0.08 + Math.random() * 0.1,
+
+      // Horizontal mist bands (like the reference — layered fog rolling across)
+      const bandCount = 7;
+      for (let i = 0; i < bandCount; i++) {
+        const yFrac = 0.12 + (i / (bandCount - 1)) * 0.72;
+        bands.push({
+          y: h * yFrac,
+          hBand: h * (0.08 + Math.random() * 0.06),
+          speed: 0.12 + Math.random() * 0.22 + i * 0.015,
           phase: Math.random() * Math.PI * 2,
-          amp: 4,
-          baseOpacity: dark ? 0.28 : 0.45,
+          opacity: (dark ? 0.08 : 0.12) + Math.random() * 0.06,
+          waveAmp: 18 + Math.random() * 28,
+          waveFreq: 0.002 + Math.random() * 0.003,
+          offset: Math.random() * 1000,
+        });
+      }
+
+      // Soft elongated orbs drifting through the bands (mist puffs, very soft)
+      for (let i = 0; i < 14; i++) {
+        orbs.push({
+          x: Math.random() * w * 1.4 - w * 0.2,
+          y: h * (0.15 + Math.random() * 0.65),
+          rx: 140 + Math.random() * 220,
+          ry: 35 + Math.random() * 55,
+          vx: 0.18 + Math.random() * 0.35,
+          phase: Math.random() * Math.PI * 2,
+          amp: 8 + Math.random() * 16,
+          opacity: (dark ? 0.1 : 0.16) + Math.random() * 0.08,
         });
       }
     };
@@ -100,15 +110,48 @@ function CloudsBackdrop() {
       seed();
     };
 
-    const drawPuff = (p: Puff, color: string) => {
-      const y = p.y + Math.sin(t * 0.0004 + p.phase) * p.amp;
-      const g = ctx.createRadialGradient(p.x, y, 0, p.x, y, p.rx);
-      g.addColorStop(0, color.replace('ALPHA', String(p.baseOpacity)));
-      g.addColorStop(0.45, color.replace('ALPHA', String(p.baseOpacity * 0.45)));
-      g.addColorStop(1, color.replace('ALPHA', '0'));
+    const drawBand = (b: MistBand, colorBase: string) => {
+      // Organic wavy horizontal strip
+      const yBase = b.y + Math.sin(t * 0.00025 + b.phase) * 10;
+      ctx.beginPath();
+      ctx.moveTo(-40, yBase);
+
+      const steps = 24;
+      for (let i = 0; i <= steps; i++) {
+        const x = (w * i) / steps;
+        const wave =
+          Math.sin(x * b.waveFreq + t * 0.0003 + b.offset) * b.waveAmp +
+          Math.sin(x * b.waveFreq * 1.7 + t * 0.0002 + b.phase) * (b.waveAmp * 0.4);
+        ctx.lineTo(x, yBase + wave);
+      }
+      // bottom edge of band
+      for (let i = steps; i >= 0; i--) {
+        const x = (w * i) / steps;
+        const wave =
+          Math.sin(x * b.waveFreq + t * 0.0003 + b.offset) * b.waveAmp +
+          Math.sin(x * b.waveFreq * 1.7 + t * 0.0002 + b.phase) * (b.waveAmp * 0.4);
+        ctx.lineTo(x, yBase + wave + b.hBand);
+      }
+      ctx.closePath();
+
+      const g = ctx.createLinearGradient(0, yBase - 20, 0, yBase + b.hBand + 20);
+      g.addColorStop(0, colorBase.replace('ALPHA', '0'));
+      g.addColorStop(0.35, colorBase.replace('ALPHA', String(b.opacity)));
+      g.addColorStop(0.65, colorBase.replace('ALPHA', String(b.opacity * 0.85)));
+      g.addColorStop(1, colorBase.replace('ALPHA', '0'));
+      ctx.fillStyle = g;
+      ctx.fill();
+    };
+
+    const drawOrb = (o: SoftOrb, colorBase: string) => {
+      const y = o.y + Math.sin(t * 0.00035 + o.phase) * o.amp;
+      const g = ctx.createRadialGradient(o.x, y, 0, o.x, y, o.rx);
+      g.addColorStop(0, colorBase.replace('ALPHA', String(o.opacity)));
+      g.addColorStop(0.4, colorBase.replace('ALPHA', String(o.opacity * 0.4)));
+      g.addColorStop(1, colorBase.replace('ALPHA', '0'));
       ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
+      ctx.ellipse(o.x, y, o.rx, o.ry, 0, 0, Math.PI * 2);
       ctx.fill();
     };
 
@@ -116,38 +159,44 @@ function CloudsBackdrop() {
       t += 16;
       const dark = isDark();
 
-      // Sky — Vanta CLOUDS style (blue → soft white below)
+      // Deep sky matching reference image
       const sky = ctx.createLinearGradient(0, 0, 0, h);
       if (dark) {
-        sky.addColorStop(0, '#0a1628');
-        sky.addColorStop(0.35, '#12233d');
-        sky.addColorStop(0.7, '#1a3050');
-        sky.addColorStop(1, '#243a58');
+        sky.addColorStop(0, '#070b18');
+        sky.addColorStop(0.4, '#0c1428');
+        sky.addColorStop(0.75, '#111c35');
+        sky.addColorStop(1, '#152440');
       } else {
-        sky.addColorStop(0, '#1a7ab8');
-        sky.addColorStop(0.3, '#4aa8d8');
-        sky.addColorStop(0.65, '#b5daf0');
-        sky.addColorStop(1, '#eef6fb');
+        sky.addColorStop(0, '#1a6fa8');
+        sky.addColorStop(0.35, '#4a9ec8');
+        sky.addColorStop(0.7, '#a8d4ec');
+        sky.addColorStop(1, '#e8f4fb');
       }
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h);
 
-      // Cloud color like Vanta: soft white (light) / soft silver-white (dark)
-      const fogColor = dark
-        ? 'rgba(220, 230, 245, ALPHA)'
+      const mistColor = dark
+        ? 'rgba(180, 200, 230, ALPHA)'
         : 'rgba(255, 255, 255, ALPHA)';
 
-      // Low blur so cloud shape stays visible (was 18px — too mushy)
+      // Heavy soft blur for true mist look
       try {
-        ctx.filter = 'blur(5px)';
+        ctx.filter = 'blur(28px)';
       } catch {
         /* ignore */
       }
 
-      for (const p of puffs) {
-        p.x += p.vx;
-        if (p.x - p.rx > w) p.x = -p.rx;
-        drawPuff(p, fogColor);
+      // Drift bands slowly
+      for (const b of bands) {
+        b.offset += b.speed * 0.4;
+        drawBand(b, mistColor);
+      }
+
+      // Drift soft orbs
+      for (const o of orbs) {
+        o.x += o.vx;
+        if (o.x - o.rx > w + 50) o.x = -o.rx - 50;
+        drawOrb(o, mistColor);
       }
 
       try {
@@ -156,19 +205,19 @@ function CloudsBackdrop() {
         /* ignore */
       }
 
-      // Soft mid haze for depth (still readable)
-      const haze = ctx.createLinearGradient(0, h * 0.35, 0, h * 0.55);
+      // Very soft vertical haze veil (depth)
+      const veil = ctx.createLinearGradient(0, 0, 0, h);
       if (dark) {
-        haze.addColorStop(0, 'rgba(200, 215, 235, 0)');
-        haze.addColorStop(0.5, 'rgba(200, 215, 235, 0.1)');
-        haze.addColorStop(1, 'rgba(200, 215, 235, 0)');
+        veil.addColorStop(0, 'rgba(12, 20, 40, 0.15)');
+        veil.addColorStop(0.5, 'rgba(20, 35, 60, 0.05)');
+        veil.addColorStop(1, 'rgba(8, 12, 28, 0.25)');
       } else {
-        haze.addColorStop(0, 'rgba(255, 255, 255, 0)');
-        haze.addColorStop(0.5, 'rgba(255, 255, 255, 0.28)');
-        haze.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        veil.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+        veil.addColorStop(0.5, 'rgba(255, 255, 255, 0.12)');
+        veil.addColorStop(1, 'rgba(240, 248, 255, 0.2)');
       }
-      ctx.fillStyle = haze;
-      ctx.fillRect(0, h * 0.35, w, h * 0.2);
+      ctx.fillStyle = veil;
+      ctx.fillRect(0, 0, w, h);
 
       raf = requestAnimationFrame(tick);
     };
@@ -184,7 +233,7 @@ function CloudsBackdrop() {
       const nowDark = isDark();
       if (nowDark !== lastDark) {
         lastDark = nowDark;
-        seed(); // refresh opacities for light/dark
+        seed();
       }
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -215,13 +264,13 @@ export const Leaderboard = () => {
 
   return (
     <div className="relative min-h-[calc(100vh-5.5rem)] flex-1 overflow-hidden">
-      {/* Full-page Vanta-style clouds */}
+      {/* Full-page soft mist fog */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <CloudsBackdrop />
       </div>
       {/* Soft veil so content stays readable */}
       <div
-        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-white/15 via-transparent to-white/25 dark:from-[#070b1a]/25 dark:via-transparent dark:to-[#070b1a]/40"
+        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-white/10 via-transparent to-white/20 dark:from-[#070b1a]/20 dark:via-transparent dark:to-[#070b1a]/35"
         aria-hidden
       />
 
