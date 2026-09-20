@@ -59,6 +59,40 @@ const COMPANY_LINKS = [
   { label: 'Terms & Conditions', href: '#contact' },
 ];
 
+/** Split text into letter spans with staggered reveal (CodeSandbox-style). */
+function StaggerText({
+  text,
+  className = '',
+  baseDelay = 0,
+  step = 0.028,
+}: {
+  text: string;
+  className?: string;
+  baseDelay?: number;
+  step?: number;
+}) {
+  return (
+    <span className={className} aria-label={text}>
+      {text.split('').map((char, i) =>
+        char === ' ' ? (
+          <span key={i} className="hero-letter-space" aria-hidden>
+            {' '}
+          </span>
+        ) : (
+          <span
+            key={i}
+            className="hero-letter"
+            style={{ animationDelay: `${baseDelay + i * step}s` }}
+            aria-hidden
+          >
+            {char}
+          </span>
+        )
+      )}
+    </span>
+  );
+}
+
 export const LandingPage = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -171,13 +205,20 @@ export const LandingPage = () => {
               Your Growth Partner in Tech
             </div>
 
-            {/* Bold two-line headline — white + EduRoute purple */}
-            <h1 className="text-5xl font-black leading-[0.95] tracking-tight text-slate-900 drop-shadow-sm sm:text-6xl lg:text-7xl dark:text-white">
-              Build Skills.
-              <br />
-              <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent dark:from-violet-400 dark:to-indigo-400">
-                Get Hired.
-              </span>
+            {/* CodeSandbox-style letter stagger: Build Skills. (white) / Get Hired. (purple) */}
+            <h1 className="text-5xl font-black leading-[0.95] tracking-tight drop-shadow-sm sm:text-6xl lg:text-7xl">
+              <StaggerText
+                text="Build Skills."
+                className="block text-slate-900 dark:text-white"
+                baseDelay={0.05}
+                step={0.03}
+              />
+              <StaggerText
+                text="Get Hired."
+                className="block bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent dark:from-violet-400 dark:to-indigo-400"
+                baseDelay={0.42}
+                step={0.03}
+              />
             </h1>
 
             {/* Short description */}
