@@ -165,23 +165,40 @@ export const LandingPage = () => {
 
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-24">
           <div className="max-w-xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3.5 py-1.5 text-xs font-bold text-violet-700 shadow-sm backdrop-blur dark:border-violet-500/30 dark:bg-slate-900/70 dark:text-violet-300">
-              <span className="text-sm">⚡</span>
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3.5 py-1.5 text-xs font-bold tracking-wide text-violet-700 shadow-sm backdrop-blur dark:border-violet-500/30 dark:bg-slate-900/70 dark:text-violet-300">
+              <span className="text-sm leading-none">⚡</span>
               Your Growth Partner in Tech
             </div>
-            <h1 className="text-4xl font-black leading-[1.1] tracking-tight text-slate-900 drop-shadow-sm sm:text-5xl lg:text-6xl dark:text-white">
+
+            {/* Bold two-line headline — white + EduRoute purple */}
+            <h1 className="text-5xl font-black leading-[0.95] tracking-tight text-slate-900 drop-shadow-sm sm:text-6xl lg:text-7xl dark:text-white">
               Build Skills.
               <br />
-              <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">Get Hired.</span>
+              <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent dark:from-violet-400 dark:to-indigo-400">
+                Get Hired.
+              </span>
             </h1>
-            <p className="mt-5 max-w-md text-base leading-7 text-slate-700 dark:text-slate-200">
-              EDUROUTE helps you find the right roadmap, get internships and job opportunities, participate in hackathons and build the skills you need to grow in tech — all in one place.
+
+            {/* Short description */}
+            <p className="mt-6 max-w-md text-base leading-relaxed text-slate-600 dark:text-slate-300 sm:text-[17px] sm:leading-7">
+              EDUROUTE helps you find the right roadmap, get internships and job
+              opportunities, participate in hackathons and build the skills you
+              need to grow in tech — all in one place.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link to="/roadmaps" className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-200/60 transition hover:bg-violet-700 dark:shadow-violet-900/40">
+
+            {/* CTAs */}
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                to="/roadmaps"
+                className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-violet-200/60 transition hover:bg-violet-700 dark:shadow-violet-900/40"
+              >
                 <ArrowRight className="h-4 w-4" /> Explore Roadmaps
               </Link>
-              <Link to="/internships" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-5 py-3 text-sm font-bold text-slate-800 backdrop-blur transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-violet-500">
+              <Link
+                to="/internships"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-6 py-3.5 text-sm font-bold text-slate-800 backdrop-blur transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-violet-500"
+              >
                 Find Opportunities
               </Link>
             </div>
@@ -371,52 +388,44 @@ export const LandingPage = () => {
               </ul>
             </div>
 
-            {/* Join community */}
+            {/* Newsletter */}
             <div>
               <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
-                Join Our Community
+                Stay Updated
               </h3>
-              <p className="mb-4 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                Stay updated with latest opportunities, events and learning resources.
+              <p className="mb-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Get the latest roadmaps, opportunities and hackathon alerts.
               </p>
               <form
-                className="flex items-center gap-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (newsletterEmail.trim()) {
-                    window.location.href = `mailto:${supportEmail}?subject=Newsletter%20signup&body=${encodeURIComponent(newsletterEmail.trim())}`;
-                  }
+                  setNewsletterEmail('');
                 }}
+                className="flex flex-col gap-2"
               >
                 <input
                   type="email"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="min-w-0 flex-1 bg-transparent px-4 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
+                  placeholder="Your email"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   required
                 />
                 <button
                   type="submit"
-                  aria-label="Subscribe"
-                  className="m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white transition hover:bg-violet-700"
+                  className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-violet-700"
                 >
-                  <ArrowRight className="h-4 w-4" />
+                  Subscribe
                 </button>
               </form>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 py-6 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-500 sm:flex-row">
-            <p>© {new Date().getFullYear()} EDUROUTE. All rights reserved.</p>
-            <p className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-400">
-              Better Skills <span className="text-violet-500">→</span> Brighter Future
-            </p>
+          <div className="border-t border-slate-200 py-5 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
+            © {new Date().getFullYear()} EDUROUTE. All rights reserved.
           </div>
         </div>
       </footer>
     </div>
   );
 };
-
-export default LandingPage;
