@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Briefcase,
   MapPin,
@@ -196,25 +195,49 @@ function MyApplicationsPanel() {
               </span>
             </div>
             {app.mentorFeedback && (
-              <div className="mt-2 rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-2 text-xs dark:border-amber-500/30 dark:bg-amber-500/10">
-                <span className="font-bold text-amber-800 dark:text-amber-200">Mentor: </span>
-                <span className="text-amber-900/90 dark:text-amber-100/90">{app.mentorFeedback}</span>
+              <div className="mt-2 rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-2 text-xs dark:border-amber-500/30 dark:bg-amber-950/30">
+                <span className="font-bold text-amber-800 dark:text-amber-200">
+                  Mentor {app.mentorFeedback.mentorName} · {'★'.repeat(app.mentorFeedback.rating)}
+                </span>
+                <p className="mt-0.5 text-slate-600 dark:text-slate-300">{app.mentorFeedback.comment}</p>
+              </div>
+            )}
+            {app.status === 'Completed' && (
+              <div className="mt-2 text-xs font-semibold text-teal-700 dark:text-teal-300">
+                ✓ Completion recorded
+                {app.completedAt ? ` · ${new Date(app.completedAt).toLocaleDateString()}` : ''}
+                {app.completionNote ? ` — ${app.completionNote}` : ''}
               </div>
             )}
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[11px] text-slate-400">
-        <Link to="/profile" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
-          Profile
-        </Link>{' '}
-        shows the same pipeline for all applications.
-      </p>
     </section>
   );
 }
 
-type JobCard = (typeof INTERNSHIPS)[number] & { fromIndustry?: boolean; mode?: string };
+type JobCard = {
+  id: string;
+  role: string;
+  company: string;
+  location: string;
+  stipend: string;
+  type: string;
+  duration: string;
+  mode?: string;
+  posted: string;
+  logo: string;
+  tags: string[];
+  sector: string;
+  verified?: boolean;
+  fastTrack?: boolean;
+  employeeCount?: string;
+  companylink?: string;
+  description?: string;
+  fromIndustry?: boolean;
+  eligibility?: string;
+  roleCategory?: string;
+};
 
 function InternshipCard({
   job,
@@ -245,17 +268,17 @@ function InternshipCard({
     <motion.article
       layout
       variants={{
-        hidden: { opacity: 0, y: 32, scale: 0.96 },
+        hidden: { opacity: 0, y: 28, scale: 0.97 },
         show: {
           opacity: 1,
           y: 0,
           scale: 1,
-          transition: { type: 'spring', stiffness: 320, damping: 26 },
+          transition: { type: 'spring' as const, stiffness: 320, damping: 26 },
         },
       }}
-      whileHover={{ y: -10, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="group flex flex-col rounded-[28px] border border-slate-100/90 bg-white/95 p-6 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-2xl hover:shadow-indigo-100/50 dark:border-slate-800 dark:bg-slate-900/95 dark:hover:shadow-indigo-950/40"
+      whileHover={{ y: -8, scale: 1.015 }}
+      whileTap={{ scale: 0.99 }}
+      className="group flex flex-col rounded-[28px] border border-slate-100/90 bg-white/95 p-6 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-indigo-100/40 dark:border-slate-800 dark:bg-slate-900/95 dark:hover:shadow-indigo-950/30"
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -366,13 +389,12 @@ export const Internships = () => {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+      transition: { staggerChildren: 0.08, delayChildren: 0.06 },
     },
   };
 
   return (
     <div className="relative mx-auto max-w-7xl flex-1 overflow-hidden p-4 md:p-8">
-      {/* Soft ambient blobs for depth */}
       <div
         className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15"
         aria-hidden
@@ -384,10 +406,10 @@ export const Internships = () => {
 
       <motion.header
         className="relative mb-10"
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: true, amount: 0.35 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="mb-3 flex items-center gap-3">
           <div className="rounded-2xl bg-indigo-100 p-3 text-indigo-600 shadow-sm dark:bg-indigo-500/20 dark:text-indigo-300">
@@ -405,10 +427,10 @@ export const Internships = () => {
       </motion.header>
 
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 14 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: 0.05 }}
+        transition={{ duration: 0.4, delay: 0.04 }}
       >
         <BuildCvCta
           title="Build your CV before you apply"
@@ -417,10 +439,10 @@ export const Internships = () => {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 14 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.4, delay: 0.08 }}
+        transition={{ duration: 0.4, delay: 0.06 }}
       >
         <MyApplicationsPanel />
       </motion.div>
@@ -428,17 +450,17 @@ export const Internships = () => {
       {skillProfile.hasProfile && recommended.some((r) => r.matchScore > 0) && (
         <motion.section
           className="mb-10"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.45 }}
+          transition={{ duration: 0.4 }}
         >
           <h2 className="mb-4 text-lg font-black text-slate-900 dark:text-white">Recommended for you</h2>
           <motion.div
             variants={gridVariants}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, amount: 0.15 }}
+            viewport={{ once: true, amount: 0.12 }}
             className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
             {recommended.map(({ job, matchScore }) => (
@@ -450,7 +472,7 @@ export const Internships = () => {
 
       <motion.div
         className="mb-6 flex flex-wrap gap-2"
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.35 }}
