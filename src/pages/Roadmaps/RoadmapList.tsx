@@ -95,170 +95,169 @@ const item = {
   },
 };
 
-/** Continuous floating dual-side waves — clearly visible, infinite loop */
+/** Dual-side waves — continuous up-down oscillation + scroll drift */
 function UpperWaveBackground({
   scrollYProgress,
 }: {
   scrollYProgress: ReturnType<typeof useScroll>['scrollYProgress'];
 }) {
-  const driftY = useTransform(scrollYProgress, [0, 0.6], [0, -24]);
-  const waveOpacity = useTransform(scrollYProgress, [0, 0.2, 0.55], [1, 0.98, 0.35]);
+  const leftFlowX = useTransform(scrollYProgress, [0, 0.7], [0, -48]);
+  const rightFlowX = useTransform(scrollYProgress, [0, 0.7], [0, 56]);
+  const leftFlowY = useTransform(scrollYProgress, [0, 0.7], [0, -16]);
+  const rightFlowY = useTransform(scrollYProgress, [0, 0.7], [0, 20]);
+  const waveOpacity = useTransform(scrollYProgress, [0, 0.15, 0.45], [1, 0.95, 0.25]);
 
   return (
     <motion.div
       className="pointer-events-none absolute inset-0 overflow-hidden"
       aria-hidden
-      style={{ opacity: waveOpacity, y: driftY }}
+      style={{ opacity: waveOpacity }}
     >
-      <div className="absolute left-[4%] top-4 h-48 w-48 rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/20" />
-      <div className="absolute right-[2%] top-0 h-64 w-64 rounded-full bg-violet-400/15 blur-3xl dark:bg-violet-600/22" />
-      <div className="absolute left-1/2 top-10 h-40 w-72 -translate-x-1/2 rounded-full bg-fuchsia-400/8 blur-3xl dark:bg-fuchsia-500/12" />
+      <div className="absolute left-[6%] top-8 h-40 w-40 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15" />
+      <div className="absolute right-[4%] top-2 h-56 w-56 rounded-full bg-violet-400/12 blur-3xl dark:bg-violet-600/18" />
 
-      <svg
-        className="absolute inset-x-0 top-[8%] h-[85%] w-full"
-        viewBox="0 0 1440 320"
+      <motion.svg
+        className="absolute left-0 top-[12%] h-[58%] w-[28%] max-w-[300px] md:w-[30%] lg:max-w-[340px]"
+        viewBox="0 0 320 240"
         fill="none"
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMinYMid meet"
+        style={{ x: leftFlowX, y: leftFlowY }}
       >
-        <g className="rm-wave rm-wave-a">
+        <defs>
+          <linearGradient id="waveFadeLeft" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="white" stopOpacity="1" />
+            <stop offset="70%" stopColor="white" stopOpacity="1" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </linearGradient>
+          <mask id="waveMaskLeft">
+            <rect width="320" height="240" fill="url(#waveFadeLeft)" />
+          </mask>
+        </defs>
+        <g className="wave-motion wave-motion-a" mask="url(#waveMaskLeft)">
           <path
-            d="M-40 160 C 120 60, 280 260, 440 160 S 720 40, 880 160 S 1160 280, 1320 150 S 1480 80, 1520 160"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            className="text-indigo-400/70 dark:text-indigo-300/75"
-          />
-          <path
-            d="M-40 190 C 140 90, 300 290, 460 190 S 740 70, 900 190 S 1180 300, 1340 180 S 1500 100, 1520 190"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            className="text-violet-400/60 dark:text-violet-300/65"
-          />
-          <path
-            d="M-40 130 C 100 40, 260 220, 420 130 S 700 20, 860 130 S 1140 250, 1300 120 S 1460 50, 1520 130"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            className="text-slate-400/55 dark:text-slate-300/55"
-          />
-        </g>
-
-        <g className="rm-wave rm-wave-b">
-          <path
-            d="M-20 200 C 160 110, 320 300, 480 200 S 760 90, 920 200 S 1200 310, 1360 195 S 1520 120, 1540 200"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            className="text-fuchsia-400/55 dark:text-fuchsia-300/60"
-          />
-          <path
-            d="M-20 100 C 180 20, 340 180, 500 100 S 780 10, 940 100 S 1220 210, 1380 95 S 1520 40, 1540 100"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            className="text-indigo-300/50 dark:text-indigo-200/55"
-          />
-          <path
-            d="M-20 220 C 150 140, 310 310, 470 220 S 750 120, 910 220 S 1190 320, 1350 215 S 1510 150, 1540 220"
-            stroke="currentColor"
-            strokeWidth="1.35"
-            strokeLinecap="round"
-            className="text-violet-300/45 dark:text-violet-200/50"
-          />
-        </g>
-
-        <g className="rm-wave rm-wave-c">
-          <path
-            d="M0 150 C 200 70, 360 240, 520 150 S 800 50, 960 150 S 1240 260, 1400 145 S 1520 90, 1560 150"
+            d="M-8 120 C 50 78, 95 165, 150 120 S 230 70, 300 118"
             stroke="currentColor"
             strokeWidth="1.4"
             strokeLinecap="round"
-            className="text-sky-400/50 dark:text-sky-300/55"
+            className="text-slate-400/55 dark:text-slate-400/48"
           />
           <path
-            d="M0 175 C 180 95, 340 265, 500 175 S 780 75, 940 175 S 1220 285, 1380 170 S 1520 110, 1560 175"
+            d="M-8 142 C 55 100, 100 185, 155 140 S 235 88, 300 140"
             stroke="currentColor"
-            strokeWidth="1.2"
+            strokeWidth="1.15"
             strokeLinecap="round"
-            className="text-indigo-400/40 dark:text-indigo-300/45"
+            className="text-indigo-400/50 dark:text-indigo-300/42"
+          />
+          <path
+            d="M-8 100 C 45 65, 90 145, 145 108 S 225 55, 300 100"
+            stroke="currentColor"
+            strokeWidth="1"
+            strokeLinecap="round"
+            className="text-violet-400/40 dark:text-violet-300/35"
           />
         </g>
-      </svg>
+      </motion.svg>
 
-      <svg
-        className="absolute left-0 top-[10%] h-[70%] w-[42%] max-w-[420px]"
-        viewBox="0 0 400 280"
-        fill="none"
-        preserveAspectRatio="xMinYMid meet"
-      >
-        <g className="rm-wave rm-wave-a">
-          <path d="M-10 140 C 60 70, 120 210, 190 140 S 300 60, 390 135" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="text-indigo-500/65 dark:text-indigo-300/70" />
-          <path d="M-10 165 C 70 95, 130 235, 200 165 S 310 85, 390 160" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" className="text-violet-500/55 dark:text-violet-300/60" />
-        </g>
-        <g className="rm-wave rm-wave-b">
-          <path d="M-10 115 C 55 55, 115 185, 185 115 S 295 45, 390 110" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" className="text-slate-400/50 dark:text-slate-300/55" />
-        </g>
-      </svg>
-
-      <svg
-        className="absolute right-0 top-[6%] h-[78%] w-[48%] max-w-[520px]"
+      <motion.svg
+        className="absolute right-0 top-[4%] h-[78%] w-[42%] max-w-[520px] md:w-[44%] lg:max-w-[560px]"
         viewBox="0 0 520 300"
         fill="none"
         preserveAspectRatio="xMaxYMid meet"
+        style={{ x: rightFlowX, y: rightFlowY }}
       >
-        <g className="rm-wave rm-wave-b">
-          <path d="M20 150 C 110 70, 200 240, 300 150 S 420 60, 520 145" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-indigo-400/70 dark:text-indigo-300/75" />
-          <path d="M30 175 C 120 95, 210 265, 310 175 S 430 85, 520 170" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="text-violet-400/60 dark:text-violet-300/65" />
-          <path d="M40 125 C 130 55, 220 210, 320 125 S 440 50, 520 120" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" className="text-fuchsia-400/50 dark:text-fuchsia-300/55" />
+        <defs>
+          <linearGradient id="waveFadeRight" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stopColor="white" stopOpacity="1" />
+            <stop offset="55%" stopColor="white" stopOpacity="1" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </linearGradient>
+          <mask id="waveMaskRight">
+            <rect width="520" height="300" fill="url(#waveMaskRight)" />
+          </mask>
+        </defs>
+        <g className="wave-motion wave-motion-b" mask="url(#waveMaskRight)">
+          <path
+            d="M20 95 C 110 40, 190 160, 290 95 S 420 35, 540 90"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className="text-slate-400/50 dark:text-slate-400/48"
+          />
+          <path
+            d="M20 125 C 120 70, 200 190, 300 125 S 430 65, 540 120"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            className="text-indigo-400/45 dark:text-indigo-300/42"
+          />
+          <path
+            d="M20 155 C 125 100, 210 220, 310 155 S 440 95, 540 150"
+            stroke="currentColor"
+            strokeWidth="1.1"
+            strokeLinecap="round"
+            className="text-violet-400/38 dark:text-violet-300/35"
+          />
+          <path
+            d="M30 72 C 115 30, 195 145, 285 78 S 410 28, 540 70"
+            stroke="currentColor"
+            strokeWidth="1"
+            strokeLinecap="round"
+            className="text-sky-400/35 dark:text-sky-300/32"
+          />
+          <path
+            d="M40 185 C 135 140, 220 245, 320 180 S 450 120, 540 175"
+            stroke="currentColor"
+            strokeWidth="0.95"
+            strokeLinecap="round"
+            className="text-fuchsia-400/30 dark:text-fuchsia-300/28"
+          />
+          <path
+            d="M50 210 C 145 170, 230 265, 330 210 S 460 150, 540 205"
+            stroke="currentColor"
+            strokeWidth="0.85"
+            strokeLinecap="round"
+            className="text-indigo-300/25 dark:text-indigo-200/22"
+          />
         </g>
-        <g className="rm-wave rm-wave-c">
-          <path d="M50 200 C 140 130, 230 280, 340 200 S 450 120, 520 195" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" className="text-sky-400/45 dark:text-sky-300/50" />
-          <path d="M60 100 C 150 40, 240 180, 350 100 S 460 35, 520 95" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" className="text-indigo-300/40 dark:text-indigo-200/48" />
-        </g>
-      </svg>
+      </motion.svg>
 
-      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
 
       <style>{`
-        @keyframes rm-wave-a {
-          0%   { transform: translate3d(0, 0px) rotate(0deg); }
-          25%  { transform: translate3d(12px, -42px) rotate(0.4deg); }
-          50%  { transform: translate3d(-8px, 38px) rotate(-0.3deg); }
-          75%  { transform: translate3d(10px, -36px) rotate(0.25deg); }
-          100% { transform: translate3d(0, 0px) rotate(0deg); }
+        /* Continuous up-down oscillation — noticeable intensity */
+        @keyframes wave-motion-a {
+          0%   { transform: translate3d(0, 0) scaleY(1); }
+          15%  { transform: translate3d(6px, -28px) scaleY(1.12); }
+          30%  { transform: translate3d(-4px, 24px) scaleY(0.9); }
+          50%  { transform: translate3d(8px, -32px) scaleY(1.14); }
+          70%  { transform: translate3d(-6px, 22px) scaleY(0.91); }
+          85%  { transform: translate3d(4px, -18px) scaleY(1.08); }
+          100% { transform: translate3d(0, 0) scaleY(1); }
         }
-        @keyframes rm-wave-b {
-          0%   { transform: translate3d(0, 0px) rotate(0deg); }
-          20%  { transform: translate3d(-14px, 44px) rotate(-0.35deg); }
-          45%  { transform: translate3d(10px, -48px) rotate(0.4deg); }
-          70%  { transform: translate3d(-12px, 32px) rotate(-0.2deg); }
-          100% { transform: translate3d(0, 0px) rotate(0deg); }
+        @keyframes wave-motion-b {
+          0%   { transform: translate3d(0, 0) scaleY(1); }
+          12%  { transform: translate3d(-8px, 30px) scaleY(0.88); }
+          28%  { transform: translate3d(6px, -34px) scaleY(1.15); }
+          48%  { transform: translate3d(-10px, 26px) scaleY(0.9); }
+          68%  { transform: translate3d(8px, -28px) scaleY(1.12); }
+          88%  { transform: translate3d(-5px, 16px) scaleY(0.94); }
+          100% { transform: translate3d(0, 0) scaleY(1); }
         }
-        @keyframes rm-wave-c {
-          0%   { transform: translate3d(0, 0px); }
-          33%  { transform: translate3d(16px, -50px); }
-          66%  { transform: translate3d(-12px, 46px); }
-          100% { transform: translate3d(0, 0px); }
-        }
-        .rm-wave {
+        .wave-motion-a {
+          animation: wave-motion-a 5.5s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center center;
           will-change: transform;
         }
-        .rm-wave-a {
-          animation: rm-wave-a 4.2s ease-in-out infinite;
-        }
-        .rm-wave-b {
-          animation: rm-wave-b 5.1s ease-in-out infinite;
-          animation-delay: -1.2s;
-        }
-        .rm-wave-c {
-          animation: rm-wave-c 3.6s ease-in-out infinite;
-          animation-delay: -0.6s;
+        .wave-motion-b {
+          animation: wave-motion-b 6.8s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center center;
+          will-change: transform;
         }
         @media (prefers-reduced-motion: reduce) {
-          .rm-wave-a, .rm-wave-b, .rm-wave-c { animation: none; }
+          .wave-motion-a,
+          .wave-motion-b { animation: none; }
         }
       `}</style>
     </motion.div>
