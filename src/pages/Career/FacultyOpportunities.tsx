@@ -9,7 +9,9 @@ import {
   Clock,
   FlaskConical,
   GraduationCap,
+  HandHelping,
   MapPin,
+  Presentation,
   Sparkles,
   Users,
 } from 'lucide-react';
@@ -35,6 +37,10 @@ const typeIcon = (type: FacultyOpportunityType) => {
       return <Users className="h-4 w-4" />;
     case 'Research Collaboration':
       return <FlaskConical className="h-4 w-4" />;
+    case 'Workshop':
+      return <Presentation className="h-4 w-4" />;
+    case 'Mentorship for Teachers':
+      return <HandHelping className="h-4 w-4" />;
     default:
       return <Sparkles className="h-4 w-4" />;
   }
@@ -47,13 +53,14 @@ const typeBadge = (type: FacultyOpportunityType) => {
     'Industrial Training': 'bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300',
     Consultancy: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
     'Research Collaboration': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+    Workshop: 'bg-pink-100 text-pink-800 dark:bg-pink-950/50 dark:text-pink-300',
+    'Mentorship for Teachers': 'bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300',
   };
   return map[type];
 };
 
 /**
  * Student-facing list of faculty / academician opportunities.
- * Faculty posts via /faculty (login role). Students only browse + express interest here.
  */
 export const FacultyOpportunities = () => {
   const user = getAuthUser();
@@ -115,15 +122,15 @@ export const FacultyOpportunities = () => {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
-            Faculty &amp; research
+            Faculty & research
           </p>
           <h1 className="mt-1 flex items-center gap-2 text-3xl font-black text-slate-900 dark:text-white md:text-4xl">
             <GraduationCap className="h-8 w-8 text-violet-600 dark:text-violet-400" />
             Faculty opportunities
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
-            FDPs, faculty internships, industrial training, consultancy, and collaborative research posted by
-            academicians and partners. Browse here as a student — faculty post via Faculty login.
+            FDPs, faculty internships, industrial training, consultancy, research, workshops, and mentorship
+            for teachers. Browse as a student — faculty post via Faculty login.
           </p>
         </div>
       </div>
@@ -168,7 +175,7 @@ export const FacultyOpportunities = () => {
               </div>
               {interestedIds.has(o.id) ? (
                 <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                  <Check className="h-3.5 w-3.5" /> Interested
+                  <Check className="h-3.5 w-3.5" /> Applied
                 </span>
               ) : (
                 <button
@@ -176,7 +183,7 @@ export const FacultyOpportunities = () => {
                   onClick={() => handleInterest(o.id)}
                   className="rounded-xl bg-violet-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-violet-700"
                 >
-                  Express interest
+                  Apply / interest
                 </button>
               )}
             </div>
