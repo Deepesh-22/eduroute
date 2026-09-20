@@ -14,6 +14,7 @@ import {
   Presentation,
   Sparkles,
   Users,
+  ExternalLink,
 } from 'lucide-react';
 import { getAuthUser } from '../../utils/rbacAuth';
 import {
@@ -130,7 +131,8 @@ export const FacultyOpportunities = () => {
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
             FDPs, faculty internships, industrial training, consultancy, research, workshops, and mentorship
-            for teachers. Browse as a student — faculty post via Faculty login.
+            for teachers. Browse as a student — faculty post via Faculty login. Open official portals (AICTE ATAL,
+            Internship, NPTEL, SWAYAM, SERB, NITTTR) from each card.
           </p>
         </div>
       </div>
@@ -198,6 +200,16 @@ export const FacultyOpportunities = () => {
               <span className="rounded-md bg-slate-100 px-2 py-0.5 dark:bg-slate-800">{o.domain}</span>
               {o.seats && <span>{o.seats} seats</span>}
             </div>
+            {o.link && (
+              <a
+                href={o.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:underline dark:text-violet-400"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Open official portal
+              </a>
+            )}
           </article>
         ))}
       </div>
