@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Trophy, Medal, Crown, TrendingUp, Search, User, Award } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Trophy, Crown, TrendingUp, Search, User } from 'lucide-react';
 import { getCurrentUser } from '../../utils/userProfile';
 
 const TOP_THREE = [
@@ -16,6 +17,150 @@ const LEADERBOARD_LIST = [
   { rank: 8, name: 'Zoya Khan', points: 6420, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoya', college: 'MSU Baroda' },
 ];
 
+/** Vanta-style soft cloud / fog backdrop for the full Leaderboard page */
+function CloudsBackdrop() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let raf = 0;
+    let w = 0;
+    let h = 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    type Cloud = {
+      x: number;
+      y: number;
+      r: number;
+      vx: number;
+      opacity: number;
+      blobs: { ox: number; oy: number; or: number }[];
+    };
+
+    let clouds: Cloud[] = [];
+
+    const isDark = () => document.documentElement.classList.contains('dark');
+
+    const makeCloud = (x: number, y: number, scale: number): Cloud => {
+      const blobs = Array.from({ length: 4 + Math.floor(Math.random() * 3) }, () => ({
+        ox: (Math.random() - 0.5) * 80 * scale,
+        oy: (Math.random() - 0.5) * 28 * scale,
+        or: (18 + Math.random() * 36) * scale,
+      }));
+      return {
+        x,
+        y,
+        r: 40 * scale,
+        vx: 0.08 + Math.random() * 0.18,
+        opacity: 0.35 + Math.random() * 0.4,
+        blobs,
+      };
+    };
+
+    const seed = () => {
+      clouds = [];
+      const rows = 5;
+      for (let row = 0; row < rows; row++) {
+        const y = (h * (row + 0.6)) / (rows + 0.5);
+        const count = 3 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < count; i++) {
+          const x = (w * (i + Math.random())) / count;
+          const scale = 0.7 + Math.random() * 1.1 + row * 0.08;
+          clouds.push(makeCloud(x, y + (Math.random() - 0.5) * 40, scale));
+        }
+      }
+    };
+
+    const resize = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      w = parent.clientWidth;
+      h = Math.max(parent.clientHeight, window.innerHeight * 0.85);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seed();
+    };
+
+    const drawCloud = (c: Cloud, fill: string) => {
+      ctx.save();
+      ctx.globalAlpha = c.opacity;
+      ctx.fillStyle = fill;
+      for (const b of c.blobs) {
+        ctx.beginPath();
+        ctx.arc(c.x + b.ox, c.y + b.oy, b.or, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // soft base oval
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y + 8, c.r * 1.6, c.r * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    const tick = () => {
+      const dark = isDark();
+
+      // Sky gradient
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      if (dark) {
+        sky.addColorStop(0, '#0b1224');
+        sky.addColorStop(0.45, '#132040');
+        sky.addColorStop(1, '#1a2744');
+      } else {
+        sky.addColorStop(0, '#1d6fa5');
+        sky.addColorStop(0.35, '#4aa3d4');
+        sky.addColorStop(0.7, '#a8d4ef');
+        sky.addColorStop(1, '#e8f2fa');
+      }
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      const cloudFill = dark ? 'rgba(148, 163, 184, 0.22)' : 'rgba(255, 255, 255, 0.85)';
+
+      for (const c of clouds) {
+        c.x += c.vx;
+        // wrap horizontally
+        if (c.x - c.r * 2 > w) c.x = -c.r * 2;
+        drawCloud(c, cloudFill);
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    resize();
+    raf = requestAnimationFrame(tick);
+
+    const ro = new ResizeObserver(resize);
+    if (canvas.parentElement) ro.observe(canvas.parentElement);
+
+    const mo = new MutationObserver(() => {
+      /* theme read each frame */
+    });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      aria-hidden
+    />
+  );
+}
+
 export const Leaderboard = () => {
   const currentUser = getCurrentUser();
   const leaderboardList = LEADERBOARD_LIST.map((entry) =>
@@ -25,116 +170,168 @@ export const Leaderboard = () => {
   );
 
   return (
-    <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto">
-      <header className="mb-12 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 dark:bg-amber-500/15 rounded-full text-amber-600 dark:text-amber-300 text-sm font-bold border border-amber-100 dark:border-amber-500/30 mb-4">
-          <Trophy className="h-4 w-4" /> Global Ranking
-        </div>
-        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">Hall of Fame</h1>
-        <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-          Compete with learners across the globe. Higher ranks unlock exclusive internship opportunities and rewards.
-        </p>
-      </header>
-
-      <div className="flex flex-col md:flex-row items-end justify-center gap-6 mb-16 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="order-2 md:order-1 flex flex-col items-center group w-full md:w-48"
-        >
-          <div className="relative mb-4">
-            <img src={TOP_THREE[0].avatar} className="h-20 w-20 rounded-3xl border-4 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-lg" alt="" />
-            <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-slate-300 dark:bg-slate-600 rounded-full flex items-center justify-center text-white font-black text-sm border-2 border-white dark:border-slate-900">2</div>
-          </div>
-          <div className="font-bold text-slate-900 dark:text-white text-center">{TOP_THREE[0].name}</div>
-          <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-3">{TOP_THREE[0].college}</div>
-          <div className="w-full h-32 bg-slate-100 dark:bg-slate-800 rounded-t-3xl border-x border-t border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-2xl font-black text-slate-700 dark:text-slate-200">{TOP_THREE[0].points.toLocaleString()}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase">pts</div>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="order-1 md:order-2 flex flex-col items-center group w-full md:w-56"
-        >
-          <Crown className="h-8 w-8 text-amber-400 mb-2" />
-          <div className="relative mb-4">
-            <img src={TOP_THREE[1].avatar} className="h-24 w-24 rounded-3xl border-4 border-amber-300 dark:border-amber-500/50 bg-slate-100 dark:bg-slate-800 shadow-xl" alt="" />
-            <div className="absolute -bottom-2 -right-2 h-9 w-9 bg-amber-400 rounded-full flex items-center justify-center text-white font-black border-2 border-white dark:border-slate-900">1</div>
-          </div>
-          <div className="text-xl font-black text-slate-900 dark:text-white text-center">{TOP_THREE[1].name}</div>
-          <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-3">{TOP_THREE[1].college}</div>
-          <div className="w-full h-40 bg-gradient-to-b from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-slate-800 rounded-t-3xl border-x border-t border-amber-200 dark:border-amber-700/40 shadow-md flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-3xl font-black text-amber-700 dark:text-amber-300">{TOP_THREE[1].points.toLocaleString()}</div>
-              <div className="text-[10px] font-bold text-amber-600/70 dark:text-amber-400/70 uppercase">pts</div>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="order-3 flex flex-col items-center group w-full md:w-48"
-        >
-          <div className="relative mb-4">
-            <img src={TOP_THREE[2].avatar} className="h-20 w-20 rounded-3xl border-4 border-orange-200 dark:border-orange-700/50 bg-slate-100 dark:bg-slate-800 shadow-lg" alt="" />
-            <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-orange-400 rounded-full flex items-center justify-center text-white font-black text-sm border-2 border-white dark:border-slate-900">3</div>
-          </div>
-          <div className="font-bold text-slate-900 dark:text-white text-center">{TOP_THREE[2].name}</div>
-          <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-3">{TOP_THREE[2].college}</div>
-          <div className="w-full h-28 bg-slate-100 dark:bg-slate-800 rounded-t-3xl border-x border-t border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-2xl font-black text-slate-700 dark:text-slate-200">{TOP_THREE[2].points.toLocaleString()}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase">pts</div>
-            </div>
-          </div>
-        </motion.div>
+    <div className="relative min-h-[calc(100vh-5.5rem)] flex-1 overflow-hidden">
+      {/* Full-page Vanta-style clouds */}
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <CloudsBackdrop />
       </div>
+      {/* Soft veil so content stays readable */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-white/25 via-transparent to-white/40 dark:from-[#070b1a]/50 dark:via-transparent dark:to-[#070b1a]/70"
+        aria-hidden
+      />
 
-      <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-100 dark:border-slate-800 shadow-xl dark:shadow-black/40 overflow-hidden">
-        <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-            <TrendingUp className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Movers & Shakers
+      <div className="relative z-10 mx-auto max-w-7xl p-4 md:p-8">
+        <header className="mb-12 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-100 bg-amber-50/90 px-4 py-1.5 text-sm font-bold text-amber-600 shadow-sm backdrop-blur-sm dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300">
+            <Trophy className="h-4 w-4" /> Global Ranking
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Find a friend..."
-              className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm w-full md:w-64 text-slate-900 dark:text-white placeholder:text-slate-400"
-            />
-          </div>
+          <h1 className="mb-4 text-4xl font-black text-slate-900 drop-shadow-sm dark:text-white md:text-5xl">
+            Hall of Fame
+          </h1>
+          <p className="mx-auto max-w-xl text-slate-600 dark:text-slate-300">
+            Compete with learners across the globe. Higher ranks unlock exclusive internship opportunities and rewards.
+          </p>
+        </header>
+
+        <div className="mb-16 flex flex-col items-end justify-center gap-6 px-4 md:flex-row">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="group order-2 flex w-full flex-col items-center md:order-1 md:w-48"
+          >
+            <div className="relative mb-4">
+              <img
+                src={TOP_THREE[0].avatar}
+                className="h-20 w-20 rounded-3xl border-4 border-slate-200 bg-slate-100 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                alt=""
+              />
+              <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-slate-300 text-sm font-black text-white dark:border-slate-900 dark:bg-slate-600">
+                2
+              </div>
+            </div>
+            <div className="text-center font-bold text-slate-900 dark:text-white">{TOP_THREE[0].name}</div>
+            <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {TOP_THREE[0].college}
+            </div>
+            <div className="flex h-32 w-full items-center justify-center rounded-t-3xl border-x border-t border-slate-200/80 bg-white/80 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/80">
+              <div className="text-center">
+                <div className="text-2xl font-black text-slate-700 dark:text-slate-200">
+                  {TOP_THREE[0].points.toLocaleString()}
+                </div>
+                <div className="text-[10px] font-bold uppercase text-slate-400">pts</div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="group order-1 flex w-full flex-col items-center md:order-2 md:w-56"
+          >
+            <Crown className="mb-2 h-8 w-8 text-amber-400" />
+            <div className="relative mb-4">
+              <img
+                src={TOP_THREE[1].avatar}
+                className="h-24 w-24 rounded-3xl border-4 border-amber-300 bg-slate-100 shadow-xl dark:border-amber-500/50 dark:bg-slate-800"
+                alt=""
+              />
+              <div className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-amber-400 font-black text-white dark:border-slate-900">
+                1
+              </div>
+            </div>
+            <div className="text-center text-xl font-black text-slate-900 dark:text-white">{TOP_THREE[1].name}</div>
+            <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {TOP_THREE[1].college}
+            </div>
+            <div className="flex h-40 w-full items-center justify-center rounded-t-3xl border-x border-t border-amber-200/80 bg-gradient-to-b from-amber-100/90 to-amber-50/90 shadow-md backdrop-blur-md dark:border-amber-700/40 dark:from-amber-900/50 dark:to-slate-800/80">
+              <div className="text-center">
+                <div className="text-3xl font-black text-amber-700 dark:text-amber-300">
+                  {TOP_THREE[1].points.toLocaleString()}
+                </div>
+                <div className="text-[10px] font-bold uppercase text-amber-600/70 dark:text-amber-400/70">pts</div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="group order-3 flex w-full flex-col items-center md:w-48"
+          >
+            <div className="relative mb-4">
+              <img
+                src={TOP_THREE[2].avatar}
+                className="h-20 w-20 rounded-3xl border-4 border-orange-200 bg-slate-100 shadow-lg dark:border-orange-700/50 dark:bg-slate-800"
+                alt=""
+              />
+              <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-orange-400 text-sm font-black text-white dark:border-slate-900">
+                3
+              </div>
+            </div>
+            <div className="text-center font-bold text-slate-900 dark:text-white">{TOP_THREE[2].name}</div>
+            <div className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {TOP_THREE[2].college}
+            </div>
+            <div className="flex h-28 w-full items-center justify-center rounded-t-3xl border-x border-t border-slate-200/80 bg-white/80 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/80">
+              <div className="text-center">
+                <div className="text-2xl font-black text-slate-700 dark:text-slate-200">
+                  {TOP_THREE[2].points.toLocaleString()}
+                </div>
+                <div className="text-[10px] font-bold uppercase text-slate-400">pts</div>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
-        <div className="divide-y divide-slate-50 dark:divide-slate-800">
-          {leaderboardList.map((user) => (
-            <div
-              key={user.rank}
-              className="flex items-center justify-between p-6 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
-            >
-              <div className="flex items-center gap-6">
-                <span className="w-6 text-center font-black text-slate-400">{user.rank}</span>
-                <img src={user.avatar} className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-slate-800" alt={user.name} />
-                <div>
-                  <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">{user.name}</div>
-                  <div className="text-xs font-bold text-slate-400 flex items-center gap-1 uppercase tracking-wider">
-                    <User className="h-3 w-3" /> {user.college}
+        <div className="overflow-hidden rounded-[40px] border border-slate-100/80 bg-white/85 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/85 dark:shadow-black/40">
+          <div className="flex flex-col justify-between gap-4 border-b border-slate-50 p-6 dark:border-slate-800 md:flex-row md:items-center">
+            <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
+              <TrendingUp className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Movers & Shakers
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Find a friend..."
+                className="w-full rounded-xl border-none bg-slate-50 py-2 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:text-white md:w-64"
+              />
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-50 dark:divide-slate-800">
+            {leaderboardList.map((user) => (
+              <div
+                key={user.rank}
+                className="flex items-center justify-between p-6 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
+              >
+                <div className="flex items-center gap-6">
+                  <span className="w-6 text-center font-black text-slate-400">{user.rank}</span>
+                  <img
+                    src={user.avatar}
+                    className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-slate-800"
+                    alt={user.name}
+                  />
+                  <div>
+                    <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">{user.name}</div>
+                    <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-400">
+                      <User className="h-3 w-3" /> {user.college}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-black text-slate-900 dark:text-white">
+                    {user.points.toLocaleString()}
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                    Points
                   </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-lg font-black text-slate-900 dark:text-white">{user.points.toLocaleString()}</div>
-                <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Points</div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
