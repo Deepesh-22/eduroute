@@ -146,7 +146,7 @@ function matchesSectorFilter(job: { sector?: string; tags: string[] }, filter: s
   if (filter === 'all') return true;
   if (job.sector === filter) return true;
   const blob = job.tags.join(' ').toLowerCase();
-  if (filter === 'software') return /react|node|js|typescript|frontend|backend/.test(blob);
+  if (filter === 'software') return /react|typescript|node|frontend|backend|full.?stack|javascript/.test(blob);
   if (filter === 'data') return /data|sql|python|analytics/.test(blob);
   if (filter === 'cyber') return /cyber|security|linux|network|siem/.test(blob);
   return true;
@@ -165,7 +165,7 @@ function MyApplicationsPanel() {
   }, []);
   if (apps.length === 0) return null;
   return (
-    <section className="mb-10 rounded-[28px] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+    <section className="mb-10 rounded-[28px] border border-slate-200 bg-white/95 p-6 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95">
       <div className="mb-4 flex items-center justify-between gap-2">
         <h2 className="text-lg font-black text-slate-900 dark:text-white">My Applications</h2>
         <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{apps.length} total</span>
@@ -196,23 +196,20 @@ function MyApplicationsPanel() {
               </span>
             </div>
             {app.mentorFeedback && (
-              <div className="mt-2 rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-2 text-xs dark:border-amber-500/30 dark:bg-amber-950/30">
-                <span className="font-bold text-amber-800 dark:text-amber-200">
-                  Mentor {app.mentorFeedback.mentorName} · {'★'.repeat(app.mentorFeedback.rating)}
-                </span>
-                <p className="mt-0.5 text-slate-600 dark:text-slate-300">{app.mentorFeedback.comment}</p>
-              </div>
-            )}
-            {app.status === 'Completed' && (
-              <div className="mt-2 text-xs font-semibold text-teal-700 dark:text-teal-300">
-                ✓ Completion recorded
-                {app.completedAt ? ` · ${new Date(app.completedAt).toLocaleDateString()}` : ''}
-                {app.completionNote ? ` — ${app.completionNote}` : ''}
+              <div className="mt-2 rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-2 text-xs dark:border-amber-500/30 dark:bg-amber-500/10">
+                <span className="font-bold text-amber-800 dark:text-amber-200">Mentor: </span>
+                <span className="text-amber-900/90 dark:text-amber-100/90">{app.mentorFeedback}</span>
               </div>
             )}
           </li>
         ))}
       </ul>
+      <p className="mt-3 text-[11px] text-slate-400">
+        <Link to="/profile" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+          Profile
+        </Link>{' '}
+        shows the same pipeline for all applications.
+      </p>
     </section>
   );
 }
@@ -247,14 +244,26 @@ function InternshipCard({
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -6, scale: 1.01 }}
-      className="flex flex-col rounded-[28px] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      variants={{
+        hidden: { opacity: 0, y: 32, scale: 0.96 },
+        show: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: { type: 'spring', stiffness: 320, damping: 26 },
+        },
+      }}
+      whileHover={{ y: -10, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="group flex flex-col rounded-[28px] border border-slate-100/90 bg-white/95 p-6 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-2xl hover:shadow-indigo-100/50 dark:border-slate-800 dark:bg-slate-900/95 dark:hover:shadow-indigo-950/40"
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <img src={job.logo} alt="" className="h-12 w-12 rounded-2xl bg-slate-100 object-cover dark:bg-slate-800" />
+          <img
+            src={job.logo}
+            alt=""
+            className="h-12 w-12 rounded-2xl bg-slate-100 object-cover transition-transform duration-300 group-hover:scale-105 dark:bg-slate-800"
+          />
           <div>
             <h3 className="font-black text-slate-900 dark:text-white">{job.role}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">{job.company}</p>
@@ -353,43 +362,99 @@ export const Internships = () => {
     [scored],
   );
 
+  const gridVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+    },
+  };
+
   return (
-    <div className="mx-auto max-w-7xl flex-1 p-4 md:p-8">
-      <header className="mb-8">
+    <div className="relative mx-auto max-w-7xl flex-1 overflow-hidden p-4 md:p-8">
+      {/* Soft ambient blobs for depth */}
+      <div
+        className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/15"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-20 top-32 h-72 w-72 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-600/15"
+        aria-hidden
+      />
+
+      <motion.header
+        className="relative mb-10"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.4 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
         <div className="mb-3 flex items-center gap-3">
-          <div className="rounded-2xl bg-indigo-100 p-3 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300">
+          <div className="rounded-2xl bg-indigo-100 p-3 text-indigo-600 shadow-sm dark:bg-indigo-500/20 dark:text-indigo-300">
             <Briefcase className="h-6 w-6" />
           </div>
           <span className="text-sm font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
             Career
           </span>
         </div>
-        <h1 className="mb-2 text-4xl font-black text-slate-900 dark:text-white">Internships</h1>
+        <h1 className="mb-2 text-4xl font-black text-slate-900 dark:text-white md:text-5xl">Internships</h1>
         <p className="max-w-2xl text-lg text-slate-500 dark:text-slate-400">
           Browse openings matched to your skill profile when available. Includes openings posted by industry
           partners.
         </p>
-      </header>
+      </motion.header>
 
-      <BuildCvCta
-        title="Build your CV before you apply"
-        subtitle="Create a resume with free templates and download PDF before you apply."
-      />
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 0.05 }}
+      >
+        <BuildCvCta
+          title="Build your CV before you apply"
+          subtitle="Create a resume with free templates and download PDF before you apply."
+        />
+      </motion.div>
 
-      <MyApplicationsPanel />
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 0.08 }}
+      >
+        <MyApplicationsPanel />
+      </motion.div>
 
       {skillProfile.hasProfile && recommended.some((r) => r.matchScore > 0) && (
-        <section className="mb-10">
+        <motion.section
+          className="mb-10"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.45 }}
+        >
           <h2 className="mb-4 text-lg font-black text-slate-900 dark:text-white">Recommended for you</h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <motion.div
+            variants={gridVariants}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.15 }}
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
             {recommended.map(({ job, matchScore }) => (
               <InternshipCard key={`rec-${job.id}`} job={job} matchScore={matchScore} showScore />
             ))}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
       )}
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <motion.div
+        className="mb-6 flex flex-wrap gap-2"
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.35 }}
+      >
         {[
           { id: 'all', label: 'All' },
           { id: 'software', label: 'Software' },
@@ -400,18 +465,25 @@ export const Internships = () => {
             key={f.id}
             type="button"
             onClick={() => setFilter(f.id)}
-            className={`rounded-2xl px-4 py-2 text-xs font-black uppercase ${
+            className={`rounded-2xl px-4 py-2 text-xs font-black uppercase transition ${
               filter === f.id
-                ? 'bg-indigo-600 text-white'
-                : 'border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
+                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
             }`}
           >
             {f.label}
           </button>
         ))}
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.div
+        key={filter}
+        variants={gridVariants}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.08 }}
+        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      >
         {filtered.map(({ job, matchScore }) => (
           <InternshipCard
             key={job.id}
@@ -420,7 +492,7 @@ export const Internships = () => {
             showScore={skillProfile.hasProfile}
           />
         ))}
-      </div>
+      </motion.div>
       {filtered.length === 0 && (
         <p className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
           No internships match your filters.
