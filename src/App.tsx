@@ -130,9 +130,9 @@ const PlacementDashboard = lazy(() =>
 
 const DASHBOARD_ROUTES = [
   '/dashboard',
-  '/my-courses',
+  '/courses',
   '/browse',
-  '/pathways',
+  '/paths',
   '/roadmaps',
   '/assessments',
   '/buddy',
@@ -233,41 +233,38 @@ export function App() {
             }
           />
 
-          <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="my-courses" element={<MyCourses />} />
-            <Route path="browse" element={<BrowseCourses />} />
-            <Route path="course/:id" element={<CourseDetails />} />
-            <Route path="pathways" element={<Pathways />} />
-            <Route path="roadmaps" element={<RoadmapList />} />
-            <Route path="roadmaps/:id" element={<RoadmapDetail />} />
-            <Route path="assessments" element={<Assessments />} />
-            <Route path="buddy" element={<BuddyChat />} />
-            <Route path="leaderboard" element={<Leaderboard />} />
-            <Route path="rewards" element={<Rewards />} />
-            <Route path="internships" element={<Internships />} />
-            <Route path="faculty-opportunities" element={<FacultyOpportunities />} />
-            <Route path="cv-builder" element={<CvBuilder />} />
-            <Route path="company/:id" element={<CompanyDetail />} />
-            <Route path="events" element={<Events />} />
-            <Route path="soft-skills" element={<SoftSkills />} />
-            <Route path="dsa-sheet" element={<DSASheet />} />
-            <Route path="profile" element={<ProfileDashboard />} />
-            <Route path="skill-profile" element={<SkillProfile />} />
+          <Route element={<AdminAccessRoute><AdminLayout /></AdminAccessRoute>}>
+            <Route path="/admin" element={<PendingApprovals />} />
+            <Route path="/admin/pending-approvals" element={<PendingApprovals />} />
+            <Route path="/admin/students" element={<PendingApprovals />} />
+            <Route path="/admin/verified" element={<AdminDashboard />} />
+            <Route path="/admin/courses" element={<CourseManager />} />
+            <Route path="/admin/partners" element={<AdminDashboard />} />
+            <Route path="/admin/reports" element={<AdminDashboard />} />
+            <Route path="/admin/settings" element={<AdminDashboard />} />
           </Route>
 
-          <Route
-            path="/admin"
-            element={
-              <AdminAccessRoute>
-                <AdminLayout />
-              </AdminAccessRoute>
-            }
-          >
-            <Route index element={<Navigate to="/admin/pending-approvals" replace />} />
-            <Route path="pending-approvals" element={<PendingApprovals />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="courses" element={<CourseManager />} />
+          <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+            <Route path="/dashboard" element={<RoleRoute role="student"><Dashboard /></RoleRoute>} />
+            <Route path="/courses" element={<RoleRoute role="student"><MyCourses /></RoleRoute>} />
+            <Route path="/browse" element={<RoleRoute role="student"><BrowseCourses /></RoleRoute>} />
+            <Route path="/course/:id" element={<RoleRoute role="student"><CourseDetails /></RoleRoute>} />
+            <Route path="/paths" element={<RoleRoute role="student"><Pathways /></RoleRoute>} />
+            <Route path="/roadmaps" element={<RoleRoute role="student"><RoadmapList /></RoleRoute>} />
+            <Route path="/roadmaps/:role" element={<RoleRoute role="student"><RoadmapDetail /></RoleRoute>} />
+            <Route path="/assessments" element={<RoleRoute role="student"><Assessments /></RoleRoute>} />
+            <Route path="/buddy" element={<RoleRoute role="student"><BuddyChat /></RoleRoute>} />
+            <Route path="/leaderboard" element={<RoleRoute role="student"><Leaderboard /></RoleRoute>} />
+            <Route path="/rewards" element={<RoleRoute role="student"><Rewards /></RoleRoute>} />
+            <Route path="/internships" element={<RoleRoute role="student"><Internships /></RoleRoute>} />
+            <Route path="/faculty-opportunities" element={<RoleRoute role="student"><FacultyOpportunities /></RoleRoute>} />
+            <Route path="/cv-builder" element={<RoleRoute role="student"><CvBuilder /></RoleRoute>} />
+            <Route path="/companies/:id" element={<RoleRoute role="student"><CompanyDetail /></RoleRoute>} />
+            <Route path="/events" element={<RoleRoute role="student"><Events /></RoleRoute>} />
+            <Route path="/soft-skills" element={<RoleRoute role="student"><SoftSkills /></RoleRoute>} />
+            <Route path="/dsa-sheet" element={<RoleRoute role="student"><DSASheet /></RoleRoute>} />
+            <Route path="/profile" element={<RoleRoute role="student"><ProfileDashboard /></RoleRoute>} />
+            <Route path="/skill-profile" element={<RoleRoute role="student"><SkillProfile /></RoleRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
