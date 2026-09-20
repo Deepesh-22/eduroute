@@ -51,7 +51,8 @@ function CloudsBackdrop() {
 
     const seed = () => {
       puffs = [];
-      // Dense soft layers — more like continuous fog banks than discrete clouds
+      const dark = isDark();
+      // Dense soft layers — continuous fog banks (higher opacity so clouds are visible)
       const layers = 6;
       for (let layer = 0; layer < layers; layer++) {
         const bandY = (h * (0.15 + layer * 0.14)) % (h * 0.95);
@@ -63,10 +64,11 @@ function CloudsBackdrop() {
             y: bandY + (Math.random() - 0.5) * h * 0.08,
             rx: (120 + Math.random() * 160) * scale,
             ry: (40 + Math.random() * 50) * scale * 0.55,
-            vx: 0.12 + Math.random() * 0.22 + layer * 0.02,
+            vx: 0.15 + Math.random() * 0.28 + layer * 0.025,
             phase: Math.random() * Math.PI * 2,
             amp: 6 + Math.random() * 12,
-            baseOpacity: (isDark() ? 0.06 : 0.14) + Math.random() * 0.08,
+            // Visible white/soft clouds in both themes
+            baseOpacity: (dark ? 0.22 : 0.38) + Math.random() * 0.12,
           });
         }
       }
@@ -77,10 +79,10 @@ function CloudsBackdrop() {
           y: h * (0.72 + Math.random() * 0.12),
           rx: w * (0.35 + Math.random() * 0.2),
           ry: h * 0.12,
-          vx: 0.06 + Math.random() * 0.08,
+          vx: 0.08 + Math.random() * 0.1,
           phase: Math.random() * Math.PI * 2,
           amp: 4,
-          baseOpacity: isDark() ? 0.08 : 0.18,
+          baseOpacity: dark ? 0.28 : 0.45,
         });
       }
     };
@@ -114,30 +116,30 @@ function CloudsBackdrop() {
       t += 16;
       const dark = isDark();
 
-      // Sky — deep blue top → misty lower (matches Vanta CLOUDS feel)
+      // Sky — Vanta CLOUDS style (blue → soft white below)
       const sky = ctx.createLinearGradient(0, 0, 0, h);
       if (dark) {
-        sky.addColorStop(0, '#060a16');
-        sky.addColorStop(0.4, '#0c1528');
-        sky.addColorStop(0.75, '#121f38');
-        sky.addColorStop(1, '#1a2744');
+        sky.addColorStop(0, '#0a1628');
+        sky.addColorStop(0.35, '#12233d');
+        sky.addColorStop(0.7, '#1a3050');
+        sky.addColorStop(1, '#243a58');
       } else {
-        sky.addColorStop(0, '#0d5f9e');
-        sky.addColorStop(0.3, '#2b8bc4');
-        sky.addColorStop(0.6, '#8ec8e8');
-        sky.addColorStop(1, '#e4f1f9');
+        sky.addColorStop(0, '#1a7ab8');
+        sky.addColorStop(0.3, '#4aa8d8');
+        sky.addColorStop(0.65, '#b5daf0');
+        sky.addColorStop(1, '#eef6fb');
       }
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h);
 
-      // Soft fog color stops (ALPHA placeholder replaced per puff)
+      // Cloud color like Vanta: soft white (light) / soft silver-white (dark)
       const fogColor = dark
-        ? 'rgba(160, 180, 210, ALPHA)'
+        ? 'rgba(220, 230, 245, ALPHA)'
         : 'rgba(255, 255, 255, ALPHA)';
 
-      // Optional blur for extra softness (supported in modern browsers)
+      // Low blur so cloud shape stays visible (was 18px — too mushy)
       try {
-        ctx.filter = 'blur(18px)';
+        ctx.filter = 'blur(5px)';
       } catch {
         /* ignore */
       }
@@ -154,15 +156,15 @@ function CloudsBackdrop() {
         /* ignore */
       }
 
-      // Thin high haze strip for depth
+      // Soft mid haze for depth (still readable)
       const haze = ctx.createLinearGradient(0, h * 0.35, 0, h * 0.55);
       if (dark) {
-        haze.addColorStop(0, 'rgba(100, 130, 180, 0)');
-        haze.addColorStop(0.5, 'rgba(120, 150, 200, 0.06)');
-        haze.addColorStop(1, 'rgba(100, 130, 180, 0)');
+        haze.addColorStop(0, 'rgba(200, 215, 235, 0)');
+        haze.addColorStop(0.5, 'rgba(200, 215, 235, 0.1)');
+        haze.addColorStop(1, 'rgba(200, 215, 235, 0)');
       } else {
         haze.addColorStop(0, 'rgba(255, 255, 255, 0)');
-        haze.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+        haze.addColorStop(0.5, 'rgba(255, 255, 255, 0.28)');
         haze.addColorStop(1, 'rgba(255, 255, 255, 0)');
       }
       ctx.fillStyle = haze;
@@ -177,8 +179,13 @@ function CloudsBackdrop() {
     const ro = new ResizeObserver(resize);
     if (canvas.parentElement) ro.observe(canvas.parentElement);
 
+    let lastDark = isDark();
     const mo = new MutationObserver(() => {
-      /* colors / opacity refreshed on next seed via resize or next frames */
+      const nowDark = isDark();
+      if (nowDark !== lastDark) {
+        lastDark = nowDark;
+        seed(); // refresh opacities for light/dark
+      }
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
@@ -214,7 +221,7 @@ export const Leaderboard = () => {
       </div>
       {/* Soft veil so content stays readable */}
       <div
-        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-white/25 via-transparent to-white/40 dark:from-[#070b1a]/50 dark:via-transparent dark:to-[#070b1a]/70"
+        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-white/15 via-transparent to-white/25 dark:from-[#070b1a]/25 dark:via-transparent dark:to-[#070b1a]/40"
         aria-hidden
       />
 
