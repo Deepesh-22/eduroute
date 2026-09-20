@@ -87,7 +87,6 @@ export const MainLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      {/* ========== DESKTOP SIDEBAR ========== */}
       <aside
         className={`er-sidebar hidden lg:flex shrink-0 transition-[width] duration-300 ease-out ${
           collapsed ? '!w-[72px]' : ''
@@ -202,7 +201,6 @@ export const MainLayout = () => {
         </div>
       </aside>
 
-      {/* ========== MAIN COLUMN ========== */}
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden transition-all duration-300">
         <header className="er-header shrink-0">
           <button
@@ -212,16 +210,6 @@ export const MainLayout = () => {
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            className="hidden lg:flex p-2 -ml-1 rounded-xl hover:bg-[var(--accent-soft)] text-[var(--text-secondary)]"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Show navigation' : 'Hide navigation'}
-          >
-            {collapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
           </button>
 
           <GlobalSearch variant="header" />
@@ -258,7 +246,6 @@ export const MainLayout = () => {
         </main>
       </div>
 
-      {/* Mobile drawer */}
       {isMobileMenuOpen && (
         <>
           <div
