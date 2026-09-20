@@ -24,6 +24,8 @@ export type FacultyOpportunity = {
   description: string;
   postedAt: string;
   seats?: string;
+  /** Official external listing (AICTE ATAL, Internship portal, NPTEL, etc.) */
+  link?: string;
 };
 
 export type FacultyInterestStatus = 'Applied' | 'Shortlisted' | 'Accepted' | 'Completed' | 'Withdrawn';
@@ -46,7 +48,7 @@ export type FacultyInterest = {
   appliedAt: string;
 };
 
-const OPP_KEY = 'eduroute:faculty-opportunities-v2';
+const OPP_KEY = 'eduroute:faculty-opportunities-v3';
 const INTEREST_KEY = 'eduroute:faculty-interests-v2';
 
 export const FACULTY_DEMO_CREDENTIALS = {
@@ -64,86 +66,93 @@ export const FACULTY_DEMO_CREDENTIALS = {
 const DEMO_OPPORTUNITIES: FacultyOpportunity[] = [
   {
     id: 'fac-opp-1',
-    title: 'FDP on AI-Powered Teaching & Assessment',
+    title: 'AICTE ATAL Academy — Faculty Development Programmes (FDP)',
     type: 'FDP',
-    organizer: 'AICTE · EduRoute Partners',
-    location: 'Hybrid · Delhi',
-    duration: '5 Days',
-    mode: 'Hybrid',
-    domain: 'AI / Education Technology',
+    organizer: 'AICTE ATAL Academy',
+    location: 'Pan-India · Hybrid / Online',
+    duration: '5 Days (typical)',
+    mode: 'Hybrid / Online',
+    domain: 'AI · Emerging Tech · Pedagogy',
     description:
-      'Hands-on faculty development covering generative AI for curriculum design, assessment, and mentoring. Certificate on completion.',
+      'Official AICTE ATAL FDPs for faculty. Browse live programmes, register with your AICTE login, and earn certificates recognised across engineering colleges. Judges can open the real ATAL portal from the card.',
     postedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    seats: '40',
+    seats: 'Open cohort',
+    link: 'https://atalacademy.aicte-india.org/',
   },
   {
     id: 'fac-opp-2',
-    title: 'Industry Immersion — Full Stack Product Teams',
+    title: 'AICTE Internship Portal — Faculty & Industry Immersion',
     type: 'Faculty Internship',
-    organizer: 'EduRoute Tech Labs',
-    location: 'Bangalore',
-    duration: '4 Weeks',
-    mode: 'On-site',
-    domain: 'Software Engineering',
+    organizer: 'AICTE Internship',
+    location: 'Pan-India · Industry partners',
+    duration: '4–8 Weeks',
+    mode: 'On-site / Hybrid',
+    domain: 'Industry Exposure',
     description:
-      'Faculty work with product engineers on live tickets and agile rituals to bring industry practices into the classroom.',
+      'National internship portal run by AICTE. Faculty and students discover industry internships; faculty can map immersion experiences back into curriculum. Opens the official AICTE internship site.',
     postedAt: new Date(Date.now() - 4 * 86400000).toISOString(),
-    seats: '12',
+    seats: 'Rolling',
+    link: 'https://internship.aicte-india.org/',
   },
   {
     id: 'fac-opp-3',
-    title: 'Industrial Training: SOC & Cyber Defense',
+    title: 'NPTEL Faculty Development & Certification Courses',
     type: 'Industrial Training',
-    organizer: 'SecureNet India',
-    location: 'Remote',
-    duration: '2 Weeks',
+    organizer: 'NPTEL · IIT System',
+    location: 'Online · All India',
+    duration: '4–12 Weeks',
     mode: 'Online',
-    domain: 'Cybersecurity',
+    domain: 'Engineering · CS · Management',
     description:
-      'SIEM labs, threat intel briefings, and curriculum mapping for faculty teaching cybersecurity.',
+      'NPTEL (Swayam) courses used widely for faculty upskilling and FDP credit. Browse domains, enroll, and use certificates for career advancement and accreditation evidence.',
     postedAt: new Date(Date.now() - 6 * 86400000).toISOString(),
-    seats: '25',
+    seats: 'Open',
+    link: 'https://nptel.ac.in/',
   },
   {
     id: 'fac-opp-4',
-    title: 'Consultancy: Campus Skill-Gap Audit',
-    type: 'Consultancy',
-    organizer: 'EduRoute Consulting',
-    location: 'Pan-India',
-    duration: 'Project-based',
-    mode: 'Hybrid',
-    domain: 'Skill Mapping',
+    title: 'SWAYAM — National Online Education Platform',
+    type: 'Workshop',
+    organizer: 'Ministry of Education · SWAYAM',
+    location: 'Online · Free / paid cert',
+    duration: 'Self-paced & scheduled',
+    mode: 'Online',
+    domain: 'Teaching & Learning',
     description:
-      'Faculty consultants run cohort skill audits aligned to industry roles and recommend curriculum updates.',
-    postedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
+      'Government of India SWAYAM portal for MOOCs and capacity-building programmes. Faculty use it for continuous professional development and workshop-style learning.',
+    postedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+    seats: 'Open',
+    link: 'https://swayam.gov.in/',
   },
   {
     id: 'fac-opp-5',
-    title: 'Collaborative Research: Employability Analytics',
+    title: 'SERB Research Grants & Collaborative Projects',
     type: 'Research Collaboration',
-    organizer: 'EduRoute Research Cell',
-    location: 'Remote + workshops',
-    duration: '6–12 Months',
+    organizer: 'SERB · DST',
+    location: 'National · Institution-based',
+    duration: 'Project cycle',
     mode: 'Hybrid',
-    domain: 'Data / Education Research',
+    domain: 'Research Funding',
     description:
-      'Joint research on skill-gap predictors and placement outcomes. Co-authorship and dataset access.',
+      'Science and Engineering Research Board (SERB) online portal for competitive research grants. Faculty can explore schemes, apply for funding, and build multi-institution collaborations.',
     postedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-    seats: '8 teams',
+    seats: 'Scheme-based',
+    link: 'https://www.serbonline.in/',
   },
   {
     id: 'fac-opp-6',
-    title: 'Workshop: Outcome-Based Education & Rubrics',
-    type: 'Workshop',
-    organizer: 'NBA Capacity Building',
-    location: 'Hybrid · Mumbai',
-    duration: '3 Days',
+    title: 'NITTTR Faculty Training & Capacity Building',
+    type: 'FDP',
+    organizer: 'NITTTR Chandigarh',
+    location: 'Chandigarh · Hybrid',
+    duration: '1–2 Weeks',
     mode: 'Hybrid',
-    domain: 'Teaching & Learning',
+    domain: 'Technical Teacher Training',
     description:
-      'Practical workshop for teachers on OBE mapping, CO-PO attainment, and assessment rubrics with peer review.',
-    postedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    seats: '50',
+      'National Institute of Technical Teachers Training & Research programmes for polytechnic and engineering faculty — pedagogy, labs, and outcome-based education.',
+    postedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+    seats: 'Batch-wise',
+    link: 'https://www.nitttrchd.ac.in/',
   },
   {
     id: 'fac-opp-7',
@@ -155,7 +164,7 @@ const DEMO_OPPORTUNITIES: FacultyOpportunity[] = [
     mode: 'Online',
     domain: 'Faculty Development',
     description:
-      'Structured mentorship for new teachers — classroom management, research planning, and student engagement with senior mentors.',
+      'Structured mentorship for new teachers — classroom management, research planning, and student engagement with senior mentors. (In-platform programme; no external portal.)',
     postedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
     seats: '30',
   },
@@ -200,7 +209,25 @@ export function readFacultyOpportunities(): FacultyOpportunity[] {
     writeJson(OPP_KEY, DEMO_OPPORTUNITIES);
     return [...DEMO_OPPORTUNITIES];
   }
-  return list;
+  // Ensure demo cards keep official portal links (judges / live demo)
+  const byId = new Map(DEMO_OPPORTUNITIES.map((d) => [d.id, d]));
+  let changed = false;
+  const merged = list.map((item) => {
+    const demo = byId.get(item.id);
+    if (demo?.link && item.link !== demo.link) {
+      changed = true;
+      return {
+        ...item,
+        link: demo.link,
+        title: demo.title,
+        organizer: demo.organizer,
+        description: demo.description,
+      };
+    }
+    return item;
+  });
+  if (changed) writeJson(OPP_KEY, merged);
+  return merged;
 }
 
 export function addFacultyOpportunity(
