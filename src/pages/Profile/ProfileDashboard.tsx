@@ -16,6 +16,7 @@ import { PROFILE_DASHBOARD_MOCK, type ProfileDashboardData } from '../../data/pr
 import { getAuthToken, getAuthUser, saveAuthSession } from '../../utils/rbacAuth';
 import { getStoredUserProfile, saveUserProfile } from '../../utils/userProfile';
 import { readOnboarding } from '../../utils/onboardingStore';
+import { readCompletions } from '../../utils/internshipApplications';
 import { BuildCvCta } from '../../components/BuildCvCta';
 
 const difficultyColors = {
@@ -41,6 +42,7 @@ export const ProfileDashboard = () => {
   const [editBio, setEditBio] = useState('');
   const onboarding = useMemo(() => readOnboarding(), []);
   const skillGapCount = onboarding.missingSkills?.length || 0;
+  const completions = useMemo(() => readCompletions(), []);
 
   useEffect(() => {
     const authUser = getAuthUser();
@@ -59,7 +61,6 @@ export const ProfileDashboard = () => {
       : null;
 
     const loadData = async () => {
-      // Always start from mock so arrays/fields exist (API is optional / often incomplete on Netlify)
       const base = { ...PROFILE_DASHBOARD_MOCK };
       try {
         const payload = await getProfileDashboardData();
@@ -113,9 +114,7 @@ export const ProfileDashboard = () => {
 
   if (!profileData) {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] p-8 text-[var(--text-secondary)]">
-        Loading profile...
-      </div>
+      <div className="min-h-screen bg-[var(--bg-primary)] p-8 text-[var(--text-secondary)]">Loading profile...</div>
     );
   }
 
@@ -133,25 +132,15 @@ export const ProfileDashboard = () => {
     const name = editName.trim();
     const email = editEmail.trim();
     if (!name || !email) return;
-
     const storedProfile = getStoredUserProfile();
     const avatar = getAuthUser()?.avatar || storedProfile?.avatar;
     const roleBio = editBio.trim() || 'Student learner';
-
-    saveUserProfile({
-      name,
-      email,
-      avatar,
-      roleBio,
-      enrolledCourses: storedProfile?.enrolledCourses,
-    });
-
+    saveUserProfile({ name, email, avatar, roleBio, enrolledCourses: storedProfile?.enrolledCourses });
     const authUser = getAuthUser();
     const authToken = getAuthToken();
     if (authUser && authToken) {
       saveAuthSession(authToken, { ...authUser, name, email });
     }
-
     setProfileData((current) =>
       current
         ? {
@@ -161,7 +150,7 @@ export const ProfileDashboard = () => {
             profilePhoto: avatar,
             roleBio,
           }
-        : current
+        : current,
     );
     setIsEditing(false);
   };
@@ -225,18 +214,13 @@ export const ProfileDashboard = () => {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <p className="mt-2 text-xs text-[var(--text-muted)]">
-              {progressPercent}% to {levelTitles[Math.min(levelTitles.length - 1, profileData.xp.level)]}.
-            </p>
           </div>
 
           <Link
             to="/skill-profile"
             className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-[var(--border-default)] bg-[var(--accent-soft)] px-4 py-3 text-sm transition hover:border-[var(--accent)] hover:bg-[var(--accent-muted)]"
           >
-            <span className="font-semibold text-[var(--accent)]">
-              View strengths, skill gaps & recommended next steps
-            </span>
+            <span className="font-semibold text-[var(--accent)]">View strengths, skill gaps & recommended next steps</span>
             <ArrowRight className="h-4 w-4 shrink-0 text-[var(--accent)]" />
           </Link>
         </section>
@@ -244,61 +228,27 @@ export const ProfileDashboard = () => {
         <BuildCvCta />
 
         {isEditing && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 dark:bg-black/70"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-profile-title"
-          >
-            <form
-              onSubmit={saveProfile}
-              className="w-full max-w-md rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-elevated)]"
-            >
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 dark:bg-black/70" role="dialog" aria-modal="true">
+            <form onSubmit={saveProfile} className="w-full max-w-md rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-elevated)]">
               <div className="mb-6 flex items-center justify-between">
-                <h2 id="edit-profile-title" className="text-xl font-black text-[var(--text-primary)]">
-                  Edit Profile
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
+                <h2 className="text-xl font-black text-[var(--text-primary)]">Edit Profile</h2>
+                <button type="button" onClick={() => setIsEditing(false)} className="text-sm font-semibold text-[var(--text-muted)]">
                   Close
                 </button>
               </div>
               <label className="block text-sm font-semibold text-[var(--text-secondary)]">
                 Name
-                <input
-                  value={editName}
-                  onChange={(event) => setEditName(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-input)] px-4 py-3 text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-                  required
-                />
+                <input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-2 w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-input)] px-4 py-3 text-[var(--text-primary)] outline-none focus:border-[var(--accent)]" required />
               </label>
               <label className="mt-4 block text-sm font-semibold text-[var(--text-secondary)]">
                 Email
-                <input
-                  type="email"
-                  value={editEmail}
-                  onChange={(event) => setEditEmail(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-input)] px-4 py-3 text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-                  required
-                />
+                <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="mt-2 w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-input)] px-4 py-3 text-[var(--text-primary)] outline-none focus:border-[var(--accent)]" required />
               </label>
               <label className="mt-4 block text-sm font-semibold text-[var(--text-secondary)]">
                 Bio
-                <textarea
-                  value={editBio}
-                  onChange={(event) => setEditBio(event.target.value)}
-                  rows={3}
-                  className="mt-2 w-full resize-none rounded-xl border border-[var(--border-default)] bg-[var(--bg-input)] px-4 py-3 text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-                />
+                <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} rows={3} className="mt-2 w-full resize-none rounded-xl border border-[var(--border-default)] bg-[var(--bg-input)] px-4 py-3 text-[var(--text-primary)] outline-none focus:border-[var(--accent)]" />
               </label>
-              <p className="mt-3 text-xs text-[var(--text-muted)]">Your profile image is connected to your Google account.</p>
-              <button
-                type="submit"
-                className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-500"
-              >
+              <button type="submit" className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-500">
                 Save Changes
               </button>
             </form>
@@ -314,18 +264,11 @@ export const ProfileDashboard = () => {
               xp: (profileData.xp?.total ?? 0).toLocaleString(),
               badges: String((profileData.badges || []).length),
             };
-
             return (
-              <article
-                key={item.key}
-                className="group rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)] transition hover:-translate-y-1 hover:border-[var(--accent)] hover:shadow-[var(--shadow-elevated)]"
-              >
+              <article key={item.key} className="group rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)] transition hover:-translate-y-1 hover:border-[var(--accent)]">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="rounded-2xl bg-[var(--accent-soft)] p-2.5 text-[var(--accent)]">
                     <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]" title={item.description}>
-                    <Info className="h-3.5 w-3.5" /> Tooltip
                   </div>
                 </div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">{item.label}</p>
@@ -350,17 +293,6 @@ export const ProfileDashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-2 space-y-2">
-              {chartData.map((difficulty) => (
-                <div key={difficulty.name} className="flex items-center justify-between text-sm text-[var(--text-primary)]">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: difficulty.color }} />
-                    {difficulty.name}
-                  </div>
-                  <span className="font-semibold text-[var(--text-secondary)]">{difficulty.value}</span>
-                </div>
-              ))}
-            </div>
           </section>
 
           <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)] xl:col-span-2">
@@ -370,10 +302,7 @@ export const ProfileDashboard = () => {
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {(profileData.badges || []).map((badge) => (
-                <article
-                  key={badge.id}
-                  className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 hover:border-[var(--accent)]"
-                >
+                <article key={badge.id} className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
                   <p className="text-2xl">{badge.icon}</p>
                   <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{badge.title}</p>
                   <p className="mt-1 text-xs text-[var(--text-muted)]">Earned: {badge.earnedAt}</p>
@@ -383,80 +312,46 @@ export const ProfileDashboard = () => {
           </section>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)] xl:col-span-2">
-            <h2 className="mb-4 text-lg font-bold text-[var(--text-primary)]">Activity Heatmap</h2>
-            <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-2">
-              {(profileData.activityHeatmap || []).map((cell) => {
-                const tone =
-                  cell.count === 0
-                    ? 'bg-[var(--bg-elevated)]'
-                    : cell.count < 3
-                      ? 'bg-indigo-200 dark:bg-indigo-900'
-                      : cell.count < 6
-                        ? 'bg-indigo-500 dark:bg-indigo-600'
-                        : 'bg-violet-500';
-
-                return (
-                  <div
-                    key={cell.date}
-                    className={`h-4 w-4 rounded-sm ${tone}`}
-                    title={`${cell.date}: ${cell.count} submissions`}
-                  />
-                );
-              })}
-            </div>
-            <div className="mt-4 flex gap-3 text-xs text-[var(--text-muted)]">
-              <span>Less</span>
-              <span className="h-3 w-3 rounded-sm bg-[var(--bg-elevated)]" />
-              <span className="h-3 w-3 rounded-sm bg-indigo-200 dark:bg-indigo-900" />
-              <span className="h-3 w-3 rounded-sm bg-indigo-500 dark:bg-indigo-600" />
-              <span className="h-3 w-3 rounded-sm bg-violet-500" />
-              <span>More</span>
-            </div>
-          </section>
-
-          <section className="space-y-4 rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">Rank & Streak</h2>
-            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
-              <p className="text-xs uppercase text-[var(--text-muted)]">Global Rank</p>
-              <p className="mt-1 text-2xl font-black text-[var(--accent)]">#{(profileData.rank?.global ?? 0).toLocaleString()}</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
-              <p className="text-xs uppercase text-[var(--text-muted)]">Platform Rank</p>
-              <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">#{(profileData.rank?.platform ?? 0).toLocaleString()}</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
-              <div className="flex items-center gap-2">
-                <Flame className="h-5 w-5 text-orange-500" />
-                <p className="text-xs uppercase text-[var(--text-muted)]">Current Streak</p>
-              </div>
-              <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">{profileData.streak?.current ?? 0} days</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Best: {profileData.streak?.max ?? 0} days</p>
-            </div>
-          </section>
-        </div>
+        <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
+          <div className="mb-4 flex items-center gap-2">
+            <Flame className="h-5 w-5 text-orange-500" />
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">Streak</h2>
+            <span className="text-sm text-[var(--text-secondary)]">
+              {profileData.streak?.current ?? 0} day current · best {profileData.streak?.max ?? 0}
+            </span>
+          </div>
+        </section>
 
         <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
-          <h2 className="mb-4 text-lg font-bold text-[var(--text-primary)]">Recent Submissions</h2>
-          <div className="space-y-3">
-            {(profileData.recentActivity || []).map((sub) => (
-              <article
-                key={sub.id}
-                className="flex flex-col gap-2 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-semibold text-[var(--text-primary)]">{sub.problemName}</p>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    {sub.difficulty} · {sub.status} · {sub.submittedAt}
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-[var(--text-secondary)]">
-                  {sub.xpEarned} XP
-                </span>
-              </article>
-            ))}
-          </div>
+          <h2 className="mb-1 text-lg font-bold text-[var(--text-primary)]">Internship completions</h2>
+          <p className="mb-4 text-xs text-[var(--text-secondary)]">Certificate / completion log from finished internships.</p>
+          {completions.length === 0 ? (
+            <p className="text-sm text-[var(--text-muted)]">No completed internships yet. Finish a pipeline to see records here.</p>
+          ) : (
+            <ul className="space-y-3">
+              {completions.map((c) => (
+                <li key={c.internshipId} className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="font-bold text-[var(--text-primary)]">{c.role}</div>
+                      <div className="text-xs text-[var(--text-secondary)]">
+                        {c.company}
+                        {c.completedAt ? ` · ${new Date(c.completedAt).toLocaleDateString()}` : ''}
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-teal-100 px-2.5 py-1 text-[10px] font-black uppercase text-teal-800 dark:bg-teal-500/20 dark:text-teal-200">
+                      Certificate logged
+                    </span>
+                  </div>
+                  {c.mentorFeedback && (
+                    <p className="mt-2 text-xs text-[var(--text-secondary)]">
+                      Mentor {c.mentorFeedback.mentorName}: {'★'.repeat(c.mentorFeedback.rating)} — {c.mentorFeedback.comment}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </div>
