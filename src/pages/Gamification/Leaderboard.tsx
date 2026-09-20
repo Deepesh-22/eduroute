@@ -17,7 +17,7 @@ const LEADERBOARD_LIST = [
   { rank: 8, name: 'Zoya Khan', points: 6420, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoya', college: 'MSU Baroda' },
 ];
 
-/** Vanta-style soft cloud / fog backdrop for the full Leaderboard page */
+/** Vanta CLOUDS-style foggy layers (soft mist, not hard bubbles) */
 function CloudsBackdrop() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -31,47 +31,57 @@ function CloudsBackdrop() {
     let w = 0;
     let h = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let t = 0;
 
-    type Cloud = {
+    // Soft fog puffs: wide, low, low-opacity radial blobs that drift slowly
+    type Puff = {
       x: number;
       y: number;
-      r: number;
+      rx: number; // horizontal radius (wide)
+      ry: number; // vertical radius (flat)
       vx: number;
-      opacity: number;
-      blobs: { ox: number; oy: number; or: number }[];
+      phase: number;
+      amp: number;
+      baseOpacity: number;
     };
 
-    let clouds: Cloud[] = [];
+    let puffs: Puff[] = [];
 
     const isDark = () => document.documentElement.classList.contains('dark');
 
-    const makeCloud = (x: number, y: number, scale: number): Cloud => {
-      const blobs = Array.from({ length: 4 + Math.floor(Math.random() * 3) }, () => ({
-        ox: (Math.random() - 0.5) * 80 * scale,
-        oy: (Math.random() - 0.5) * 28 * scale,
-        or: (18 + Math.random() * 36) * scale,
-      }));
-      return {
-        x,
-        y,
-        r: 40 * scale,
-        vx: 0.08 + Math.random() * 0.18,
-        opacity: 0.35 + Math.random() * 0.4,
-        blobs,
-      };
-    };
-
     const seed = () => {
-      clouds = [];
-      const rows = 5;
-      for (let row = 0; row < rows; row++) {
-        const y = (h * (row + 0.6)) / (rows + 0.5);
-        const count = 3 + Math.floor(Math.random() * 3);
+      puffs = [];
+      // Dense soft layers — more like continuous fog banks than discrete clouds
+      const layers = 6;
+      for (let layer = 0; layer < layers; layer++) {
+        const bandY = (h * (0.15 + layer * 0.14)) % (h * 0.95);
+        const count = 4 + Math.floor(layer * 0.6);
         for (let i = 0; i < count; i++) {
-          const x = (w * (i + Math.random())) / count;
-          const scale = 0.7 + Math.random() * 1.1 + row * 0.08;
-          clouds.push(makeCloud(x, y + (Math.random() - 0.5) * 40, scale));
+          const scale = 0.9 + layer * 0.25 + Math.random() * 0.5;
+          puffs.push({
+            x: (w * (i + 0.3 + Math.random() * 0.4)) / count,
+            y: bandY + (Math.random() - 0.5) * h * 0.08,
+            rx: (120 + Math.random() * 160) * scale,
+            ry: (40 + Math.random() * 50) * scale * 0.55,
+            vx: 0.12 + Math.random() * 0.22 + layer * 0.02,
+            phase: Math.random() * Math.PI * 2,
+            amp: 6 + Math.random() * 12,
+            baseOpacity: (isDark() ? 0.06 : 0.14) + Math.random() * 0.08,
+          });
         }
+      }
+      // Extra large horizon fog bank
+      for (let i = 0; i < 3; i++) {
+        puffs.push({
+          x: w * (0.2 + i * 0.3),
+          y: h * (0.72 + Math.random() * 0.12),
+          rx: w * (0.35 + Math.random() * 0.2),
+          ry: h * 0.12,
+          vx: 0.06 + Math.random() * 0.08,
+          phase: Math.random() * Math.PI * 2,
+          amp: 4,
+          baseOpacity: isDark() ? 0.08 : 0.18,
+        });
       }
     };
 
@@ -79,7 +89,7 @@ function CloudsBackdrop() {
       const parent = canvas.parentElement;
       if (!parent) return;
       w = parent.clientWidth;
-      h = Math.max(parent.clientHeight, window.innerHeight * 0.85);
+      h = Math.max(parent.clientHeight, window.innerHeight * 0.9);
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       canvas.style.width = `${w}px`;
@@ -88,48 +98,75 @@ function CloudsBackdrop() {
       seed();
     };
 
-    const drawCloud = (c: Cloud, fill: string) => {
-      ctx.save();
-      ctx.globalAlpha = c.opacity;
-      ctx.fillStyle = fill;
-      for (const b of c.blobs) {
-        ctx.beginPath();
-        ctx.arc(c.x + b.ox, c.y + b.oy, b.or, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      // soft base oval
+    const drawPuff = (p: Puff, color: string) => {
+      const y = p.y + Math.sin(t * 0.0004 + p.phase) * p.amp;
+      const g = ctx.createRadialGradient(p.x, y, 0, p.x, y, p.rx);
+      g.addColorStop(0, color.replace('ALPHA', String(p.baseOpacity)));
+      g.addColorStop(0.45, color.replace('ALPHA', String(p.baseOpacity * 0.45)));
+      g.addColorStop(1, color.replace('ALPHA', '0'));
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.ellipse(c.x, c.y + 8, c.r * 1.6, c.r * 0.55, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x, y, p.rx, p.ry, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     };
 
     const tick = () => {
+      t += 16;
       const dark = isDark();
 
-      // Sky gradient
+      // Sky — deep blue top → misty lower (matches Vanta CLOUDS feel)
       const sky = ctx.createLinearGradient(0, 0, 0, h);
       if (dark) {
-        sky.addColorStop(0, '#0b1224');
-        sky.addColorStop(0.45, '#132040');
+        sky.addColorStop(0, '#060a16');
+        sky.addColorStop(0.4, '#0c1528');
+        sky.addColorStop(0.75, '#121f38');
         sky.addColorStop(1, '#1a2744');
       } else {
-        sky.addColorStop(0, '#1d6fa5');
-        sky.addColorStop(0.35, '#4aa3d4');
-        sky.addColorStop(0.7, '#a8d4ef');
-        sky.addColorStop(1, '#e8f2fa');
+        sky.addColorStop(0, '#0d5f9e');
+        sky.addColorStop(0.3, '#2b8bc4');
+        sky.addColorStop(0.6, '#8ec8e8');
+        sky.addColorStop(1, '#e4f1f9');
       }
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h);
 
-      const cloudFill = dark ? 'rgba(148, 163, 184, 0.22)' : 'rgba(255, 255, 255, 0.85)';
+      // Soft fog color stops (ALPHA placeholder replaced per puff)
+      const fogColor = dark
+        ? 'rgba(160, 180, 210, ALPHA)'
+        : 'rgba(255, 255, 255, ALPHA)';
 
-      for (const c of clouds) {
-        c.x += c.vx;
-        // wrap horizontally
-        if (c.x - c.r * 2 > w) c.x = -c.r * 2;
-        drawCloud(c, cloudFill);
+      // Optional blur for extra softness (supported in modern browsers)
+      try {
+        ctx.filter = 'blur(18px)';
+      } catch {
+        /* ignore */
       }
+
+      for (const p of puffs) {
+        p.x += p.vx;
+        if (p.x - p.rx > w) p.x = -p.rx;
+        drawPuff(p, fogColor);
+      }
+
+      try {
+        ctx.filter = 'none';
+      } catch {
+        /* ignore */
+      }
+
+      // Thin high haze strip for depth
+      const haze = ctx.createLinearGradient(0, h * 0.35, 0, h * 0.55);
+      if (dark) {
+        haze.addColorStop(0, 'rgba(100, 130, 180, 0)');
+        haze.addColorStop(0.5, 'rgba(120, 150, 200, 0.06)');
+        haze.addColorStop(1, 'rgba(100, 130, 180, 0)');
+      } else {
+        haze.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        haze.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+        haze.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      }
+      ctx.fillStyle = haze;
+      ctx.fillRect(0, h * 0.35, w, h * 0.2);
 
       raf = requestAnimationFrame(tick);
     };
@@ -141,7 +178,7 @@ function CloudsBackdrop() {
     if (canvas.parentElement) ro.observe(canvas.parentElement);
 
     const mo = new MutationObserver(() => {
-      /* theme read each frame */
+      /* colors / opacity refreshed on next seed via resize or next frames */
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
