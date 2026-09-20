@@ -95,7 +95,7 @@ const item = {
   },
 };
 
-/** Dual-side waves — slow water-like continuous flow + soft scroll drift */
+/** Dual-side waves — continuous up-down oscillation + scroll drift */
 function UpperWaveBackground({
   scrollYProgress,
 }: {
@@ -224,30 +224,36 @@ function UpperWaveBackground({
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
 
       <style>{`
-        /* Slow water-like flow */
+        /* Continuous up-down oscillation — noticeable intensity */
         @keyframes wave-motion-a {
           0%   { transform: translate3d(0, 0) scaleY(1); }
-          25%  { transform: translate3d(18px, -10px) scaleY(1.04); }
-          50%  { transform: translate3d(-8px, 8px) scaleY(0.97); }
-          75%  { transform: translate3d(12px, -6px) scaleY(1.03); }
+          15%  { transform: translate3d(6px, -28px) scaleY(1.12); }
+          30%  { transform: translate3d(-4px, 24px) scaleY(0.9); }
+          50%  { transform: translate3d(8px, -32px) scaleY(1.14); }
+          70%  { transform: translate3d(-6px, 22px) scaleY(0.91); }
+          85%  { transform: translate3d(4px, -18px) scaleY(1.08); }
           100% { transform: translate3d(0, 0) scaleY(1); }
         }
         @keyframes wave-motion-b {
           0%   { transform: translate3d(0, 0) scaleY(1); }
-          25%  { transform: translate3d(-20px, 10px) scaleY(1.05); }
-          50%  { transform: translate3d(12px, -12px) scaleY(0.96); }
-          75%  { transform: translate3d(-14px, 7px) scaleY(1.03); }
+          12%  { transform: translate3d(-8px, 30px) scaleY(0.88); }
+          28%  { transform: translate3d(6px, -34px) scaleY(1.15); }
+          48%  { transform: translate3d(-10px, 26px) scaleY(0.9); }
+          68%  { transform: translate3d(8px, -28px) scaleY(1.12); }
+          88%  { transform: translate3d(-5px, 16px) scaleY(0.94); }
           100% { transform: translate3d(0, 0) scaleY(1); }
         }
         .wave-motion-a {
-          animation: wave-motion-a 14s ease-in-out infinite;
+          animation: wave-motion-a 5.5s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center center;
+          will-change: transform;
         }
         .wave-motion-b {
-          animation: wave-motion-b 18s ease-in-out infinite;
+          animation: wave-motion-b 6.8s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center center;
+          will-change: transform;
         }
         @media (prefers-reduced-motion: reduce) {
           .wave-motion-a,
