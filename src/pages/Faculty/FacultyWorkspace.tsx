@@ -11,19 +11,27 @@ import {
   Briefcase,
   FlaskConical,
   Building2,
-  Check,
   Sparkles,
+  CheckCircle2,
+  HandHelping,
+  Presentation,
 } from 'lucide-react';
 import { clearAuthSession, getAuthUser } from '../../utils/rbacAuth';
 import {
   addFacultyOpportunity,
-  expressInterest,
+  advanceInterestStatus,
+  applyToOpportunity,
+  FACULTY_STATUS_FLOW,
+  FACULTY_TABS,
   FACULTY_TYPES,
   readFacultyInterests,
   readFacultyOpportunities,
+  updateInterestStatus,
   type FacultyInterest,
+  type FacultyInterestStatus,
   type FacultyOpportunity,
   type FacultyOpportunityType,
+  type FacultyTabId,
 } from '../../utils/facultyStore';
 import { ThemeToggle } from '../../components/ThemeToggle';
 
@@ -39,6 +47,10 @@ const typeIcon = (type: FacultyOpportunityType) => {
       return <Users className="h-4 w-4" />;
     case 'Research Collaboration':
       return <FlaskConical className="h-4 w-4" />;
+    case 'Workshop':
+      return <Presentation className="h-4 w-4" />;
+    case 'Mentorship for Teachers':
+      return <HandHelping className="h-4 w-4" />;
     default:
       return <Sparkles className="h-4 w-4" />;
   }
@@ -51,8 +63,27 @@ const typeBadge = (type: FacultyOpportunityType) => {
     'Industrial Training': 'bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300',
     Consultancy: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
     'Research Collaboration': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+    Workshop: 'bg-pink-100 text-pink-800 dark:bg-pink-950/50 dark:text-pink-300',
+    'Mentorship for Teachers': 'bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300',
   };
   return map[type];
+};
+
+const statusBadge = (status: FacultyInterestStatus) => {
+  switch (status) {
+    case 'Applied':
+      return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/25 dark:text-indigo-200';
+    case 'Shortlisted':
+      return 'bg-sky-100 text-sky-800 dark:bg-sky-500/25 dark:text-sky-200';
+    case 'Accepted':
+      return 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/25 dark:text-emerald-200';
+    case 'Completed':
+      return 'bg-teal-100 text-teal-900 dark:bg-teal-500/25 dark:text-teal-200';
+    case 'Withdrawn':
+      return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
+    default:
+      return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200';
+  }
 };
 
 export const FacultyWorkspace = () => {
@@ -60,7 +91,7 @@ export const FacultyWorkspace = () => {
   const user = getAuthUser();
   const [opps, setOpps] = useState<FacultyOpportunity[]>(() => readFacultyOpportunities());
   const [interests, setInterests] = useState<FacultyInterest[]>(() => readFacultyInterests());
-  const [filter, setFilter] = useState<'All' | FacultyOpportunityType>('All');
+  const [tab, setTab] = useState<FacultyTabId>('all');
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -85,24 +116,38 @@ export const FacultyWorkspace = () => {
     refresh();
   }, [refresh]);
 
+  const myEmail = user?.email || 'faculty@gmail.com';
+
   const filtered = useMemo(() => {
-    if (filter === 'All') return opps;
-    return opps.filter((o) => o.type === filter);
-  }, [opps, filter]);
+    const tabDef = FACULTY_TABS.find((t) => t.id === tab);
+    if (!tabDef || !tabDef.types) return opps;
+    return opps.filter((o) => tabDef.types!.includes(o.type));
+  }, [opps, tab]);
 
-  const myInterests = useMemo(() => {
-    const email = user?.email?.toLowerCase() || '';
-    return interests.filter((i) => i.email.toLowerCase() === email);
-  }, [interests, user?.email]);
-
-  const interestedIds = useMemo(
-    () => new Set(myInterests.map((i) => i.opportunityId)),
-    [myInterests],
+  const myApplications = useMemo(
+    () => interests.filter((i) => i.email === myEmail),
+    [interests, myEmail],
   );
+
+  const interestByOpp = useMemo(() => {
+    const m = new Map<string, FacultyInterest>();
+    for (const i of myApplications) m.set(i.opportunityId, i);
+    return m;
+  }, [myApplications]);
 
   const handleLogout = () => {
     clearAuthSession();
     navigate('/login', { replace: true });
+  };
+
+  const handleApply = (oppId: string) => {
+    applyToOpportunity(oppId, {
+      name: user?.name || 'Faculty Member',
+      email: myEmail,
+      institution: (user as { institutionName?: string } | null)?.institutionName || 'Your Institution',
+      department: 'General',
+    });
+    refresh();
   };
 
   const handlePost = (e: React.FormEvent) => {
@@ -120,9 +165,9 @@ export const FacultyWorkspace = () => {
         organizer: form.organizer.trim(),
         location: form.location.trim() || 'TBA',
         duration: form.duration.trim() || 'Flexible',
-        mode: form.mode.trim() || 'Hybrid',
+        mode: form.mode,
         domain: form.domain.trim() || 'General',
-        description: form.description.trim(),
+        description: form.description.trim() || 'Faculty opportunity posted via EduRoute.',
         seats: form.seats.trim() || undefined,
       });
       setForm({
@@ -143,42 +188,33 @@ export const FacultyWorkspace = () => {
     }
   };
 
-  const handleInterest = (oppId: string) => {
-    if (!user) return;
-    const row = expressInterest(oppId, {
-      name: user.name || 'Faculty',
-      email: user.email,
-      institution: user.institutionName || 'Institution',
-      department: 'Academic',
-    });
-    if (!row) return;
-    refresh();
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 font-black tracking-tight">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">
-                <GraduationCap className="h-5 w-5" />
-              </span>
-              <span className="hidden sm:inline">
-                EDUROUTE <span className="font-semibold text-violet-600 dark:text-violet-400">Faculty</span>
-              </span>
-            </Link>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white">
+              <GraduationCap className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-sm font-black">Faculty workspace</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {user?.name || 'Academician'} · FDPs, training, research & workshops
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <div className="hidden text-right text-xs sm:block">
-              <p className="font-bold text-slate-900 dark:text-white">{user?.name || 'Faculty'}</p>
-              <p className="text-slate-500 dark:text-slate-400">{user?.email}</p>
-            </div>
+            <Link
+              to="/"
+              className="hidden rounded-xl px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 sm:inline"
+            >
+              Home
+            </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
             >
               <LogOut className="h-3.5 w-3.5" /> Logout
             </button>
@@ -186,33 +222,45 @@ export const FacultyWorkspace = () => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
-              Academician portal
-            </p>
-            <h1 className="mt-1 text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
-              Faculty opportunities
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-              Explore FDPs, faculty internships, industrial training, consultancy, and collaborative research —
-              aligned with SIH academia–industry collaboration.
+            <h1 className="text-2xl font-black tracking-tight">Academician hub</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Apply to FDPs, faculty internships, research, workshops & mentorship programs
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShowForm((v) => !v)}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-600/20 hover:bg-violet-700"
+            className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg"
           >
-            <Plus className="h-4 w-4" /> Post opportunity
+            <Plus className="h-4 w-4" /> {showForm ? 'Hide form' : 'Post opportunity'}
           </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {FACULTY_TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`rounded-2xl px-4 py-2 text-xs font-black uppercase tracking-wide transition ${
+                tab === t.id
+                  ? 'bg-violet-600 text-white shadow'
+                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {showForm && (
           <form
             onSubmit={handlePost}
-            className="mb-8 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-2"
+            className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-2"
           >
             {formError && (
               <p
@@ -223,12 +271,11 @@ export const FacultyWorkspace = () => {
               </p>
             )}
             <div className="sm:col-span-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Title</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Title *</label>
               <input
                 required
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. FDP on Generative AI for Educators"
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
@@ -247,12 +294,11 @@ export const FacultyWorkspace = () => {
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Organizer</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Organizer *</label>
               <input
                 required
                 value={form.organizer}
                 onChange={(e) => setForm({ ...form, organizer: e.target.value })}
-                placeholder="AICTE / Industry partner"
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
@@ -261,7 +307,6 @@ export const FacultyWorkspace = () => {
               <input
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
-                placeholder="Delhi / Remote"
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
@@ -270,166 +315,175 @@ export const FacultyWorkspace = () => {
               <input
                 value={form.duration}
                 onChange={(e) => setForm({ ...form, duration: e.target.value })}
-                placeholder="5 Days / 4 Weeks"
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Mode</label>
-              <input
+              <select
                 value={form.mode}
                 onChange={(e) => setForm({ ...form, mode: e.target.value })}
-                placeholder="Hybrid / Online / On-site"
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
+              >
+                {['Online', 'Hybrid', 'On-site'].map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Domain</label>
               <input
                 value={form.domain}
                 onChange={(e) => setForm({ ...form, domain: e.target.value })}
-                placeholder="AI, Cyber, Data…"
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Description</label>
               <textarea
-                rows={3}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Outcomes, eligibility, benefits…"
+                rows={3}
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
-            <div className="sm:col-span-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setFormError('');
-                }}
-                className="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300"
-              >
-                Cancel
-              </button>
+            <div className="sm:col-span-2">
               <button
                 type="submit"
                 disabled={busy}
-                className="rounded-xl bg-violet-600 px-5 py-2 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-50"
+                className="rounded-2xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
               >
-                {busy ? 'Publishing…' : 'Publish'}
+                {busy ? 'Posting…' : 'Publish opportunity'}
               </button>
             </div>
           </form>
         )}
 
-        <div className="mb-6 flex flex-wrap gap-2">
-          {(['All', ...FACULTY_TYPES] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setFilter(t)}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
-                filter === t
-                  ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        {/* My applications */}
+        {myApplications.length > 0 && (
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide text-slate-500">
+              <CheckCircle2 className="h-4 w-4 text-violet-600" /> My applications
+            </h2>
+            <ul className="space-y-3">
+              {myApplications.map((app) => {
+                const opp = opps.find((o) => o.id === app.opportunityId);
+                const idx = FACULTY_STATUS_FLOW.indexOf(app.status);
+                const next =
+                  idx >= 0 && idx < FACULTY_STATUS_FLOW.length - 1
+                    ? FACULTY_STATUS_FLOW[idx + 1]
+                    : null;
+                return (
+                  <li
+                    key={app.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950/40"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-bold">{opp?.title || app.opportunityId}</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {opp?.type} · Applied {new Date(app.appliedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${statusBadge(app.status)}`}>
+                        {app.status}
+                      </span>
+                      {next && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            advanceInterestStatus(app.id);
+                            refresh();
+                          }}
+                          className="rounded-xl bg-violet-600 px-2.5 py-1 text-[10px] font-bold text-white"
+                        >
+                          Advance → {next}
+                        </button>
+                      )}
+                      {app.status !== 'Withdrawn' && app.status !== 'Completed' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateInterestStatus(app.id, 'Withdrawn');
+                            refresh();
+                          }}
+                          className="rounded-xl border border-slate-200 px-2.5 py-1 text-[10px] font-bold text-slate-500 dark:border-slate-700"
+                        >
+                          Withdraw
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
-        <div className="grid gap-8 lg:grid-cols-5">
-          <section className="space-y-4 lg:col-span-3">
-            <h2 className="text-lg font-black text-slate-900 dark:text-white">Open opportunities</h2>
-            {filtered.length === 0 && (
-              <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                No opportunities in this category yet.
-              </p>
-            )}
-            {filtered.map((o) => (
+        {/* Opportunity cards */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {filtered.map((opp) => {
+            const mine = interestByOpp.get(opp.id);
+            return (
               <article
-                key={o.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                key={opp.id}
+                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${typeBadge(o.type)}`}
-                    >
-                      {typeIcon(o.type)} {o.type}
-                    </span>
-                    <h3 className="mt-2 text-base font-black text-slate-900 dark:text-white">{o.title}</h3>
-                    <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{o.organizer}</p>
-                  </div>
-                  {interestedIds.has(o.id) ? (
-                    <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                      <Check className="h-3.5 w-3.5" /> Applied
-                    </span>
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${typeBadge(opp.type)}`}
+                  >
+                    {typeIcon(opp.type)} {opp.type}
+                  </span>
+                  {opp.seats && (
+                    <span className="text-[10px] font-bold text-slate-400">{opp.seats} seats</span>
+                  )}
+                </div>
+                <h3 className="text-base font-black leading-snug">{opp.title}</h3>
+                <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{opp.organizer}</p>
+                <p className="mt-3 flex-1 text-sm text-slate-600 dark:text-slate-300">{opp.description}</p>
+                <div className="mt-4 flex flex-wrap gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> {opp.location}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> {opp.duration}
+                  </span>
+                  <span>{opp.mode}</span>
+                  <span className="text-violet-600 dark:text-violet-400">{opp.domain}</span>
+                </div>
+                <div className="mt-4">
+                  {mine ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`rounded-full px-3 py-1.5 text-xs font-black uppercase ${statusBadge(mine.status)}`}>
+                        {mine.status}
+                      </span>
+                      <span className="text-[10px] text-slate-400">Application saved</span>
+                    </div>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => handleInterest(o.id)}
-                      className="rounded-xl bg-violet-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-violet-700"
+                      onClick={() => handleApply(opp.id)}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-500"
                     >
-                      Express interest
+                      <CheckCircle2 className="h-4 w-4" /> Apply now
                     </button>
                   )}
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{o.description}</p>
-                <div className="mt-4 flex flex-wrap gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5" /> {o.location}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" /> {o.duration} · {o.mode}
-                  </span>
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 dark:bg-slate-800">{o.domain}</span>
-                  {o.seats && <span>{o.seats} seats</span>}
-                </div>
               </article>
-            ))}
-          </section>
-
-          <aside className="space-y-4 lg:col-span-2">
-            <h2 className="text-lg font-black text-slate-900 dark:text-white">My applications</h2>
-            {myInterests.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                You have not applied yet. Express interest on an opportunity to track it here.
-              </p>
-            ) : (
-              myInterests.map((i) => {
-                const opp = opps.find((o) => o.id === i.opportunityId);
-                return (
-                  <div
-                    key={i.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
-                  >
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {opp?.title || 'Opportunity'}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {opp?.type} · {i.status}
-                    </p>
-                    <p className="mt-2 text-[11px] text-slate-400">
-                      Applied {new Date(i.appliedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                );
-              })
-            )}
-
-            <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 text-xs leading-relaxed text-violet-900 dark:border-violet-900/50 dark:bg-violet-950/30 dark:text-violet-200">
-              <p className="font-bold">SIH · Academician side</p>
-              <p className="mt-1 opacity-90">
-                Faculty internships, FDPs, industrial training, consultancy, and research collaboration in one place.
-                Demo data is stored locally.
-              </p>
-            </div>
-          </aside>
+            );
+          })}
         </div>
+
+        {filtered.length === 0 && (
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400">No opportunities in this tab yet.</p>
+        )}
+
+        <p className="text-center text-xs text-slate-400">
+          Demo localStorage · Login: faculty@gmail.com / faculty
+        </p>
       </main>
     </div>
   );

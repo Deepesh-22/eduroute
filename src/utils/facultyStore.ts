@@ -1,6 +1,6 @@
 /**
- * Faculty / Academician opportunities — client-only (localStorage).
- * FDPs, faculty internships, industrial training, consultancy, research.
+ * Faculty / Academician opportunities — localStorage demo.
+ * FDPs, internships, industrial training, consultancy, research, workshops, mentorship.
  */
 
 export type FacultyOpportunityType =
@@ -8,7 +8,9 @@ export type FacultyOpportunityType =
   | 'Faculty Internship'
   | 'Industrial Training'
   | 'Consultancy'
-  | 'Research Collaboration';
+  | 'Research Collaboration'
+  | 'Workshop'
+  | 'Mentorship for Teachers';
 
 export type FacultyOpportunity = {
   id: string;
@@ -24,7 +26,14 @@ export type FacultyOpportunity = {
   seats?: string;
 };
 
-export type FacultyInterestStatus = 'Interested' | 'Applied' | 'Selected' | 'Completed';
+export type FacultyInterestStatus = 'Applied' | 'Shortlisted' | 'Accepted' | 'Completed' | 'Withdrawn';
+
+export const FACULTY_STATUS_FLOW: FacultyInterestStatus[] = [
+  'Applied',
+  'Shortlisted',
+  'Accepted',
+  'Completed',
+];
 
 export type FacultyInterest = {
   id: string;
@@ -37,8 +46,8 @@ export type FacultyInterest = {
   appliedAt: string;
 };
 
-const OPP_KEY = 'eduroute:faculty-opportunities-v1';
-const INTEREST_KEY = 'eduroute:faculty-interests-v1';
+const OPP_KEY = 'eduroute:faculty-opportunities-v2';
+const INTEREST_KEY = 'eduroute:faculty-interests-v2';
 
 export const FACULTY_DEMO_CREDENTIALS = {
   email: 'faculty@gmail.com',
@@ -63,8 +72,8 @@ const DEMO_OPPORTUNITIES: FacultyOpportunity[] = [
     mode: 'Hybrid',
     domain: 'AI / Education Technology',
     description:
-      'Hands-on faculty development program covering generative AI tools for curriculum design, assessment, and student mentoring. Certificate on completion.',
-    postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      'Hands-on faculty development covering generative AI for curriculum design, assessment, and mentoring. Certificate on completion.',
+    postedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
     seats: '40',
   },
   {
@@ -77,8 +86,8 @@ const DEMO_OPPORTUNITIES: FacultyOpportunity[] = [
     mode: 'On-site',
     domain: 'Software Engineering',
     description:
-      'Faculty work alongside product engineers on live tickets, agile rituals, and code reviews to bring industry practices back to classrooms.',
-    postedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      'Faculty work with product engineers on live tickets and agile rituals to bring industry practices into the classroom.',
+    postedAt: new Date(Date.now() - 4 * 86400000).toISOString(),
     seats: '12',
   },
   {
@@ -91,8 +100,8 @@ const DEMO_OPPORTUNITIES: FacultyOpportunity[] = [
     mode: 'Online',
     domain: 'Cybersecurity',
     description:
-      'Structured training for faculty teaching cybersecurity courses — SIEM labs, threat intel briefings, and curriculum mapping.',
-    postedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      'SIEM labs, threat intel briefings, and curriculum mapping for faculty teaching cybersecurity.',
+    postedAt: new Date(Date.now() - 6 * 86400000).toISOString(),
     seats: '25',
   },
   {
@@ -105,8 +114,8 @@ const DEMO_OPPORTUNITIES: FacultyOpportunity[] = [
     mode: 'Hybrid',
     domain: 'Skill Mapping',
     description:
-      'Institutions can engage faculty consultants to run cohort skill audits aligned to industry roles and recommend curriculum updates.',
-    postedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+      'Faculty consultants run cohort skill audits aligned to industry roles and recommend curriculum updates.',
+    postedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
   },
   {
     id: 'fac-opp-5',
@@ -118,9 +127,37 @@ const DEMO_OPPORTUNITIES: FacultyOpportunity[] = [
     mode: 'Hybrid',
     domain: 'Data / Education Research',
     description:
-      'Joint research on skill-gap predictors, placement outcomes, and NSQF-aligned competency mapping. Co-authorship and dataset access.',
-    postedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      'Joint research on skill-gap predictors and placement outcomes. Co-authorship and dataset access.',
+    postedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
     seats: '8 teams',
+  },
+  {
+    id: 'fac-opp-6',
+    title: 'Workshop: Outcome-Based Education & Rubrics',
+    type: 'Workshop',
+    organizer: 'NBA Capacity Building',
+    location: 'Hybrid · Mumbai',
+    duration: '3 Days',
+    mode: 'Hybrid',
+    domain: 'Teaching & Learning',
+    description:
+      'Practical workshop for teachers on OBE mapping, CO-PO attainment, and assessment rubrics with peer review.',
+    postedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+    seats: '50',
+  },
+  {
+    id: 'fac-opp-7',
+    title: 'Peer Mentorship Circle for Early-Career Faculty',
+    type: 'Mentorship for Teachers',
+    organizer: 'EduRoute Faculty Guild',
+    location: 'Online',
+    duration: '1 Semester',
+    mode: 'Online',
+    domain: 'Faculty Development',
+    description:
+      'Structured mentorship for new teachers — classroom management, research planning, and student engagement with senior mentors.',
+    postedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+    seats: '30',
   },
 ];
 
@@ -133,7 +170,7 @@ const DEMO_INTERESTS: FacultyInterest[] = [
     institution: 'All India Institute of Technology',
     department: 'Computer Science',
     status: 'Applied',
-    appliedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    appliedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
   },
 ];
 
@@ -153,15 +190,15 @@ function writeJson(key: string, value: unknown) {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    // ignore
+    /* ignore */
   }
 }
 
 export function readFacultyOpportunities(): FacultyOpportunity[] {
-  const list = readJson<FacultyOpportunity[]>(OPP_KEY, DEMO_OPPORTUNITIES);
-  if (!list.length) {
+  const list = readJson<FacultyOpportunity[] | null>(OPP_KEY, null);
+  if (!list || !list.length) {
     writeJson(OPP_KEY, DEMO_OPPORTUNITIES);
-    return DEMO_OPPORTUNITIES;
+    return [...DEMO_OPPORTUNITIES];
   }
   return list;
 }
@@ -175,28 +212,29 @@ export function addFacultyOpportunity(
     id: `fac-opp-${Date.now()}`,
     postedAt: new Date().toISOString(),
   };
-  const next = [item, ...list];
-  writeJson(OPP_KEY, next);
+  writeJson(OPP_KEY, [item, ...list]);
   return item;
 }
 
 export function readFacultyInterests(): FacultyInterest[] {
-  const list = readJson<FacultyInterest[]>(INTEREST_KEY, DEMO_INTERESTS);
-  if (!list.length) {
+  const list = readJson<FacultyInterest[] | null>(INTEREST_KEY, null);
+  if (!list || !list.length) {
     writeJson(INTEREST_KEY, DEMO_INTERESTS);
-    return DEMO_INTERESTS;
+    return [...DEMO_INTERESTS];
   }
   return list;
 }
 
-export function expressInterest(
+/** Apply to an opportunity (idempotent per email + opportunity). */
+export function applyToOpportunity(
   opportunityId: string,
   faculty: { name: string; email: string; institution: string; department: string },
 ): FacultyInterest | null {
   const interests = readFacultyInterests();
-  if (interests.some((i) => i.opportunityId === opportunityId && i.email === faculty.email)) {
-    return null;
-  }
+  const existing = interests.find(
+    (i) => i.opportunityId === opportunityId && i.email === faculty.email,
+  );
+  if (existing) return existing;
   const row: FacultyInterest = {
     id: `fac-int-${Date.now()}`,
     opportunityId,
@@ -211,6 +249,14 @@ export function expressInterest(
   return row;
 }
 
+/** @deprecated alias */
+export function expressInterest(
+  opportunityId: string,
+  faculty: { name: string; email: string; institution: string; department: string },
+): FacultyInterest | null {
+  return applyToOpportunity(opportunityId, faculty);
+}
+
 export function updateInterestStatus(
   interestId: string,
   status: FacultyInterestStatus,
@@ -223,10 +269,44 @@ export function updateInterestStatus(
   return list[idx];
 }
 
+export function advanceInterestStatus(interestId: string): FacultyInterest | null {
+  const list = readFacultyInterests();
+  const row = list.find((i) => i.id === interestId);
+  if (!row) return null;
+  const i = FACULTY_STATUS_FLOW.indexOf(row.status);
+  if (i < 0 || i >= FACULTY_STATUS_FLOW.length - 1) return row;
+  return updateInterestStatus(interestId, FACULTY_STATUS_FLOW[i + 1]);
+}
+
 export const FACULTY_TYPES: FacultyOpportunityType[] = [
   'FDP',
   'Faculty Internship',
   'Industrial Training',
   'Consultancy',
   'Research Collaboration',
+  'Workshop',
+  'Mentorship for Teachers',
+];
+
+/** UI tabs grouping */
+export type FacultyTabId = 'all' | 'fdp' | 'internships' | 'research' | 'workshops';
+
+export const FACULTY_TABS: { id: FacultyTabId; label: string; types: FacultyOpportunityType[] | null }[] = [
+  { id: 'all', label: 'All', types: null },
+  { id: 'fdp', label: 'FDPs', types: ['FDP'] },
+  {
+    id: 'internships',
+    label: 'Internships & Training',
+    types: ['Faculty Internship', 'Industrial Training'],
+  },
+  {
+    id: 'research',
+    label: 'Research & Consultancy',
+    types: ['Research Collaboration', 'Consultancy'],
+  },
+  {
+    id: 'workshops',
+    label: 'Workshops & Mentorship',
+    types: ['Workshop', 'Mentorship for Teachers'],
+  },
 ];
