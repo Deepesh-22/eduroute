@@ -515,17 +515,18 @@ export const BuddyChat = () => {
         language,
         onboardingContext: onboard || undefined,
       });
+      const replyText = String(response?.reply ?? '').trim() || 'I could not generate a reply. Please try again.';
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, role: 'ai', text: response.reply, timestamp: timestamp() },
+        { id: Date.now() + 1, role: 'ai', text: replyText, timestamp: timestamp() },
       ]);
-      if (autoSpeak && response.reply) {
+      if (autoSpeak && replyText) {
         const speakId = String(Date.now() + 1);
         setSpeakingId(speakId);
-        speakText(response.reply, language);
+        speakText(replyText, language);
         window.setTimeout(
           () => setSpeakingId((cur) => (cur === speakId ? null : cur)),
-          Math.min(60000, Math.max(2500, response.reply.length * 45)),
+          Math.min(60000, Math.max(2500, replyText.length * 45)),
         );
       }
       setProgress((current) => ({
