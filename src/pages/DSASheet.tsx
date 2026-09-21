@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { dsaSheet, TOTAL_DSA_QUESTIONS } from '../data/dsaSheetData';
 import { apiGetProblemSubmissions, apiSubmitProblem } from '../utils/authApi';
+import { FeatureDecor } from '../components/FeatureDecor';
 
 type FilterType = 'all' | 'solved' | 'unsolved';
 
@@ -20,7 +21,6 @@ export const DSASheet = () => {
   const [solvedQuestions, setSolvedQuestions] = useState<number[]>([]);
   const [pendingQuestions, setPendingQuestions] = useState<number[]>([]);
   const [isLoadingProgress, setIsLoadingProgress] = useState(true);
-  const [saveError, setSaveError] = useState('');
   const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(dsaSheet.map((section) => [section.topic, true])),
   );
@@ -36,27 +36,19 @@ export const DSASheet = () => {
           .filter((submission) => submission.status === 'Accepted')
           .map((submission) => Number(submission.problemKey));
         setSolvedQuestions(ids);
-        try {
-          localStorage.setItem('eduroute:dsa-solved', JSON.stringify(ids));
-        } catch {
-          /* ignore */
-        }
+        try { localStorage.setItem('eduroute:dsa-solved', JSON.stringify(ids)); } catch { /* */ }
       } catch {
-        // Offline / no backend — restore local progress; never show API config errors
         try {
           const raw = localStorage.getItem('eduroute:dsa-solved');
           if (raw) {
             const parsed = JSON.parse(raw) as number[];
             if (Array.isArray(parsed)) setSolvedQuestions(parsed.map(Number));
           }
-        } catch {
-          /* ignore */
-        }
+        } catch { /* */ }
       } finally {
         setIsLoadingProgress(false);
       }
     };
-
     void loadSubmissions();
   }, []);
 
@@ -70,7 +62,6 @@ export const DSASheet = () => {
           questions: section.questions.filter((question) => {
             const searchMatch = question.title.toLowerCase().includes(searchText.toLowerCase());
             const solved = solvedSet.has(question.id);
-
             if (!searchMatch) return false;
             if (filter === 'solved') return solved;
             if (filter === 'unsolved') return !solved;
@@ -88,27 +79,17 @@ export const DSASheet = () => {
     if (pendingQuestions.includes(id)) return;
     const solved = solvedSet.has(id);
     setPendingQuestions((prev) => [...prev, id]);
-    setSaveError('');
     try {
       await apiSubmitProblem(String(id), { name: title, difficulty: 'Easy', status: solved ? 'Attempted' : 'Accepted' });
       setSolvedQuestions((prev) => {
         const next = solved ? prev.filter((questionId) => questionId !== id) : [...prev, id];
-        try {
-          localStorage.setItem('eduroute:dsa-solved', JSON.stringify(next));
-        } catch {
-          /* ignore */
-        }
+        try { localStorage.setItem('eduroute:dsa-solved', JSON.stringify(next)); } catch { /* */ }
         return next;
       });
     } catch {
-      // Keep local solved state optimistic; hide backend/API config messages
       setSolvedQuestions((prev) => {
         const next = solved ? prev.filter((questionId) => questionId !== id) : prev.includes(id) ? prev : [...prev, id];
-        try {
-          localStorage.setItem('eduroute:dsa-solved', JSON.stringify(next));
-        } catch {
-          /* ignore */
-        }
+        try { localStorage.setItem('eduroute:dsa-solved', JSON.stringify(next)); } catch { /* */ }
         return next;
       });
     } finally {
@@ -118,16 +99,16 @@ export const DSASheet = () => {
 
   const markAllComplete = () => {
     const ids = dsaSheet.flatMap((section) => section.questions.map((question) => question.id));
-    void Promise.all(ids.map((id) => {
-      const question = dsaSheet.flatMap((section) => section.questions).find((item) => item.id === id);
-      return question ? apiSubmitProblem(String(id), { name: question.title, difficulty: 'Easy', status: 'Accepted' }) : Promise.resolve();
-    })).then(() => {
+    void Promise.all(
+      ids.map((id) => {
+        const question = dsaSheet.flatMap((section) => section.questions).find((item) => item.id === id);
+        return question
+          ? apiSubmitProblem(String(id), { name: question.title, difficulty: 'Easy', status: 'Accepted' })
+          : Promise.resolve();
+      }),
+    ).then(() => {
       setSolvedQuestions(ids);
-      try {
-        localStorage.setItem('eduroute:dsa-solved', JSON.stringify(ids));
-      } catch {
-        /* ignore */
-      }
+      try { localStorage.setItem('eduroute:dsa-solved', JSON.stringify(ids)); } catch { /* */ }
     });
   };
 
@@ -139,8 +120,15 @@ export const DSASheet = () => {
             <div className="mb-4 inline-flex animate-pulse items-center gap-2 rounded-full border border-emerald-300/50 bg-emerald-400/20 px-4 py-1.5 text-xs font-black uppercase tracking-[0.25em] text-emerald-700 shadow-lg shadow-emerald-400/20 dark:text-emerald-200">
               <Sparkles className="h-4 w-4" /> Free
             </div>
-            <h1 className="text-3xl font-black text-slate-900 md:text-4xl dark:text-white">DSA Sheet (Beginner - 100 Questions)</h1>
-            <p className="mt-2 text-sm font-medium text-slate-600 md:text-base dark:text-slate-400">Practice consistently, track your solved count, and build your coding confidence one easy problem at a time.</p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex-1">
+                <h1 className="text-3xl font-black text-slate-900 md:text-4xl dark:text-white">DSA Sheet (Beginner - 100 Questions)</h1>
+                <p className="mt-2 text-sm font-medium text-slate-600 md:text-base dark:text-slate-400">
+                  Practice consistently, track your solved count, and build your coding confidence one easy problem at a time.
+                </p>
+              </div>
+              <FeatureDecor variant="code" className="opacity-95" />
+            </div>
 
             <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="relative w-full md:max-w-md">
@@ -152,20 +140,24 @@ export const DSASheet = () => {
                   className="w-full rounded-xl border border-slate-200 bg-slate-100 py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-indigo-400 dark:border-white/10 dark:bg-slate-900/30 dark:text-slate-100 dark:placeholder:text-slate-400"
                 />
               </div>
-
               <div className="flex flex-wrap items-center gap-2">
                 {(['all', 'solved', 'unsolved'] as FilterType[]).map((option) => (
                   <button
                     key={option}
                     onClick={() => setFilter(option)}
                     className={`rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-widest transition ${
-                      filter === option ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10'
+                      filter === option
+                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10'
                     }`}
                   >
                     {option}
                   </button>
                 ))}
-                <button onClick={markAllComplete} className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110">
+                <button
+                  onClick={markAllComplete}
+                  className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110"
+                >
                   Mark all complete
                 </button>
               </div>
@@ -176,7 +168,6 @@ export const DSASheet = () => {
             const topicSolvedCount = section.questions.filter((question) => solvedSet.has(question.id)).length;
             const totalQuestions = section.questions.length;
             const isExpanded = expandedTopics[section.topic];
-
             return (
               <div key={section.topic} className="glass-panel premium-border overflow-hidden rounded-3xl">
                 <button
@@ -185,11 +176,12 @@ export const DSASheet = () => {
                 >
                   <div>
                     <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">{section.topic}</h2>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-indigo-700 dark:text-indigo-200">{topicSolvedCount}/{totalQuestions} solved</p>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-indigo-700 dark:text-indigo-200">
+                      {topicSolvedCount}/{totalQuestions} solved
+                    </p>
                   </div>
                   <ChevronDown className={`h-5 w-5 text-slate-600 transition dark:text-slate-300 ${isExpanded ? 'rotate-180' : ''}`} />
                 </button>
-
                 {isExpanded && (
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[860px] text-sm">
@@ -207,7 +199,7 @@ export const DSASheet = () => {
                         {section.questions.map((question) => {
                           const solved = solvedSet.has(question.id);
                           return (
-                            <tr key={question.id} className="border-t border-slate-200 transition hover:bg-indigo-500/10 hover:shadow-[inset_0_0_24px_rgba(99,102,241,0.15)] dark:border-white/5">
+                            <tr key={question.id} className="border-t border-slate-200 transition hover:bg-indigo-500/10 dark:border-white/5">
                               <td className="px-4 py-3">
                                 <button
                                   onClick={() => void toggleSolved(question.id, question.title)}
@@ -226,32 +218,32 @@ export const DSASheet = () => {
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   {question.gfgUrl && (
-                                    <a href={question.gfgUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-700 transition hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/20" title="GeeksforGeeks">
+                                    <a href={question.gfgUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-white/10 dark:text-slate-200" title="GeeksforGeeks">
                                       <FileText className="h-4 w-4" />
                                     </a>
                                   )}
                                   {question.leetcodeUrl && (
-                                    <a href={question.leetcodeUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-700 transition hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/20" title="LeetCode">
+                                    <a href={question.leetcodeUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-white/10 dark:text-slate-200" title="LeetCode">
                                       <span className="text-[10px] font-black">LC</span>
                                     </a>
                                   )}
-                                  <a href={question.codingNinjaUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-700 transition hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/20" title="Coding Ninjas">
+                                  <a href={question.codingNinjaUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-white/10 dark:text-slate-200" title="Coding Ninjas">
                                     <span className="text-[10px] font-black">CN</span>
                                   </a>
-                                  <a href={question.videoUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-700 transition hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/20" title="Video">
+                                  <a href={question.videoUrl} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-white/10 dark:text-slate-200" title="Video">
                                     <PlayCircle className="h-4 w-4" />
                                   </a>
                                 </div>
                               </td>
                               <td className="px-4 py-3">
                                 {(question.gfgUrl || question.leetcodeUrl) && (
-                                  <a href={question.gfgUrl || question.leetcodeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-indigo-500/40 transition hover:bg-indigo-400">
+                                  <a href={question.gfgUrl || question.leetcodeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-bold text-white">
                                     Solve <ExternalLink className="h-3.5 w-3.5" />
                                   </a>
                                 )}
                               </td>
                               <td className="px-4 py-3">
-                                <button className="rounded-lg bg-slate-100 p-2 text-amber-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-amber-300 dark:hover:bg-white/20" title="Mark revision">
+                                <button className="rounded-lg bg-slate-100 p-2 text-amber-600 dark:bg-white/10 dark:text-amber-300" title="Mark revision">
                                   <Star className="h-4 w-4" />
                                 </button>
                               </td>
@@ -271,21 +263,11 @@ export const DSASheet = () => {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass-panel premium-border sticky top-4 rounded-3xl p-6">
             <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">DSA Progress</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">Track your easy questions completed out of 100.</p>
-
             <div className="mt-6 flex items-center justify-center">
               <div className="relative h-40 w-40">
                 <svg viewBox="0 0 120 120" className="h-40 w-40 -rotate-90">
                   <circle cx="60" cy="60" r="52" className="fill-none stroke-white/10" strokeWidth="10" />
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="52"
-                    className="fill-none stroke-emerald-400 transition-all duration-500"
-                    strokeWidth="10"
-                    strokeDasharray={326.72}
-                    strokeDashoffset={326.72 - (326.72 * progress) / 100}
-                    strokeLinecap="round"
-                  />
+                  <circle cx="60" cy="60" r="52" className="fill-none stroke-emerald-400 transition-all duration-500" strokeWidth="10" strokeDasharray={326.72} strokeDashoffset={326.72 - (326.72 * progress) / 100} strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-2xl font-black text-slate-900 dark:text-slate-100">{totalSolved}</span>
@@ -293,20 +275,17 @@ export const DSASheet = () => {
                 </div>
               </div>
             </div>
-
-            <p className="mt-4 text-center text-base font-semibold text-emerald-700 dark:text-emerald-200">{totalSolved} / {TOTAL_DSA_QUESTIONS} solved</p>
-            <p className="text-center text-xs text-slate-600 dark:text-slate-400">Easy: {totalSolved}/{TOTAL_DSA_QUESTIONS}</p>
-
-            <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-500 py-3 text-sm font-black text-white shadow-xl shadow-indigo-500/30 transition hover:brightness-110">
+            <p className="mt-4 text-center text-base font-semibold text-emerald-700 dark:text-emerald-200">
+              {totalSolved} / {TOTAL_DSA_QUESTIONS} solved
+            </p>
+            <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-500 py-3 text-sm font-black text-white shadow-xl shadow-indigo-500/30">
               <Target className="h-4 w-4" /> Start Practice
             </button>
-
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-              Day Streak: <span className="font-bold text-indigo-700 dark:text-indigo-200">12 days</span>
-            </div>
           </motion.div>
         </aside>
       </div>
     </div>
   );
 };
+
+export default DSASheet;
