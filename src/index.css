@@ -267,11 +267,11 @@ html[data-theme="dark"] .er-nav-item.active,
   text-transform: uppercase;
 }
 
+/* display is controlled by Tailwind: !hidden lg:!flex — do NOT set display here */
 .er-sidebar {
   width: var(--sidebar-width);
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-default);
-  display: flex;
   flex-direction: column;
   height: 100vh;
   position: sticky;
@@ -407,7 +407,6 @@ html[data-theme="dark"] ::selection {
   }
 }
 
-/* RESPONSIVE UTILITIES */
 .er-table-scroll {
   width: 100%;
   max-width: 100%;
