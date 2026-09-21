@@ -68,19 +68,58 @@ const FEATURES = [
 
 type Props = { onExploreAll?: () => void };
 
+function FeatureCard({
+  f,
+  className = '',
+}: {
+  f: (typeof FEATURES)[number];
+  className?: string;
+}) {
+  return (
+    <Link
+      to={f.to}
+      className={`group relative flex min-h-[180px] flex-col justify-between overflow-hidden rounded-3xl border border-[var(--border-default)] bg-gradient-to-br ${f.accent} bg-[var(--bg-card)] p-5 shadow-[var(--shadow-elevated)] transition-shadow hover:shadow-xl sm:min-h-[220px] sm:flex-row sm:items-center sm:gap-6 sm:p-7 dark:border-white/10 ${className}`}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(124,58,237,0.12),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top_right,rgba(124,58,237,0.28),transparent_55%)]" />
+      <div className="relative z-10 max-w-md">
+        <div className={`mb-3 flex h-11 w-11 items-center justify-center rounded-2xl ${f.iconBg}`}>
+          <f.icon className="h-5 w-5" />
+        </div>
+        <h3 className="text-lg font-extrabold tracking-tight text-[var(--text-primary)] sm:text-xl">{f.title}</h3>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{f.desc}</p>
+        <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3.5 py-1.5 text-sm font-semibold text-[var(--text-primary)] transition group-hover:border-violet-500 group-hover:bg-violet-600 group-hover:text-white dark:border-white/15 dark:bg-white/5">
+          Learn more <ArrowRight className="h-4 w-4" />
+        </span>
+      </div>
+      <div className="relative z-10 mt-5 flex shrink-0 items-center justify-center sm:mt-0 sm:w-[38%]">
+        <div className="w-full max-w-[200px] rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-3.5 text-center shadow-inner dark:border-white/10 dark:bg-slate-950/70">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Highlight</p>
+          <p className="mt-1 text-sm font-bold text-violet-700 dark:text-violet-200">{f.badge}</p>
+          <div className="mt-2.5 flex justify-center gap-1.5">
+            {[0, 1, 2].map((d) => (
+              <span
+                key={d}
+                className="h-1.5 w-7 rounded-full bg-gradient-to-r from-violet-500 to-indigo-400"
+                style={{ opacity: 1 - d * 0.25 }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export function OfferStackSection({ onExploreAll }: Props) {
   return (
-    <section
-      id="features"
-      className="bg-[var(--bg-primary)] py-16 text-[var(--text-primary)]"
-    >
+    <section id="features" className="bg-[var(--bg-primary)] py-12 text-[var(--text-primary)] sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4 sm:mb-10">
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
               — What We Offer
             </p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
+            <h2 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-3xl">
               Everything You Need to Grow
             </h2>
           </div>
@@ -93,57 +132,28 @@ export function OfferStackSection({ onExploreAll }: Props) {
           </button>
         </div>
 
-        {/* Sticky stack — gap ~50% of previous 55vh */}
-        <div className="relative mx-auto max-w-4xl">
+        {/* Mobile / tablet: vertical stack — every card visible */}
+        <div className="mx-auto flex max-w-4xl flex-col gap-4 md:hidden">
+          {FEATURES.map((f) => (
+            <FeatureCard key={f.title} f={f} />
+          ))}
+        </div>
+
+        {/* Desktop: sticky stack effect */}
+        <div className="relative mx-auto hidden max-w-4xl md:block">
           {FEATURES.map((f, i) => (
             <div
               key={f.title}
-              className="sticky mb-[28vh] last:mb-6"
+              className="sticky mb-[22vh] last:mb-6"
               style={{
                 top: `calc(5.5rem + ${i * 0.65}rem)`,
                 zIndex: i + 1,
               }}
             >
-              <Link
-                to={f.to}
-                className={`group relative flex min-h-[200px] flex-col justify-between overflow-hidden rounded-3xl border border-[var(--border-default)] bg-gradient-to-br ${f.accent} bg-[var(--bg-card)] p-6 shadow-[var(--shadow-elevated)] transition-shadow hover:shadow-xl sm:min-h-[240px] sm:flex-row sm:items-center sm:gap-8 sm:p-8 dark:border-white/10`}
-              >
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(124,58,237,0.12),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top_right,rgba(124,58,237,0.28),transparent_55%)]" />
-                <div className="relative z-10 max-w-md">
-                  <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${f.iconBg}`}>
-                    <f.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-2xl">
-                    {f.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)] sm:text-base">
-                    {f.desc}
-                  </p>
-                  <span className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition group-hover:border-violet-500 group-hover:bg-violet-600 group-hover:text-white dark:border-white/15 dark:bg-white/5">
-                    Learn more <ArrowRight className="h-4 w-4" />
-                  </span>
-                </div>
-                <div className="relative z-10 mt-6 flex shrink-0 items-center justify-center sm:mt-0 sm:w-[40%]">
-                  <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] px-5 py-4 text-center shadow-inner dark:border-white/10 dark:bg-slate-950/70">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                      Highlight
-                    </p>
-                    <p className="mt-1 text-sm font-bold text-violet-700 dark:text-violet-200">{f.badge}</p>
-                    <div className="mt-3 flex justify-center gap-1.5">
-                      {[0, 1, 2].map((d) => (
-                        <span
-                          key={d}
-                          className="h-1.5 w-8 rounded-full bg-gradient-to-r from-violet-500 to-indigo-400"
-                          style={{ opacity: 1 - d * 0.25 }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <FeatureCard f={f} />
             </div>
           ))}
-          <div className="h-[10vh]" aria-hidden />
+          <div className="h-[8vh]" aria-hidden />
         </div>
       </div>
     </section>
