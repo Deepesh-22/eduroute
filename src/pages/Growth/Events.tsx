@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Users, ArrowRight, Search } from 'lucide-react';
+import { FeatureDecor } from '../../components/FeatureDecor';
 
 const EVENTS = [
   {
@@ -11,8 +12,7 @@ const EVENTS = [
     attendees: '2,500+',
     category: 'Technology',
     filter: 'all' as const,
-    image:
-      'https://images.unsplash.com/photo-1571645163064-77faa9676a46?q=80&w=1170&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1571645163064-77faa9676a46?q=80&w=1170&auto=format&fit=crop',
   },
   {
     id: '2',
@@ -22,8 +22,7 @@ const EVENTS = [
     attendees: '400',
     category: 'Workshop',
     filter: 'workshops' as const,
-    image:
-      'https://images.unsplash.com/photo-1616499535171-a3ca97f87a7d?q=80&w=1170&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1616499535171-a3ca97f87a7d?q=80&w=1170&auto=format&fit=crop',
   },
   {
     id: '3',
@@ -76,14 +75,16 @@ export const Events = () => {
 
   return (
     <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto">
-      <header className="mb-12">
-        <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4">Growth Events</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl">
-          Expand your network and learn from experts at our curated tech summits, workshops, and hackathons.
-        </p>
+      <header className="mb-12 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex-1">
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4">Growth Events</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl">
+            Expand your network and learn from experts at our curated tech summits, workshops, and hackathons.
+          </p>
+        </div>
+        <FeatureDecor variant="growth" className="opacity-95" />
       </header>
 
-      {/* Hero / Featured Event — previous UI */}
       <motion.div
         whileHover={{ scale: 1.01 }}
         className="mb-12 relative h-80 md:h-[450px] rounded-[40px] overflow-hidden group cursor-pointer"
@@ -96,24 +97,14 @@ export const Events = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
         <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full">
           <div className="flex items-center gap-2 mb-4">
-            <span className="px-4 py-1.5 bg-indigo-600 text-white rounded-full text-xs font-bold uppercase tracking-widest">
-              Featured Event
-            </span>
-            <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md text-white rounded-full text-xs font-bold uppercase tracking-widest">
-              Hackathon
-            </span>
+            <span className="px-4 py-1.5 bg-indigo-600 text-white rounded-full text-xs font-bold uppercase tracking-widest">Featured Event</span>
+            <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md text-white rounded-full text-xs font-bold uppercase tracking-widest">Hackathon</span>
           </div>
           <h2 className="text-3xl md:text-5xl font-black text-white mb-4">Global AI Innovation Hackathon</h2>
           <div className="flex flex-wrap items-center gap-6 text-white/80 text-sm font-bold">
-            <span className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-indigo-400" /> Dec 10-12, 2024
-            </span>
-            <span className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-indigo-400" /> IIT Jodhpur
-            </span>
-            <span className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-indigo-400" /> 5,000+ Participants
-            </span>
+            <span className="flex items-center gap-2"><Calendar className="h-5 w-5 text-indigo-400" /> Dec 10-12, 2024</span>
+            <span className="flex items-center gap-2"><MapPin className="h-5 w-5 text-indigo-400" /> IIT Jodhpur</span>
+            <span className="flex items-center gap-2"><Users className="h-5 w-5 text-indigo-400" /> 5,000+ Participants</span>
           </div>
         </div>
       </motion.div>
@@ -145,9 +136,7 @@ export const Events = () => {
           >
             <div className="h-48 relative overflow-hidden">
               <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
-              <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1 rounded-xl text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">
-                {event.category}
-              </div>
+              <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1 rounded-xl text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">{event.category}</div>
             </div>
             <div className="p-6">
               <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-2">{event.date}</div>
@@ -160,10 +149,7 @@ export const Events = () => {
                   <Users className="h-4 w-4 text-slate-400" /> {event.attendees} attending
                 </div>
               </div>
-              <button
-                type="button"
-                className="w-full py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl font-bold group-hover:bg-indigo-600 group-hover:text-white transition-all flex items-center justify-center gap-2"
-              >
+              <button type="button" className="w-full py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl font-bold group-hover:bg-indigo-600 group-hover:text-white transition-all flex items-center justify-center gap-2">
                 Register Now <ArrowRight className="h-4 w-4" />
               </button>
             </div>
