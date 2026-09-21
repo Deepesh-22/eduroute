@@ -2,7 +2,7 @@
 <html lang="en" class="dark" data-theme="dark" style="color-scheme: dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="EDUROUTE — Smart Education Platform" />
     <title>EDUROUTE | Smart Education Platform</title>
     <script>
@@ -33,17 +33,17 @@
   <body>
     <div id="root"></div>
     <div id="boot-fallback" role="alert">
-      <p><strong>EDUROUTE</strong> is loading…</p>
-      <p style="font-size:0.875rem;color:#94a3b8">If this stays, hard-refresh or open <a href="/">home</a> / <a href="/login">login</a>.</p>
+      <p style="font-size:1.25rem;font-weight:800;margin:0 0 0.5rem">EDUROUTE</p>
+      <p style="color:#94a3b8;margin:0 0 1rem">Something went wrong loading the app.</p>
+      <a href="/">Reload</a>
     </div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // If the app has not mounted after a few seconds, show a clean message (never Netlify 404 HTML).
       setTimeout(function () {
         var root = document.getElementById('root');
-        var fb = document.getElementById('boot-fallback');
-        if (root && fb && !root.hasChildNodes()) {
-          fb.classList.add('show');
+        if (root && !root.hasChildNodes()) {
+          var fb = document.getElementById('boot-fallback');
+          if (fb) fb.classList.add('show');
         }
       }, 8000);
     </script>
