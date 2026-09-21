@@ -70,10 +70,10 @@ function renderTable(rows: string[][], keyBase: number) {
         </thead>
         <tbody>
           {body.map((row, ri) => (
-            <tr key={ri} className={ri % 2 === 0 ? 'bg-white dark:bg-slate-900/40' : 'bg-slate-50/60 dark:bg-slate-800/40'}>
+            <tr key={ri} className={ri % 2 === 0 ? 'bg-white dark:bg-transparent' : 'bg-slate-50/80 dark:bg-slate-800/30'}>
               {row.map((cell, ci) => (
                 <td key={ci} className="border-b border-slate-100 px-3 py-2 align-top text-slate-700 dark:border-slate-800 dark:text-slate-300">
-                  {inlineFormat(cell.replace(/<br\s*\/?>/gi, ' · '))}
+                  {inlineFormat(cell)}
                 </td>
               ))}
             </tr>
@@ -85,8 +85,10 @@ function renderTable(rows: string[][], keyBase: number) {
 }
 
 export function BuddyMarkdown({ text }: { text: string }) {
+  // Guard against undefined/null so a bad caller never unmounts the chat tree
+  const raw = String(text ?? '');
   // Normalize HTML line breaks Groq sometimes emits
-  const normalized = text.replace(/<br\s*\/?>/gi, '\n').replace(/\r\n/g, '\n');
+  const normalized = raw.replace(/<br\s*\/?>/gi, '\n').replace(/\r\n/g, '\n');
   const lines = normalized.split('\n');
   const blocks: ReactNode[] = [];
   let i = 0;
@@ -103,38 +105,40 @@ export function BuddyMarkdown({ text }: { text: string }) {
 
     // Fenced code block
     if (trimmed.startsWith('```')) {
+      const lang = trimmed.slice(3).trim();
       const codeLines: string[] = [];
       i += 1;
       while (i < lines.length && !lines[i].trim().startsWith('```')) {
         codeLines.push(lines[i]);
         i += 1;
       }
-      i += 1; // skip closing ```
+      if (i < lines.length) i += 1; // skip closing ```
       blocks.push(
         <pre
           key={key++}
           className="my-3 overflow-x-auto rounded-xl bg-slate-950 p-4 text-[12px] leading-5 text-slate-100"
         >
-          <code>{codeLines.join('\n')}</code>
+          <code className={lang ? `language-${lang}` : undefined}>{codeLines.join('\n')}</code>
         </pre>
       );
       continue;
     }
 
-    // Markdown table
+    // Table (header + separator + rows)
     if (trimmed.includes('|') && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
-      const tableRows: string[][] = [parseTableRow(trimmed)];
+      const rows: string[][] = [parseTableRow(trimmed)];
       i += 2; // skip header + separator
       while (i < lines.length && lines[i].includes('|') && lines[i].trim()) {
-        tableRows.push(parseTableRow(lines[i]));
+        rows.push(parseTableRow(lines[i]));
         i += 1;
       }
-      blocks.push(renderTable(tableRows, key++));
+      const tbl = renderTable(rows, key++);
+      if (tbl) blocks.push(tbl);
       continue;
     }
 
     // Headings
-    const heading = /^(#{1,4})\s+(.+)$/.exec(trimmed);
+    const heading = /^(#{1,3})\s+(.+)$/.exec(trimmed);
     if (heading) {
       const level = heading[1].length;
       const content = inlineFormat(heading[2]);

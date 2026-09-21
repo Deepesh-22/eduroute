@@ -26,14 +26,13 @@ const ThemeContext = createContext<
    GET INITIAL THEME
 
    Priority:
-   1. Saved user preference
-   2. System preference
-   3. Light theme
+   1. Saved user preference (from toggle)
+   2. Default: dark (always open in dark mode)
 ========================================================= */
 
 const getInitialTheme = (): Theme => {
   if (typeof window === "undefined") {
-    return "light";
+    return "dark";
   }
 
   try {
@@ -46,20 +45,12 @@ const getInitialTheme = (): Theme => {
     ) {
       return savedTheme;
     }
-
-    if (
-      typeof window.matchMedia === "function" &&
-      window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches
-    ) {
-      return "dark";
-    }
   } catch {
     // Ignore browser/storage errors
   }
 
-  return "light";
+  // Always default to dark for first-time visitors
+  return "dark";
 };
 
 /* =========================================================
@@ -126,72 +117,6 @@ export const ThemeProvider = ({
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
-
-  /* =======================================================
-     SYSTEM THEME LISTENER
-
-     System theme will only control the app if the user
-     hasn't manually selected light/dark.
-  ======================================================= */
-
-  useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      typeof window.matchMedia !== "function"
-    ) {
-      return;
-    }
-
-    let mediaQuery: MediaQueryList;
-
-    try {
-      mediaQuery = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      );
-    } catch {
-      return;
-    }
-
-    const handleSystemThemeChange = (
-      event: MediaQueryListEvent
-    ) => {
-      try {
-        const savedTheme =
-          window.localStorage.getItem(
-            STORAGE_KEY
-          );
-
-        /*
-          If user already selected a theme,
-          don't overwrite it.
-        */
-        if (
-          savedTheme === "dark" ||
-          savedTheme === "light"
-        ) {
-          return;
-        }
-
-        setThemeState(
-          event.matches ? "dark" : "light"
-        );
-      } catch {
-        // Ignore browser errors
-      }
-    };
-
-    mediaQuery.addEventListener(
-      "change",
-      handleSystemThemeChange
-    );
-
-    return () => {
-      mediaQuery.removeEventListener(
-        "change",
-        handleSystemThemeChange
-      );
-    };
-  }, []);
 
   /* =======================================================
      CONTEXT VALUE
