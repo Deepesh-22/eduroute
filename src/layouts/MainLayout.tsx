@@ -55,6 +55,10 @@ export const MainLayout = () => {
     }
   }, []);
 
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
       const next = !prev;
@@ -169,9 +173,7 @@ export const MainLayout = () => {
             {!collapsed && (
               <>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-[var(--text-primary)]">
-                    {profileIdentity.name}
-                  </div>
+                  <div className="truncate text-sm font-semibold text-[var(--text-primary)]">{profileIdentity.name}</div>
                   <div className="text-xs text-[var(--text-muted)]">{profileIdentity.role}</div>
                 </div>
                 <ChevronDown className="h-4 w-4 text-[var(--text-muted)]" />
@@ -195,13 +197,7 @@ export const MainLayout = () => {
           </button>
 
           {collapsed && (
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              className="er-nav-item !justify-center !px-0 w-full"
-              title="Expand sidebar"
-              aria-label="Expand sidebar"
-            >
+            <button type="button" onClick={toggleCollapsed} className="er-nav-item !justify-center !px-0 w-full" title="Expand sidebar" aria-label="Expand sidebar">
               <PanelLeftOpen className="h-[18px] w-[18px]" />
             </button>
           )}
@@ -212,16 +208,18 @@ export const MainLayout = () => {
         <header className="er-header shrink-0">
           <button
             type="button"
-            className="lg:hidden p-2 -ml-1 rounded-xl hover:bg-[var(--accent-soft)]"
+            className="lg:hidden shrink-0 p-2 -ml-1 rounded-xl hover:bg-[var(--accent-soft)]"
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
 
-          <GlobalSearch variant="header" />
+          <div className="min-w-0 flex-1">
+            <GlobalSearch variant="header" />
+          </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
               className="relative flex h-9 w-9 items-center justify-center rounded-full hover:bg-[var(--accent-soft)] text-[var(--text-secondary)]"
@@ -231,10 +229,7 @@ export const MainLayout = () => {
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[var(--bg-sidebar)]" />
             </button>
             <ThemeToggle />
-            <Link
-              to="/profile"
-              className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-[var(--accent-soft)]"
-            >
+            <Link to="/profile" className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-[var(--accent-soft)]">
               <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-xs font-bold text-white">
                 {profileIdentity.photo ? (
                   <img src={profileIdentity.photo} alt="" className="h-full w-full object-cover" />
@@ -255,12 +250,8 @@ export const MainLayout = () => {
 
       {isMobileMenuOpen && (
         <>
-          <div
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-hidden
-          />
-          <aside className="fixed inset-y-0 left-0 z-50 w-[280px] bg-[var(--bg-sidebar)] shadow-2xl lg:hidden flex flex-col">
+          <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} aria-hidden />
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(280px,85vw)] flex-col bg-[var(--bg-sidebar)] shadow-2xl er-safe-pt lg:hidden">
             <div className="flex items-center justify-between px-4 py-4">
               <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white">
@@ -272,11 +263,7 @@ export const MainLayout = () => {
                 </div>
                 <span className="font-bold">EDUROUTE</span>
               </Link>
-              <button
-                type="button"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-xl hover:bg-[var(--accent-soft)]"
-              >
+              <button type="button" onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-xl hover:bg-[var(--accent-soft)]">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -296,12 +283,12 @@ export const MainLayout = () => {
                 </Link>
               ))}
             </nav>
-            <div className="border-t border-[var(--border-default)] p-3 space-y-1">
+            <div className="border-t border-[var(--border-default)] p-3 space-y-1 er-safe-pb">
               <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="er-nav-item">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white">
                   {profileIdentity.initial}
                 </div>
-                {profileIdentity.name}
+                <span className="truncate">{profileIdentity.name}</span>
               </Link>
               <Link to="/admin-login" onClick={() => setIsMobileMenuOpen(false)} className="er-nav-item">
                 <Shield className="h-[18px] w-[18px]" />
