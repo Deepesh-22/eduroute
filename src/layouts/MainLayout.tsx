@@ -99,7 +99,7 @@ export const MainLayout = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
       <aside
-        className={`er-sidebar hidden lg:flex shrink-0 transition-[width] duration-300 ease-out ${
+        className={`er-sidebar !hidden lg:!flex shrink-0 transition-[width] duration-300 ease-out ${
           collapsed ? '!w-[72px]' : ''
         }`}
         style={collapsed ? { width: 72 } : undefined}
