@@ -29,6 +29,18 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/auth/oauth/github"
+  to = "/.netlify/functions/auth-oauth-github"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/auth/oauth/linkedin"
+  to = "/.netlify/functions/auth-oauth-linkedin"
+  status = 200
+  force = true
+
 # Other API → Netlify functions
 [[redirects]]
   from = "/api/*"
