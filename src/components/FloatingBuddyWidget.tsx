@@ -1,6 +1,6 @@
 /**
- * Floating Buddy AI — logo FAB + “How can I help you?” text that floats above
- * (visible before and after open). Frontend only; no backend/API changes.
+ * Floating Buddy AI — logo FAB + “How can I help you?” (Buddy page logo + text)
+ * floats above before and after open. Frontend only; no backend/API changes.
  */
 import {
   FormEvent,
@@ -134,40 +134,6 @@ function savePos(x: number, y: number) {
   } catch {
     /* ignore */
   }
-}
-
-/** Custom Buddy AI logo — friendly guide mark (not emoji). */
-function BuddyLogo({ size = 40, className = '' }: { size?: number; className?: string }) {
-  const uid = `buddy-${size}`;
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" className={className} aria-hidden>
-      <defs>
-        <linearGradient id={`${uid}-face`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#8B5CF6" />
-          <stop offset="50%" stopColor="#6366F1" />
-          <stop offset="100%" stopColor="#38BDF8" />
-        </linearGradient>
-        <linearGradient id={`${uid}-shine`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <circle cx="32" cy="34" r="22" fill={`url(#${uid}-face)`} />
-      <ellipse cx="32" cy="26" rx="18" ry="12" fill={`url(#${uid}-shine)`} />
-      <rect x="30" y="6" width="4" height="10" rx="2" fill="#A78BFA" />
-      <circle cx="32" cy="6" r="4" fill="#FBBF24" />
-      <circle cx="32" cy="6" r="2" fill="#FEF3C7" />
-      <circle cx="24" cy="32" r="5" fill="#FFFFFF" />
-      <circle cx="40" cy="32" r="5" fill="#FFFFFF" />
-      <circle cx="25" cy="33" r="2.5" fill="#1E1B4B" />
-      <circle cx="41" cy="33" r="2.5" fill="#1E1B4B" />
-      <circle cx="26" cy="32" r="1" fill="#FFFFFF" />
-      <circle cx="42" cy="32" r="1" fill="#FFFFFF" />
-      <path d="M24 40 Q32 48 40 40" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="18" cy="38" r="3" fill="#F9A8D4" opacity="0.55" />
-      <circle cx="46" cy="38" r="3" fill="#F9A8D4" opacity="0.55" />
-    </svg>
-  );
 }
 
 export function FloatingBuddyWidget() {
@@ -341,8 +307,8 @@ export function FloatingBuddyWidget() {
 
           <div className="relative z-10 flex shrink-0 items-start gap-3 px-4 pb-2 pt-4">
             <div className="relative shrink-0">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 via-indigo-500/10 to-sky-400/20 shadow-lg shadow-violet-400/30 ring-4 ring-white/80 dark:ring-slate-900/80">
-                <BuddyLogo size={52} />
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-[28px] text-white shadow-lg shadow-violet-500/30 ring-4 ring-white/80 dark:ring-slate-900/80">
+                🤖
               </div>
               <span className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-950">
                 ✓
@@ -473,20 +439,23 @@ export function FloatingBuddyWidget() {
         </div>
       )}
 
-      {/* Floating label — visible before and after click (above logo only) */}
+      {/* Floating label — logo (same as Buddy AI page) + text; before & after open */}
       {hintVisible && (
         <div
-          style={{ right: pos.x - 40, bottom: pos.y + 62 }}
+          style={{ right: pos.x - 52, bottom: pos.y + 62 }}
           className="buddy-help-float fixed z-[92] pointer-events-none select-none"
           aria-hidden
         >
-          <span className="buddy-help-text-float inline-block whitespace-nowrap rounded-full border border-violet-200/80 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-violet-700 shadow-lg shadow-violet-200/40 backdrop-blur dark:border-violet-500/40 dark:bg-slate-900/95 dark:text-violet-200 dark:shadow-violet-900/40">
+          <span className="buddy-help-text-float inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-violet-200/80 bg-white/95 py-1 pl-1 pr-3.5 text-xs font-bold text-violet-700 shadow-lg shadow-violet-200/40 backdrop-blur dark:border-violet-500/40 dark:bg-slate-900/95 dark:text-violet-200 dark:shadow-violet-900/40">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-sm text-white shadow-md shadow-violet-500/30 ring-2 ring-violet-400/30">
+              🤖
+            </span>
             How can I help you?
           </span>
         </div>
       )}
 
-      {/* Logo-only FAB — no “Buddy” text */}
+      {/* Logo-only FAB — same Buddy AI page mark, no “Buddy” text */}
       <button
         ref={fabRef}
         type="button"
@@ -495,12 +464,12 @@ export function FloatingBuddyWidget() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        className="buddy-fab-pulse fixed z-[91] flex h-14 w-14 touch-none select-none items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 p-0 text-white shadow-lg shadow-violet-300/50 transition hover:shadow-xl active:cursor-grabbing dark:shadow-violet-900/50 sm:h-12 sm:w-12"
+        className="buddy-fab-pulse fixed z-[91] flex h-14 w-14 touch-none select-none items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 p-0 text-white shadow-lg shadow-violet-500/30 transition hover:shadow-xl active:cursor-grabbing dark:shadow-violet-900/50 sm:h-12 sm:w-12"
         aria-label="How can I help you? AI assistant"
         title="Drag to move · Click to open"
       >
-        <span className="buddy-logo-bob flex h-full w-full items-center justify-center">
-          <BuddyLogo size={40} />
+        <span className="buddy-logo-bob flex h-full w-full items-center justify-center text-2xl sm:text-xl" aria-hidden>
+          🤖
         </span>
       </button>
 
@@ -523,7 +492,7 @@ export function FloatingBuddyWidget() {
         }
         .buddy-help-float { animation: buddy-help-bob 2.4s ease-in-out infinite; }
         .buddy-help-text-float {
-          display: inline-block;
+          display: inline-flex;
           animation: buddy-help-text-flow 2s ease-in-out infinite;
         }
         .buddy-fab-pulse { animation: buddy-fab-glow 2.8s ease-in-out infinite; }
