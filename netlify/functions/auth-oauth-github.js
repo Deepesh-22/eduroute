@@ -2,8 +2,10 @@
  * POST /api/auth/oauth/github
  * Body: { code, redirect_uri, mode? }
  * Exchanges GitHub OAuth code for profile using server-side client secret.
+ * When MySQL is configured, upserts user and returns real JWT (same as email register).
  */
 const crypto = require('crypto');
+const mysqlAuth = require('./_lib/mysqlAuth');
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -124,8 +126,25 @@ exports.handler = async (event) => {
 
     const name = ghUser.name || ghUser.login || 'GitHub User';
     const avatar = ghUser.avatar_url || '';
-    const sessionToken = `github.${crypto.randomBytes(24).toString('hex')}`;
 
+    // Prefer real MySQL user + JWT when DB is configured (same as email signup)
+    try {
+      const dbResult = await mysqlAuth.upsertOAuthUser({
+        name,
+        email,
+        avatar,
+        mode,
+        provider: 'github',
+      });
+      if (dbResult && dbResult.success) {
+        return json(200, dbResult);
+      }
+    } catch (dbErr) {
+      console.warn('github oauth mysql upsert failed, using session token', dbErr.message);
+    }
+
+    // Fallback: local session token (same pattern as Google client-side auth)
+    const sessionToken = `github.${crypto.randomBytes(24).toString('hex')}`;
     return json(200, {
       success: true,
       token: sessionToken,

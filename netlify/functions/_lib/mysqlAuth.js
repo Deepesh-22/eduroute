@@ -44,9 +44,7 @@ function envFirst(...keys) {
 
 /** True when Railway/MySQL connection can be built from env. */
 function hasMysqlConfig() {
-  // Connection URL styles
   if (envFirst('MYSQL_URL', 'DATABASE_URL', 'MYSQL_PUBLIC_URL', 'MYSQL_PRIVATE_URL')) return true;
-  // Split vars — standard + Railway naming (MYSQLHOST / MYSQLUSER / …)
   const host = envFirst('MYSQL_HOST', 'MYSQLHOST', 'DB_HOST');
   const user = envFirst('MYSQL_USER', 'MYSQLUSER', 'DB_USER', 'DB_USERNAME');
   const password = envFirst('MYSQL_PASSWORD', 'MYSQLPASSWORD', 'DB_PASSWORD');
@@ -137,6 +135,7 @@ function toUser(row) {
     email: row.email,
     role: row.role === 'admin' ? 'admin' : 'student',
     verificationStatus: row.college_verified || 'none',
+    avatar: row.avatar || undefined,
   };
 }
 
@@ -190,7 +189,7 @@ async function login({ email, password, role }) {
   }
 
   const [rows] = await pool.query(
-    'SELECT id, name, email, password, role, college_verified FROM users WHERE email = ? LIMIT 1',
+    'SELECT id, name, email, password, role, college_verified, avatar FROM users WHERE email = ? LIMIT 1',
     [cleanEmail],
   );
 
@@ -213,6 +212,70 @@ async function login({ email, password, role }) {
   const user = toUser(row);
   const token = issueToken(user);
   return json(200, { success: true, token, user });
+}
+
+/**
+ * Upsert OAuth user (GitHub / LinkedIn / Google-style).
+ * Creates account if email is new; returns existing on login/signup with same email.
+ * Password is a random unusable hash so email login cannot hijack OAuth accounts without reset.
+ */
+async function upsertOAuthUser({ name, email, avatar, mode, provider }) {
+  if (!hasMysqlConfig() || !depsReady()) {
+    return null;
+  }
+
+  const pool = await getPool();
+  await ensureUsersTable(pool);
+
+  const cleanName = String(name || 'User').trim().slice(0, 160) || 'User';
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  if (!cleanEmail) {
+    throw new Error('OAuth profile missing email');
+  }
+  const cleanAvatar = avatar ? String(avatar).slice(0, 500) : null;
+  const college =
+    mode === 'login' ? 'verified' : 'pending';
+
+  const [existing] = await pool.query(
+    'SELECT id, name, email, role, college_verified, avatar FROM users WHERE email = ? LIMIT 1',
+    [cleanEmail],
+  );
+
+  if (existing.length) {
+    const row = existing[0];
+    if (cleanAvatar && !row.avatar) {
+      await pool.query('UPDATE users SET avatar = ? WHERE id = ?', [cleanAvatar, row.id]);
+      row.avatar = cleanAvatar;
+    }
+    if (mode === 'login' && row.college_verified === 'none') {
+      await pool.query("UPDATE users SET college_verified = 'verified' WHERE id = ?", [row.id]);
+      row.college_verified = 'verified';
+    }
+    const user = toUser(row);
+    user.provider = provider;
+    const token = issueToken(user);
+    return { success: true, token, user };
+  }
+
+  const randomPass = crypto.randomBytes(32).toString('hex');
+  const hash = await bcrypt.hash(randomPass, 12);
+  const [result] = await pool.query(
+    `INSERT INTO users (name, email, password, role, college_verified, avatar)
+     VALUES (?, ?, ?, 'student', ?, ?)`,
+    [cleanName, cleanEmail, hash, college, cleanAvatar],
+  );
+
+  const user = {
+    id: String(result.insertId),
+    name: cleanName,
+    email: cleanEmail,
+    role: 'student',
+    verificationStatus: college,
+    avatar: cleanAvatar || undefined,
+    provider,
+  };
+  const token = issueToken(user);
+  return { success: true, token, user };
 }
 
 async function ensureDefaultAdmin() {
@@ -239,5 +302,7 @@ module.exports = {
   depsReady,
   register,
   login,
+  upsertOAuthUser,
+  issueToken,
   ensureDefaultAdmin,
 };

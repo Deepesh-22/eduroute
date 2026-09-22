@@ -2,8 +2,10 @@
  * POST /api/auth/oauth/linkedin
  * Body: { code, redirect_uri, mode? }
  * Exchanges LinkedIn OAuth code for profile using server-side client secret.
+ * When MySQL is configured, upserts user and returns real JWT (same as email register).
  */
 const crypto = require('crypto');
+const mysqlAuth = require('./_lib/mysqlAuth');
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -104,8 +106,23 @@ exports.handler = async (event) => {
       [profile.given_name, profile.family_name].filter(Boolean).join(' ') ||
       'LinkedIn User';
     const avatar = profile.picture || '';
-    const sessionToken = `linkedin.${crypto.randomBytes(24).toString('hex')}`;
 
+    try {
+      const dbResult = await mysqlAuth.upsertOAuthUser({
+        name,
+        email,
+        avatar,
+        mode,
+        provider: 'linkedin',
+      });
+      if (dbResult && dbResult.success) {
+        return json(200, dbResult);
+      }
+    } catch (dbErr) {
+      console.warn('linkedin oauth mysql upsert failed, using session token', dbErr.message);
+    }
+
+    const sessionToken = `linkedin.${crypto.randomBytes(24).toString('hex')}`;
     return json(200, {
       success: true,
       token: sessionToken,
