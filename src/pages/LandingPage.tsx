@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   BookOpen,
   Briefcase,
+  ClipboardCheck,
   Code2,
   Instagram,
   Mail,
   Map,
   MessageCircle,
+  Route,
   Trophy,
   Users,
 } from 'lucide-react';
@@ -19,20 +21,41 @@ const HERO_VIDEO_CDN =
   'https://videos.pexels.com/video-files/2278095/2278095-hd_1920_1080_30fps.mp4';
 const HERO_VIDEO_LOCAL = '/videos/hero-coding.mp4';
 
+/** Real nav links */
 const NAV = [
   { label: 'Home', href: '#home' },
-  { label: 'Roadmaps', href: '#features' },
-  { label: 'Jobs & Internships', href: '#features' },
-  { label: 'Hackathons', href: '#features' },
-  { label: 'Resources', href: '#features' },
-  { label: 'Community', href: '#features' },
+  { label: 'How it works', href: '#how-it-works' },
+  { label: 'Roadmaps', href: '/roadmaps' },
+  { label: 'Internships', href: '/internships' },
+  { label: 'Journey', href: '#journey' },
 ];
 
 const STATS = [
-  { value: '45K+', label: 'Active Learners', icon: Users, color: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300' },
-  { value: '80+', label: 'Roadmaps', icon: Map, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300' },
-  { value: '500+', label: 'Job & Internship Opportunities', icon: Briefcase, color: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300' },
-  { value: '120+', label: 'Upcoming Hackathons', icon: Trophy, color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300' },
+  { target: 45, suffix: 'K+', label: 'Active Learners', icon: Users, color: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300' },
+  { target: 80, suffix: '+', label: 'Roadmaps', icon: Map, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300' },
+  { target: 500, suffix: '+', label: 'Job & Internship Opportunities', icon: Briefcase, color: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300' },
+  { target: 120, suffix: '+', label: 'Upcoming Hackathons', icon: Trophy, color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300' },
+];
+
+const HOW_STEPS = [
+  {
+    step: '1',
+    title: 'Sign up',
+    body: 'Create a free account and pick the track you care about.',
+    icon: Users,
+  },
+  {
+    step: '2',
+    title: 'Skill quiz',
+    body: 'Answer a short yes/no quiz so we map your skill gaps.',
+    icon: ClipboardCheck,
+  },
+  {
+    step: '3',
+    title: 'Get your path',
+    body: 'Follow a personal roadmap, practice, and apply with confidence.',
+    icon: Route,
+  },
 ];
 
 const JOURNEY = [
@@ -44,11 +67,10 @@ const JOURNEY = [
 
 const QUICK_LINKS = [
   { label: 'Home', href: '#home' },
+  { label: 'How it works', href: '#how-it-works' },
   { label: 'Roadmaps', href: '/roadmaps' },
-  { label: 'Jobs & Internships', href: '/internships' },
-  { label: 'Hackathons', href: '#features' },
-  { label: 'Resources', href: '#features' },
-  { label: 'Community', href: '#features' },
+  { label: 'Internships', href: '/internships' },
+  { label: 'Journey', href: '#journey' },
 ];
 
 const COMPANY_LINKS = [
@@ -89,9 +111,102 @@ function StaggerText({
           >
             {char}
           </span>
-        )
+        ),
       )}
     </span>
+  );
+}
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => setReduced(mq.matches);
+    apply();
+    mq.addEventListener?.('change', apply);
+    return () => mq.removeEventListener?.('change', apply);
+  }, []);
+  return reduced;
+}
+
+function useCountUp(target: number, active: boolean, duration = 1400) {
+  const [value, setValue] = useState(0);
+  const reduced = usePrefersReducedMotion();
+
+  useEffect(() => {
+    if (!active) return;
+    if (reduced) {
+      setValue(target);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [active, target, duration, reduced]);
+
+  return value;
+}
+
+function StatItem({
+  target,
+  suffix,
+  label,
+  icon: Icon,
+  color,
+  active,
+}: {
+  target: number;
+  suffix: string;
+  label: string;
+  icon: typeof Users;
+  color: string;
+  active: boolean;
+}) {
+  const value = useCountUp(target, active);
+  return (
+    <div className="flex items-center gap-3 px-2 py-2">
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <div className="text-lg font-extrabold tabular-nums text-slate-900 dark:text-white">
+          {value}
+          {suffix}
+        </div>
+        <div className="text-[11px] font-medium leading-tight text-slate-500 dark:text-slate-400">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function NavItem({
+  item,
+  onClick,
+  className,
+}: {
+  item: { label: string; href: string };
+  onClick?: () => void;
+  className: string;
+}) {
+  if (item.href.startsWith('/')) {
+    return (
+      <Link to={item.href} onClick={onClick} className={className}>
+        {item.label}
+      </Link>
+    );
+  }
+  return (
+    <a href={item.href} onClick={onClick} className={className}>
+      {item.label}
+    </a>
   );
 }
 
@@ -99,10 +214,51 @@ export const LandingPage = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [heroVideoSrc, setHeroVideoSrc] = useState(HERO_VIDEO_CDN);
+  const [statsActive, setStatsActive] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
 
   const instagramUrl = 'https://www.instagram.com/vanshkhandelwal28/';
   const whatsappUrl = 'https://wa.link/9mfubu';
   const supportEmail = 'vanshkhandelwal777@gmail.com';
+
+  // Pause hero video when off-screen (better performance)
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry) return;
+        if (entry.isIntersecting) {
+          void el.play().catch(() => undefined);
+        } else {
+          el.pause();
+        }
+      },
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [heroVideoSrc]);
+
+  // Stats count-up when scrolled into view
+  useEffect(() => {
+    const el = statsRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setStatsActive(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <div id="home" className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -121,13 +277,11 @@ export const LandingPage = () => {
 
           <nav className="hidden items-center gap-1 lg:flex">
             {NAV.map((item) => (
-              <a
+              <NavItem
                 key={item.label}
-                href={item.href}
+                item={item}
                 className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-              >
-                {item.label}
-              </a>
+              />
             ))}
           </nav>
 
@@ -161,14 +315,12 @@ export const LandingPage = () => {
         {mobileOpen && (
           <div className="border-t border-slate-100 bg-white px-4 py-3 lg:hidden dark:border-slate-800 dark:bg-slate-950">
             {NAV.map((item) => (
-              <a
+              <NavItem
                 key={item.label}
-                href={item.href}
+                item={item}
                 onClick={() => setMobileOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200"
-              >
-                {item.label}
-              </a>
+              />
             ))}
             <a
               href="#contact"
@@ -184,16 +336,16 @@ export const LandingPage = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <video
+            ref={videoRef}
             className="h-full w-full scale-105 object-cover"
             autoPlay
             muted
             loop
             playsInline
             preload="auto"
-          >
-            <source src={HERO_VIDEO_CDN} type="video/mp4" />
-            <source src={HERO_VIDEO_LOCAL} type="video/mp4" />
-          </video>
+            src={heroVideoSrc}
+            onError={() => setHeroVideoSrc(HERO_VIDEO_LOCAL)}
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-white from-0% via-white/75 via-35% to-white/15 to-100% dark:from-slate-950 dark:from-0% dark:via-slate-950/80 dark:via-40% dark:to-slate-950/25 dark:to-100%" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white/90 to-transparent dark:from-slate-950/90 dark:to-transparent" />
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/50 to-transparent dark:from-slate-950/40 dark:to-transparent" />
@@ -201,13 +353,11 @@ export const LandingPage = () => {
 
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-24">
           <div className="max-w-xl">
-            {/* Badge */}
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3.5 py-1.5 text-xs font-bold tracking-wide text-violet-700 shadow-sm backdrop-blur dark:border-violet-500/30 dark:bg-slate-900/70 dark:text-violet-300">
               <span className="text-sm leading-none">⚡</span>
               Your Growth Partner in Tech
             </div>
 
-            {/* CodeSandbox-style letter stagger: Build Skills. (white) / Get Hired. (purple) — 2x slower */}
             <h1 className="text-5xl font-black leading-[0.95] tracking-tight drop-shadow-sm sm:text-6xl lg:text-7xl">
               <StaggerText
                 text="Build Skills."
@@ -225,14 +375,12 @@ export const LandingPage = () => {
               />
             </h1>
 
-            {/* Short description */}
             <p className="mt-6 max-w-md text-base leading-relaxed text-slate-600 dark:text-slate-300 sm:text-[17px] sm:leading-7">
               EDUROUTE helps you find the right roadmap, get internships and job
               opportunities, participate in hackathons and build the skills you
               need to grow in tech — all in one place.
             </p>
 
-            {/* CTAs */}
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
                 to="/roadmaps"
@@ -251,26 +399,53 @@ export const LandingPage = () => {
           <div className="hidden min-h-[280px] lg:block" aria-hidden />
         </div>
 
+        {/* Stats bar — count-up on scroll */}
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-lg shadow-slate-200/40 backdrop-blur-md sm:grid-cols-4 dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-black/30">
+          <div
+            ref={statsRef}
+            className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-lg shadow-slate-200/40 backdrop-blur-md sm:grid-cols-4 dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-black/30"
+          >
             {STATS.map((s) => (
-              <div key={s.label} className="flex items-center gap-3 px-2 py-2">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${s.color}`}>
-                  <s.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-lg font-extrabold text-slate-900 dark:text-white">{s.value}</div>
-                  <div className="text-[11px] font-medium leading-tight text-slate-500 dark:text-slate-400">{s.label}</div>
-                </div>
-              </div>
+              <StatItem key={s.label} {...s} active={statsActive} />
             ))}
           </div>
         </div>
       </section>
 
+      {/* How it works */}
+      <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white">How it works</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-slate-600 dark:text-slate-400">
+            Sign up → Skill quiz → Get your path — in three clear steps.
+          </p>
+        </div>
+        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          {HOW_STEPS.map((s, i) => (
+            <div
+              key={s.step}
+              className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
+              {i < HOW_STEPS.length - 1 && (
+                <div className="absolute right-0 top-1/2 hidden h-px w-6 translate-x-full border-t border-dashed border-slate-300 sm:block dark:border-slate-600" />
+              )}
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-violet-600 text-sm font-black text-white">
+                {s.step}
+              </div>
+              <div className="mb-2 flex items-center gap-2">
+                <s.icon className="h-4 w-4 text-violet-500" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">{s.title}</h3>
+              </div>
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-400">{s.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <OfferStackSection onExploreAll={() => setIsAuthOpen(true)} />
 
-      <section className="py-16">
+      {/* Journey */}
+      <section id="journey" className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
             <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr] lg:items-center">
@@ -309,13 +484,11 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer: EDUROUTE watermark first, then columns below (no overlap) */}
       <footer
         id="contact"
         className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-[#0a0a0f]"
       >
         <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
-          {/* Outlined EDUROUTE — in document flow so content sits fully below */}
           <div className="select-none overflow-hidden text-center" aria-hidden>
             <span
               className="inline-block whitespace-nowrap text-[16vw] font-black leading-none tracking-tight sm:text-[12vw] lg:text-[9.5rem]"
@@ -337,9 +510,7 @@ export const LandingPage = () => {
             </span>
           </div>
 
-          {/* All info below the word — no absolute overlay */}
           <div className="mt-6 grid gap-10 pb-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-            {/* Brand */}
             <div>
               <div className="flex items-center gap-2.5">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-sm font-black text-white shadow-md">
@@ -384,76 +555,71 @@ export const LandingPage = () => {
               </div>
             </div>
 
-            {/* Quick links */}
             <div>
               <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
                 Quick Links
               </h3>
               <ul className="space-y-2.5">
-                {QUICK_LINKS.map((item) =>
-                  item.href.startsWith('/') ? (
-                    <li key={item.label}>
+                {QUICK_LINKS.map((l) => (
+                  <li key={l.label}>
+                    {l.href.startsWith('/') ? (
                       <Link
-                        to={item.href}
+                        to={l.href}
                         className="text-sm text-slate-500 transition hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300"
                       >
-                        {item.label}
+                        {l.label}
                       </Link>
-                    </li>
-                  ) : (
-                    <li key={item.label}>
+                    ) : (
                       <a
-                        href={item.href}
+                        href={l.href}
                         className="text-sm text-slate-500 transition hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300"
                       >
-                        {item.label}
+                        {l.label}
                       </a>
-                    </li>
-                  )
-                )}
+                    )}
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* Company */}
             <div>
               <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
                 Company
               </h3>
               <ul className="space-y-2.5">
-                {COMPANY_LINKS.map((item) => (
-                  <li key={item.label}>
+                {COMPANY_LINKS.map((l) => (
+                  <li key={l.label}>
                     <a
-                      href={item.href}
+                      href={l.href}
                       className="text-sm text-slate-500 transition hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300"
                     >
-                      {item.label}
+                      {l.label}
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Newsletter */}
             <div>
               <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
                 Stay Updated
               </h3>
               <p className="mb-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                Get the latest roadmaps, opportunities and hackathon alerts.
+                Get the latest roadmaps, opportunities and tips in your inbox.
               </p>
               <form
+                className="flex flex-col gap-2 sm:flex-row"
                 onSubmit={(e) => {
                   e.preventDefault();
                   setNewsletterEmail('');
                 }}
-                className="flex flex-col gap-2"
               >
                 <input
                   type="email"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder="Your email"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-violet-500 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   required
                 />
                 <button

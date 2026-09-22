@@ -85,6 +85,9 @@ const CourseDetails = lazy(() => import('./pages/CourseDetails').then((module) =
 const Pathways = lazy(() => import('./pages/Pathways').then((module) => ({ default: module.Pathways })));
 const MainLayout = lazy(() => import('./layouts/MainLayout').then((module) => ({ default: module.MainLayout })));
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
+const AuthCallback = lazy(() =>
+  import('./pages/Auth/AuthCallback').then((module) => ({ default: module.AuthCallback ?? module.default })),
+);
 const Signup = lazy(() => import('./pages/Auth/Signup').then((module) => ({ default: module.Signup })));
 const Login = lazy(() => import('./pages/Auth/Login').then((module) => ({ default: module.Login })));
 const VerifyOTP = lazy(() => import('./pages/Auth/VerifyOTP').then((module) => ({ default: module.VerifyOTP })));
@@ -96,6 +99,7 @@ const Assessments = lazy(() => import('./pages/Assessments/Assessments').then((m
 const BuddyChat = lazy(() => import('./pages/Buddy/BuddyChat').then((module) => ({ default: module.BuddyChat })));
 const Leaderboard = lazy(() => import('./pages/Gamification/Leaderboard').then((module) => ({ default: module.Leaderboard })));
 const Rewards = lazy(() => import('./pages/Gamification/Rewards').then((module) => ({ default: module.Rewards })));
+const Community = lazy(() => import('./pages/Community/Community').then((module) => ({ default: module.Community ?? module.default })));
 const Internships = lazy(() => import('./pages/Career/Internships').then((module) => ({ default: module.Internships })));
 const Certifications = lazy(() => import('./pages/Career/Certifications').then((module) => ({ default: module.Certifications })));
 const FacultyOpportunities = lazy(() =>
@@ -142,6 +146,7 @@ const DASHBOARD_ROUTES = [
   '/buddy',
   '/leaderboard',
   '/rewards',
+  '/community',
   '/internships',
   '/certifications',
   '/faculty-opportunities',
@@ -169,6 +174,7 @@ const AUTH_HIDE_GLOBAL_TOGGLE = [
   '/verify-college',
   '/onboarding',
   '/admin-login',
+  '/auth/callback',
 ];
 
 const GlobalThemeButton = () => {
@@ -194,6 +200,7 @@ export function App() {
           <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
           <Route path="/sign-up" element={<Navigate to="/signup" replace />} />
           <Route path="/register" element={<Navigate to="/signup" replace />} />
+          <Route path="/auth/callback/:provider" element={<AuthCallback />} />
           <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
           <Route path="/signin" element={<Navigate to="/login" replace />} />
           <Route path="/sign-in" element={<Navigate to="/login" replace />} />
@@ -262,6 +269,7 @@ export function App() {
             <Route path="/buddy" element={<RoleRoute role="student"><BuddyChat /></RoleRoute>} />
             <Route path="/leaderboard" element={<RoleRoute role="student"><Leaderboard /></RoleRoute>} />
             <Route path="/rewards" element={<RoleRoute role="student"><Rewards /></RoleRoute>} />
+            <Route path="/community" element={<RoleRoute role="student"><Community /></RoleRoute>} />
             <Route path="/internships" element={<RoleRoute role="student"><Internships /></RoleRoute>} />
             <Route path="/certifications" element={<RoleRoute role="student"><Certifications /></RoleRoute>} />
             <Route path="/faculty-opportunities" element={<RoleRoute role="student"><FacultyOpportunities /></RoleRoute>} />

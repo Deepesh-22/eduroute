@@ -7,6 +7,7 @@ import {
   ShieldAlert,
   Palette,
   Database,
+  Layers,
   TrendingUp,
   ChevronRight,
   Target,
@@ -75,6 +76,16 @@ const ROLES = [
     modules: 10,
     trending: true,
   },
+  {
+    id: 'dsa',
+    title: 'DSA Complete Path',
+    icon: Layers,
+    color: 'bg-violet-500',
+    description: 'Arrays to DP — structured problem-solving for interviews.',
+    level: 'Intermediate',
+    modules: 10,
+    trending: true,
+  },
 ];
 
 const container = {
@@ -95,7 +106,6 @@ const item = {
   },
 };
 
-/** Dual-side waves — sound-wave phase oscillation + scroll drift */
 function SoundWavePath({
   d0,
   d1,

@@ -85,27 +85,67 @@ export const GAP_QUESTIONS: Record<
 > = {
   software: [
     { id: 'sw1', question: 'Have you built a web or mobile app before?', skill: 'Project building' },
-    { id: 'sw2', question: 'Are you comfortable with at least one programming language (JS, Python, or Java)?', skill: 'Programming fundamentals' },
-    { id: 'sw3', question: 'Do you know basic data structures (arrays, linked lists, hash maps)?', skill: 'Data structures' },
+    {
+      id: 'sw2',
+      question: 'Are you comfortable with at least one programming language (JS, Python, or Java)?',
+      skill: 'Programming fundamentals',
+    },
+    {
+      id: 'sw3',
+      question: 'Do you know basic data structures (arrays, linked lists, hash maps)?',
+      skill: 'Data structures',
+    },
     { id: 'sw4', question: 'Have you used Git and GitHub for version control?', skill: 'Git & GitHub' },
     { id: 'sw5', question: 'Can you explain how REST APIs work at a basic level?', skill: 'APIs' },
-    { id: 'sw6', question: 'Have you completed any coding internship, freelance, or open-source work?', skill: 'Practical experience' },
+    {
+      id: 'sw6',
+      question: 'Have you completed any coding internship, freelance, or open-source work?',
+      skill: 'Practical experience',
+    },
   ],
   cybersecurity: [
-    { id: 'cy1', question: 'Do you understand networking basics (IP, DNS, HTTP/HTTPS)?', skill: 'Networking basics' },
+    {
+      id: 'cy1',
+      question: 'Do you understand networking basics (IP, DNS, HTTP/HTTPS)?',
+      skill: 'Networking basics',
+    },
     { id: 'cy2', question: 'Have you used the Linux command line for day-to-day tasks?', skill: 'Linux' },
     { id: 'cy3', question: 'Do you know what encryption and hashing mean?', skill: 'Cryptography basics' },
-    { id: 'cy4', question: 'Have you practiced any CTF challenges or security labs?', skill: 'Hands-on security practice' },
-    { id: 'cy5', question: 'Are you familiar with common vulnerabilities (XSS, SQL injection, CSRF)?', skill: 'Web vulnerabilities' },
-    { id: 'cy6', question: 'Have you studied OS security or configured a firewall?', skill: 'OS & network security' },
+    {
+      id: 'cy4',
+      question: 'Have you practiced any CTF challenges or security labs?',
+      skill: 'Hands-on security practice',
+    },
+    {
+      id: 'cy5',
+      question: 'Are you familiar with common vulnerabilities (XSS, SQL injection, CSRF)?',
+      skill: 'Web vulnerabilities',
+    },
+    {
+      id: 'cy6',
+      question: 'Have you studied OS security or configured a firewall?',
+      skill: 'OS & network security',
+    },
   ],
   data_analyst: [
-    { id: 'da1', question: 'Are you comfortable analyzing data in Excel or Google Sheets?', skill: 'Spreadsheets' },
+    {
+      id: 'da1',
+      question: 'Are you comfortable analyzing data in Excel or Google Sheets?',
+      skill: 'Spreadsheets',
+    },
     { id: 'da2', question: 'Have you used SQL to query a database?', skill: 'SQL' },
     { id: 'da3', question: 'Do you know Python or R for data analysis?', skill: 'Python/R for analysis' },
     { id: 'da4', question: 'Have you created charts, reports, or dashboards?', skill: 'Visualization' },
-    { id: 'da5', question: 'Do you understand basic statistics (mean, median, correlation)?', skill: 'Statistics' },
-    { id: 'da6', question: 'Have you cleaned or prepared a messy real-world dataset?', skill: 'Data cleaning' },
+    {
+      id: 'da5',
+      question: 'Do you understand basic statistics (mean, median, correlation)?',
+      skill: 'Statistics',
+    },
+    {
+      id: 'da6',
+      question: 'Have you cleaned or prepared a messy real-world dataset?',
+      skill: 'Data cleaning',
+    },
   ],
 };
 
@@ -192,6 +232,203 @@ export const TRACK_RECOMMENDATIONS: Record<InterestTrack, TrackRecommendation[]>
   ],
 };
 
+/**
+ * Maps each onboarding skill to a concrete in-app path.
+ * Priority is used when ranking which gap to close first (lower = do first).
+ */
+export type SkillPath = {
+  courseTitle: string;
+  to: string;
+  /** Lower = more foundational / close first */
+  priority: number;
+};
+
+export const SKILL_TO_PATH: Record<string, SkillPath> = {
+  // Software — fundamentals first
+  'Programming fundamentals': {
+    courseTitle: 'Fullstack fundamentals',
+    to: '/roadmaps/fullstack',
+    priority: 1,
+  },
+  'Data structures': {
+    courseTitle: 'DSA Beginner Sheet',
+    to: '/dsa-sheet',
+    priority: 2,
+  },
+  'Git & GitHub': {
+    courseTitle: 'Backend Developer roadmap',
+    to: '/roadmaps/backend',
+    priority: 3,
+  },
+  APIs: {
+    courseTitle: 'Backend & API path',
+    to: '/roadmaps/backend',
+    priority: 4,
+  },
+  'Project building': {
+    courseTitle: 'Frontend & project path',
+    to: '/roadmaps/frontend',
+    priority: 5,
+  },
+  'Practical experience': {
+    courseTitle: 'Internships board',
+    to: '/internships',
+    priority: 6,
+  },
+  // Cyber
+  'Networking basics': {
+    courseTitle: 'Cybersecurity roadmap',
+    to: '/roadmaps/cybersecurity',
+    priority: 1,
+  },
+  Linux: {
+    courseTitle: 'Cybersecurity roadmap',
+    to: '/roadmaps/cybersecurity',
+    priority: 2,
+  },
+  'Cryptography basics': {
+    courseTitle: 'Cybersecurity roadmap',
+    to: '/roadmaps/cybersecurity',
+    priority: 3,
+  },
+  'Web vulnerabilities': {
+    courseTitle: 'Cybersecurity roadmap',
+    to: '/roadmaps/cybersecurity',
+    priority: 4,
+  },
+  'OS & network security': {
+    courseTitle: 'Cybersecurity roadmap',
+    to: '/roadmaps/cybersecurity',
+    priority: 5,
+  },
+  'Hands-on security practice': {
+    courseTitle: 'Assessments & labs',
+    to: '/assessments',
+    priority: 6,
+  },
+  // Data
+  Spreadsheets: {
+    courseTitle: 'Data Analyst roadmap',
+    to: '/roadmaps/data-analyst',
+    priority: 1,
+  },
+  SQL: {
+    courseTitle: 'Data Analyst roadmap',
+    to: '/roadmaps/data-analyst',
+    priority: 2,
+  },
+  'Python/R for analysis': {
+    courseTitle: 'Data Analyst roadmap',
+    to: '/roadmaps/data-analyst',
+    priority: 3,
+  },
+  Statistics: {
+    courseTitle: 'Data Analyst roadmap',
+    to: '/roadmaps/data-analyst',
+    priority: 4,
+  },
+  Visualization: {
+    courseTitle: 'Data Analyst roadmap',
+    to: '/roadmaps/data-analyst',
+    priority: 5,
+  },
+  'Data cleaning': {
+    courseTitle: 'Data Analyst roadmap',
+    to: '/roadmaps/data-analyst',
+    priority: 6,
+  },
+};
+
+export type GapAction = {
+  skill: string;
+  courseTitle: string;
+  to: string;
+  priority: number;
+};
+
+export type NextStepPlan =
+  | { kind: 'quiz' }
+  | {
+      kind: 'gaps';
+      gapCount: number;
+      skills: string[];
+      /** Highest-priority gap action (close this first) */
+      primary: GapAction;
+      /** Other unique paths for remaining gaps */
+      alternatives: GapAction[];
+      trackLabel: string;
+    }
+  | { kind: 'internships'; trackLabel: string };
+
+/** Resolve dashboard / profile “what should I do next?” from onboarding data. */
+export function getNextStepPlan(profile?: OnboardingProfile): NextStepPlan {
+  const p = profile ?? readOnboarding();
+  const track = p.interests?.[0];
+  const trackLabel = track ? interestLabel(track) : 'your track';
+
+  if (!p.completedAt) {
+    return { kind: 'quiz' };
+  }
+
+  const missing = [...(p.missingSkills || [])];
+  // Also treat explicit “no” answers as gaps if missingSkills is empty but answers exist
+  if (missing.length === 0 && p.gapAnswers?.length) {
+    p.gapAnswers.forEach((a) => {
+      if (a.answer === 'no' && a.skill && !missing.includes(a.skill)) {
+        missing.push(a.skill);
+      }
+    });
+  }
+
+  if (missing.length === 0) {
+    return { kind: 'internships', trackLabel };
+  }
+
+  const actions: GapAction[] = missing.map((skill) => {
+    const mapped = SKILL_TO_PATH[skill];
+    if (mapped) {
+      return {
+        skill,
+        courseTitle: mapped.courseTitle,
+        to: mapped.to,
+        priority: mapped.priority,
+      };
+    }
+    // Fallback: first track recommendation
+    const fallback =
+      track && TRACK_RECOMMENDATIONS[track]?.[0]
+        ? TRACK_RECOMMENDATIONS[track][0]
+        : { title: 'Browse roadmaps', to: '/roadmaps' };
+    return {
+      skill,
+      courseTitle: fallback.title,
+      to: fallback.to,
+      priority: 99,
+    };
+  });
+
+  actions.sort((a, b) => a.priority - b.priority || a.skill.localeCompare(b.skill));
+
+  const primary = actions[0];
+  const seenPaths = new Set<string>([primary.to]);
+  const alternatives: GapAction[] = [];
+  for (const a of actions.slice(1)) {
+    if (seenPaths.has(a.to)) continue;
+    seenPaths.add(a.to);
+    alternatives.push(a);
+    if (alternatives.length >= 3) break;
+  }
+
+  return {
+    kind: 'gaps',
+    gapCount: missing.length,
+    skills: missing,
+    primary,
+    alternatives,
+    trackLabel,
+  };
+}
+
 export function interestLabel(id: InterestTrack): string {
   return INTEREST_OPTIONS.find((o) => o.id === id)?.title || id;
 }
@@ -209,7 +446,6 @@ export function readOnboarding(): OnboardingProfile {
     const raw = localStorage.getItem(GLOBAL_KEY);
     if (!raw) return { ...EMPTY };
     const parsed = { ...EMPTY, ...JSON.parse(raw) } as OnboardingProfile;
-    // Migrate global → email bucket when logged in
     if (email && parsed.completedAt) {
       writeOnboarding({ ...parsed, userEmail: email });
       return { ...parsed, userEmail: email };

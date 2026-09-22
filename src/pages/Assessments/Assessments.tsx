@@ -99,6 +99,31 @@ export const Assessments = () => {
     return () => clearInterval(timer);
   }, [view]);
 
+  /** All cards start neutral. Blue background only while hovered (moves with pointer). */
+  const stats = [
+    {
+      id: 'points',
+      value: '1,250',
+      label: 'Total Points',
+      Icon: Trophy,
+      idleIcon: 'text-indigo-600 dark:text-indigo-300',
+    },
+    {
+      id: 'accuracy',
+      value: '84%',
+      label: 'Avg. Accuracy',
+      Icon: BarChart2,
+      idleIcon: 'text-emerald-500',
+    },
+    {
+      id: 'tests',
+      value: '12',
+      label: 'Tests Completed',
+      Icon: Clock,
+      idleIcon: 'text-amber-500',
+    },
+  ] as const;
+
   return (
     <div className="relative flex-1 overflow-hidden">
       <StarfieldBackground />
@@ -114,22 +139,25 @@ export const Assessments = () => {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              <div className="bg-indigo-600 rounded-[40px] p-8 text-white shadow-xl shadow-indigo-50 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all" />
-                <Trophy className="h-10 w-10 mb-6 opacity-80" />
-                <div className="text-4xl font-black">1,250</div>
-                <div className="text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Total Points</div>
-              </div>
-              <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-                <BarChart2 className="h-10 w-10 mb-6 text-emerald-500" />
-                <div className="text-4xl font-black text-slate-900 dark:text-white">84%</div>
-                <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 dark:text-slate-200">Avg. Accuracy</div>
-              </div>
-              <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-                <Clock className="h-10 w-10 mb-6 text-amber-500" />
-                <div className="text-4xl font-black text-slate-900 dark:text-white">12</div>
-                <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 dark:text-slate-200">Tests Completed</div>
-              </div>
+              {stats.map((stat) => (
+                <div
+                  key={stat.id}
+                  className="group relative overflow-hidden rounded-[40px] border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:border-transparent hover:bg-indigo-600 hover:text-white hover:shadow-xl hover:shadow-indigo-500/25 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-indigo-600 dark:hover:shadow-indigo-900/50"
+                >
+                  <div className="pointer-events-none absolute -right-4 -top-4 h-28 w-28 rounded-full bg-indigo-400/0 blur-2xl transition-all duration-300 group-hover:bg-white/20" />
+                  <div
+                    className={`mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 transition-all duration-300 group-hover:rotate-6 group-hover:bg-white/20 group-hover:text-white dark:bg-slate-800 ${stat.idleIcon}`}
+                  >
+                    <stat.Icon className="h-6 w-6" />
+                  </div>
+                  <div className="text-4xl font-black text-slate-900 transition-colors duration-300 group-hover:text-white dark:text-white">
+                    {stat.value}
+                  </div>
+                  <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors duration-300 group-hover:text-indigo-100 dark:text-slate-200">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="space-y-6">

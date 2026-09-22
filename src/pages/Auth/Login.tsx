@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -19,6 +19,7 @@ import { apiRoleLogin } from '../../utils/authApi';
 import { saveAuthSession, type UserRole } from '../../utils/rbacAuth';
 import { setAdminSession, validateAdminPassword } from '../../utils/adminSession';
 import { isAuthDbConfigError, localDemoLogin } from '../../utils/localDemoAuth';
+import { handleSocialAuth } from '../../utils/socialAuth';
 import { INDUSTRY_DEMO_CREDENTIALS } from '../../utils/industryStore';
 import { FACULTY_DEMO_CREDENTIALS } from '../../utils/facultyStore';
 import { COLLEGE_DEMO_CREDENTIALS } from '../../utils/placementDashboard';
@@ -50,11 +51,21 @@ export const Login = () => {
   const { isDark } = useTheme();
   const [role, setRole] = useState<UserRole>('student');
   const [error, setError] = useState('');
+  const [socialMsg, setSocialMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [usedDemoMode, setUsedDemoMode] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
+  const roleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (roleRef.current && !roleRef.current.contains(e.target as Node)) setRoleOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
 
   const enterLocalAdmin = async (email: string, password: string) => {
     const emailOk = email.trim().toLowerCase() === LOCAL_STAFF.email;
@@ -67,115 +78,139 @@ export const Login = () => {
     return true;
   };
 
-  const enterCollege = (email: string, password: string) => {
-    const emailOk = email.trim().toLowerCase() === COLLEGE_DEMO_CREDENTIALS.email;
-    const passOk = password === COLLEGE_DEMO_CREDENTIALS.password;
-    if (!emailOk || !passOk) return false;
-    saveAuthSession(`college-${Date.now()}`, COLLEGE_DEMO_CREDENTIALS.user);
-    navigate('/college/placements', { replace: true });
-    return true;
+  const goHome = (userRole: UserRole) => {
+    if (userRole === 'admin') navigate('/admin/pending-approvals', { replace: true });
+    else if (userRole === 'industry') navigate('/industry', { replace: true });
+    else if (userRole === 'college') navigate('/college/placements', { replace: true });
+    else if (userRole === 'faculty') navigate('/faculty', { replace: true });
+    else navigate('/dashboard', { replace: true });
   };
 
-  const enterIndustry = (email: string, password: string) => {
-    const emailOk = email.trim().toLowerCase() === INDUSTRY_DEMO_CREDENTIALS.email;
-    const passOk = password === INDUSTRY_DEMO_CREDENTIALS.password;
-    if (!emailOk || !passOk) return false;
-    saveAuthSession(`industry-${Date.now()}`, INDUSTRY_DEMO_CREDENTIALS.user);
-    navigate('/industry', { replace: true });
-    return true;
-  };
-
-  const enterFaculty = (email: string, password: string) => {
-    const emailOk = email.trim().toLowerCase() === FACULTY_DEMO_CREDENTIALS.email;
-    const passOk = password === FACULTY_DEMO_CREDENTIALS.password;
-    if (!emailOk || !passOk) return false;
-    saveAuthSession(`faculty-${Date.now()}`, FACULTY_DEMO_CREDENTIALS.user);
-    navigate('/faculty', { replace: true });
-    return true;
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
-    setUsedDemoMode(false);
     setIsLoading(true);
+    setUsedDemoMode(false);
     try {
-      if (role === 'faculty') {
-        if (enterFaculty(formData.email, formData.password)) {
-          setUsedDemoMode(true);
+      if (role === 'industry') {
+        const ok =
+          formData.email.trim().toLowerCase() === INDUSTRY_DEMO_CREDENTIALS.email.toLowerCase() &&
+          formData.password === INDUSTRY_DEMO_CREDENTIALS.password;
+        if (!ok) {
+          setError('Invalid industry credentials.');
           return;
         }
-        setError('Faculty login failed. Use faculty@gmail.com / faculty');
+        saveAuthSession(`demo-industry-${Date.now()}`, {
+          id: 'industry-demo',
+          name: 'Industry Partner',
+          email: formData.email.trim(),
+          role: 'industry',
+          verificationStatus: 'verified',
+        });
+        goHome('industry');
         return;
       }
-      if (role === 'industry') {
-        if (enterIndustry(formData.email, formData.password)) {
-          setUsedDemoMode(true);
+      if (role === 'faculty') {
+        const ok =
+          formData.email.trim().toLowerCase() === FACULTY_DEMO_CREDENTIALS.email.toLowerCase() &&
+          formData.password === FACULTY_DEMO_CREDENTIALS.password;
+        if (!ok) {
+          setError('Invalid faculty credentials.');
           return;
         }
-        setError('Industry login failed. Use company@gmail.com / hire');
+        saveAuthSession(`demo-faculty-${Date.now()}`, {
+          id: 'faculty-demo',
+          name: 'Faculty Member',
+          email: formData.email.trim(),
+          role: 'faculty',
+          verificationStatus: 'verified',
+        });
+        goHome('faculty');
         return;
       }
       if (role === 'college') {
-        if (enterCollege(formData.email, formData.password)) {
-          setUsedDemoMode(true);
+        const ok =
+          formData.email.trim().toLowerCase() === COLLEGE_DEMO_CREDENTIALS.email.toLowerCase() &&
+          formData.password === COLLEGE_DEMO_CREDENTIALS.password;
+        if (!ok) {
+          setError('Invalid college credentials.');
           return;
         }
-        setError('College login failed. Use college@gmail.com / student');
+        saveAuthSession(`demo-college-${Date.now()}`, {
+          id: 'college-demo',
+          name: 'College Admin',
+          email: formData.email.trim(),
+          role: 'college',
+          verificationStatus: 'verified',
+          institutionName: 'Modi Institute of Technology',
+        });
+        goHome('college');
         return;
       }
+
       if (role === 'admin') {
-        try {
-          const response = await apiRoleLogin({ ...formData, role: 'admin' });
-          saveAuthSession(response.token, response.user);
-          setAdminSession(true);
-          navigate('/admin/pending-approvals', { replace: true });
-          return;
-        } catch (staffErr) {
-          if (await enterLocalAdmin(formData.email, formData.password)) return;
-          if (staffErr instanceof Error && isAuthDbConfigError(staffErr.message)) {
-            try {
-              const demo = localDemoLogin({ email: formData.email, password: formData.password, role: 'admin' });
-              saveAuthSession(demo.token, demo.user);
-              setAdminSession(true);
-              setUsedDemoMode(true);
-              navigate('/admin/pending-approvals', { replace: true });
-              return;
-            } catch { /* fall */ }
-          }
-          setError(staffErr instanceof Error ? staffErr.message : 'Staff login failed.');
+        if (await enterLocalAdmin(formData.email, formData.password)) return;
+      }
+
+      try {
+        const result = await apiRoleLogin({
+          email: formData.email.trim(),
+          password: formData.password,
+          role: role === 'admin' ? 'admin' : 'student',
+        });
+        if (result.success && result.token && result.user) {
+          saveAuthSession(result.token, {
+            id: result.user.id,
+            name: result.user.name,
+            email: result.user.email,
+            avatar: result.user.avatar,
+            role: (result.user.role as UserRole) || role,
+            verificationStatus: result.user.verificationStatus || 'verified',
+          });
+          if ((result.user.role as UserRole) === 'admin') setAdminSession(true);
+          goHome((result.user.role as UserRole) || role);
           return;
         }
-      }
-      try {
-        const response = await apiRoleLogin({ ...formData, role: 'student' });
-        saveAuthSession(response.token, response.user);
-        navigate('/dashboard', { replace: true });
-      } catch (apiError) {
-        const msg = apiError instanceof Error ? apiError.message : 'Login failed';
-        if (isAuthDbConfigError(msg)) {
+        if (isAuthDbConfigError(result.error)) {
           try {
-            const demo = localDemoLogin({ email: formData.email, password: formData.password, role: 'student' });
-            saveAuthSession(demo.token, demo.user);
+            const demo = localDemoLogin({
+              email: formData.email,
+              password: formData.password,
+              role: role === 'admin' ? 'admin' : 'student',
+            });
             setUsedDemoMode(true);
-            navigate('/dashboard', { replace: true });
+            saveAuthSession(demo.token, demo.user);
+            goHome(demo.user.role as UserRole);
             return;
           } catch (demoErr) {
-            setError(demoErr instanceof Error ? demoErr.message : 'Invalid credentials.');
+            setError(demoErr instanceof Error ? demoErr.message : 'Login failed');
             return;
           }
         }
-        setError(msg);
+        setError(result.error || 'Login failed');
+      } catch (err) {
+        if (isAuthDbConfigError(err instanceof Error ? err.message : '')) {
+          try {
+            const demo = localDemoLogin({
+              email: formData.email,
+              password: formData.password,
+              role: role === 'admin' ? 'admin' : 'student',
+            });
+            setUsedDemoMode(true);
+            saveAuthSession(demo.token, demo.user);
+            goHome(demo.user.role as UserRole);
+            return;
+          } catch (demoErr) {
+            setError(demoErr instanceof Error ? demoErr.message : 'Login failed');
+            return;
+          }
+        }
+        setError(err instanceof Error ? err.message : 'Login failed');
       }
-    } catch (apiError) {
-      setError(apiError instanceof Error ? apiError.message : 'Login failed');
     } finally {
       setIsLoading(false);
     }
   };
-
-  const selectedRole = ROLE_OPTIONS.find((r) => r.id === role) || ROLE_OPTIONS[0];
-  const SelectedIcon = selectedRole.icon;
 
   const fieldCls = isDark
     ? 'border-white/10 bg-slate-800/80 text-white'
@@ -184,6 +219,7 @@ export const Login = () => {
     ? 'border-white/15 bg-slate-900/70 shadow-black/40'
     : 'border-slate-200 bg-white/95 shadow-slate-300/40';
   const muted = isDark ? 'text-slate-400' : 'text-slate-500';
+  const selected = ROLE_OPTIONS.find((r) => r.id === role) || ROLE_OPTIONS[0];
 
   return (
     <div className={`relative min-h-screen overflow-hidden ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-900'}`}>
@@ -207,49 +243,64 @@ export const Login = () => {
           <h1 className={`text-4xl font-black leading-tight md:text-5xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Welcome to <span className="bg-gradient-to-r from-violet-500 to-indigo-500 bg-clip-text text-transparent">EduRoute</span>
           </h1>
-          <p className={`mt-4 text-base leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-            Explore opportunities, build skills, connect with your peers and take the next step towards your dream career.
+          <p className={`mt-4 text-base leading-relaxed ${muted}`}>
+            Sign in to continue skill mapping, internships, roadmaps, and placement preparation — all in one place.
           </p>
-          <div className="mt-10 grid grid-cols-2 gap-4">
-            {[ { t: 'Jobs', d: 'Find your next opportunity' }, { t: 'Internships', d: 'Gain real-world experience' }, { t: 'Hackathons', d: 'Showcase your skills' }, { t: 'Skill Development', d: 'Learn & grow with us' } ].map((item) => (
+          <div className="mt-8 grid grid-cols-2 gap-3">
+            {[
+              { t: 'Skill mapping', d: 'Know your gaps' },
+              { t: 'Internships', d: 'Match & apply' },
+              { t: 'Roadmaps', d: 'Learn with path' },
+              { t: 'Placement', d: 'Track outcomes' },
+            ].map((item) => (
               <div key={item.t} className={`rounded-2xl border p-4 backdrop-blur-sm ${isDark ? 'border-white/10 bg-white/5' : 'border-slate-200/80 bg-white/70 shadow-sm'}`}>
-                <div className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.t}</div>
-                <div className={`mt-1 text-xs ${muted}`}>{item.d}</div>
+                <p className="text-sm font-bold">{item.t}</p>
+                <p className={`mt-0.5 text-xs ${muted}`}>{item.d}</p>
               </div>
             ))}
           </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-          <div className={`rounded-3xl border p-7 shadow-2xl backdrop-blur-xl md:p-8 ${cardCls}`}>
+          <div className={`rounded-3xl border p-6 shadow-2xl backdrop-blur-md sm:p-8 ${cardCls}`}>
             <div className="mb-6 flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-sm font-black text-white">E</div>
-              <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>EDUROUTE</span>
+              <div>
+                <div className="text-base font-bold">Sign in</div>
+                <div className={`text-xs ${muted}`}>Choose your role and continue</div>
+              </div>
             </div>
-            <h2 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Welcome back!</h2>
-            <p className={`mt-1 text-sm ${muted}`}>Sign in to continue your journey</p>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <div className="relative">
-                <label className={`mb-1.5 block text-xs font-medium ${muted}`}>Sign in as</label>
-                <button type="button" onClick={() => setRoleOpen((o) => !o)} className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium outline-none ring-violet-500/40 focus:ring-2 ${fieldCls}`}>
-                  <span className="flex items-center gap-2"><SelectedIcon className="h-4 w-4 text-violet-500" />{selectedRole.label}</span>
-                  <ChevronDown className={`h-4 w-4 text-slate-400 transition ${roleOpen ? 'rotate-180' : ''}`} />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div ref={roleRef} className="relative">
+                <label className={`mb-1.5 block text-xs font-semibold ${muted}`}>I am a</label>
+                <button
+                  type="button"
+                  onClick={() => setRoleOpen((v) => !v)}
+                  className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left text-sm ${fieldCls}`}
+                >
+                  <span className="flex items-center gap-2">
+                    <selected.icon className="h-4 w-4 text-violet-500" />
+                    <span className="font-semibold">{selected.label}</span>
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition ${roleOpen ? 'rotate-180' : ''} ${muted}`} />
                 </button>
                 {roleOpen && (
                   <div className={`absolute z-30 mt-1 w-full overflow-hidden rounded-xl border shadow-xl ${isDark ? 'border-white/10 bg-slate-900' : 'border-slate-200 bg-white'}`}>
                     {ROLE_OPTIONS.map((opt) => {
-                      const Icon = opt.icon;
                       const active = role === opt.id;
                       return (
-                        <button key={opt.id} type="button" onClick={() => {
-                          setRole(opt.id); setRoleOpen(false); setError('');
-                          if (opt.id === 'industry') setFormData({ email: 'company@gmail.com', password: 'hire' });
-                          else if (opt.id === 'faculty') setFormData({ email: 'faculty@gmail.com', password: 'faculty' });
-                          else if (opt.id === 'college') setFormData({ email: 'college@gmail.com', password: 'student' });
-                          else if (opt.id === 'admin') setFormData({ email: 'admin@gmail.com', password: 'timepass' });
-                        }} className={`flex w-full items-center gap-2 px-4 py-2.5 text-sm transition ${active ? (isDark ? 'bg-violet-600/30 text-violet-200' : 'bg-violet-100 text-violet-800') : (isDark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50')}`}>
-                          <Icon className="h-4 w-4" />{opt.label}{active && <span className="ml-auto">✓</span>}
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            setRole(opt.id);
+                            setRoleOpen(false);
+                          }}
+                          className={`flex w-full items-center gap-2 px-4 py-2.5 text-sm transition ${active ? (isDark ? 'bg-violet-600/30 text-violet-200' : 'bg-violet-100 text-violet-800') : (isDark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50')}`}
+                        >
+                          <opt.icon className="h-4 w-4" />
+                          {opt.label}
                         </button>
                       );
                     })}
@@ -258,30 +309,44 @@ export const Login = () => {
               </div>
 
               <div>
-                <label className={`mb-1.5 block text-xs font-medium ${muted}`}>Email</label>
+                <label className={`mb-1.5 block text-xs font-semibold ${muted}`}>Email</label>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                  <input type="email" required autoComplete="email" placeholder="you@example.com" className={`w-full rounded-xl border py-3 pl-10 pr-3 text-sm outline-none ring-violet-500/40 focus:ring-2 placeholder:text-slate-500 ${fieldCls}`} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                  <Mail className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${muted}`} />
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+                    placeholder="you@college.edu"
+                    className={`w-full rounded-xl border py-2.5 pl-10 pr-3.5 text-sm outline-none focus:ring-2 focus:ring-violet-500/30 ${fieldCls}`}
+                  />
                 </div>
               </div>
 
               <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label className={`block text-xs font-medium ${muted}`}>Password</label>
-                  <span className="text-xs text-violet-500/80">Forgot password?</span>
-                </div>
+                <label className={`mb-1.5 block text-xs font-semibold ${muted}`}>Password</label>
                 <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                  <input type={showPass ? 'text' : 'password'} required autoComplete="current-password" placeholder="••••••••" className={`w-full rounded-xl border py-3 pl-10 pr-10 text-sm outline-none ring-violet-500/40 focus:ring-2 placeholder:text-slate-500 ${fieldCls}`} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
-                  <button type="button" onClick={() => setShowPass((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" aria-label="Toggle password">{showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+                  <Lock className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${muted}`} />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
+                    placeholder="••••••••"
+                    className={`w-full rounded-xl border py-2.5 pl-10 pr-10 text-sm outline-none focus:ring-2 focus:ring-violet-500/30 ${fieldCls}`}
+                  />
+                  <button type="button" onClick={() => setShowPass((v) => !v)} className={`absolute right-3 top-1/2 -translate-y-1/2 ${muted}`} aria-label="Toggle password">
+                    {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
 
               {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</p>}
-              {usedDemoMode && <p className="text-xs text-amber-500">Signed in with demo / offline mode.</p>}
+              {usedDemoMode && <p className="text-xs text-amber-500">Signed in with local demo mode (API offline).</p>}
 
               <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-violet-600/30 transition hover:from-violet-500 hover:to-indigo-400 disabled:opacity-60">
-                {isLoading ? 'Signing in…' : 'Sign In'}{!isLoading && <ArrowRight className="h-4 w-4" />}
+                {isLoading ? 'Signing in…' : 'Sign in'}
+                {!isLoading && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>
 
@@ -293,12 +358,14 @@ export const Login = () => {
 
             <div className="flex items-center justify-center gap-3">
               <button type="button" onClick={() => navigate('/signup')} className={`flex h-11 w-11 items-center justify-center rounded-xl border text-sm font-bold ${isDark ? 'border-white/10 bg-slate-800/80 text-white' : 'border-slate-200 bg-white text-slate-800'}`}>G</button>
-              <button type="button" className={`flex h-11 w-11 items-center justify-center rounded-xl border ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`} title="GitHub">
-                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.26.82-.577 0-.285-.01-1.04-.016-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.238 1.84 1.238 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.76-1.605-2.665-.303-5.467-1.333-5.467-5.93 0-1.31.468-2.382 1.236-3.222-.124-.303-.536-1.523.117-3.176 0 0 1.008-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.29-1.552 3.297-1.23 3.297-1.23.655 1.653.243 2.873.12 3.176.77.84 1.235 1.912 1.235 3.222 0 4.61-2.807 5.624-5.48 5.92.43.37.814 1.102.814 2.222 0 1.606-.015 2.898-.015 3.293 0 .32.216.694.825.576C20.565 21.796 24 17.297 24 12c0-6.63-5.37-12-12-12z" /></svg>
+              <button type="button" onClick={() => handleSocialAuth('github', 'login', (msg) => setSocialMsg(msg))} className={`flex h-11 w-11 items-center justify-center rounded-xl border ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`} title="Sign in with GitHub" aria-label="Sign in with GitHub">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.26.82-.577 0-.285-.01-1.04-.016-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.238 1.84 1.238 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.76-1.605-2.665-.303-5.467-1.333-5.467-5.93 0-1.31.468-2.382 1.236-3.222-.124-.303-.536-1.523.117-3.176 0 0 1.008-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.29-1.552 3.297-1.23 3.297-1.23.655 1.653.243 2.873.12 3.176.77.84 1.235 1.912 1.235 3.222 0 4.61-2.807 5.624-5.48 5.92.43.37.814 1.102.814 2.222 0 1.606-.015 2.898-.015 3.293 0 .32.216.694.825.576C20.565 21.796 24 17.297 24 12c0-6.63-5.37-12-12-12z" /></svg>
               </button>
-              <button type="button" className={`flex h-11 w-11 items-center justify-center rounded-xl border text-sm font-bold text-[#0A66C2] ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`}>in</button>
+              <button type="button" onClick={() => handleSocialAuth('linkedin', 'login', (msg) => setSocialMsg(msg))} className={`flex h-11 w-11 items-center justify-center rounded-xl border text-sm font-bold text-[#0A66C2] ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`} title="Sign in with LinkedIn" aria-label="Sign in with LinkedIn">in</button>
               <button type="button" onClick={() => navigate('/signup')} className={`flex h-11 w-11 items-center justify-center rounded-xl border ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`}><Mail className="h-4 w-4 text-slate-500" /></button>
             </div>
+
+            {socialMsg && <p className="mt-3 text-center text-xs text-amber-500">{socialMsg}</p>}
 
             <p className={`mt-6 text-center text-sm ${muted}`}>
               Don&apos;t have an account?{' '}

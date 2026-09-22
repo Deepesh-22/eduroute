@@ -7,6 +7,7 @@ import { apiRegisterUser } from '../../utils/authApi';
 import { saveAuthSession } from '../../utils/rbacAuth';
 import { parseGoogleCredential, saveUserProfile } from '../../utils/userProfile';
 import { isAuthDbConfigError, localDemoRegister } from '../../utils/localDemoAuth';
+import { handleSocialAuth } from '../../utils/socialAuth';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -52,6 +53,7 @@ export const Signup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [demoHint, setDemoHint] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [socialMsg, setSocialMsg] = useState<string | null>(null);
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const googleClientId = useMemo(
     () =>
@@ -172,8 +174,8 @@ export const Signup = () => {
     ? 'border-white/10 bg-slate-800/80 text-white'
     : 'border-slate-200 bg-white text-slate-900';
   const cardCls = isDark
-    ? 'border-white/15 bg-slate-900/70 shadow-black/40'
-    : 'border-slate-200 bg-white/95 shadow-slate-300/40';
+    ? 'border-white/15 bg-slate-900/95 shadow-black/40'
+    : 'border-slate-200 bg-white shadow-slate-300/40';
   const muted = isDark ? 'text-slate-400' : 'text-slate-500';
 
   return (
@@ -252,14 +254,37 @@ export const Signup = () => {
             </div>
 
             <div className="flex items-center justify-center gap-3">
-              <div ref={googleButtonRef} className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl" />
-              <button type="button" className={`flex h-11 w-11 items-center justify-center rounded-xl border ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`} title="GitHub">
-                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.26.82-.577 0-.285-.01-1.04-.016-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.238 1.84 1.238 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.76-1.605-2.665-.303-5.467-1.333-5.467-5.93 0-1.31.468-2.382 1.236-3.222-.124-.303-.536-1.523.117-3.176 0 0 1.008-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.29-1.552 3.297-1.23 3.297-1.23.655 1.653.243 2.873.12 3.176.77.84 1.235 1.912 1.235 3.222 0 4.61-2.807 5.624-5.48 5.92.43.37.814 1.102.814 2.222 0 1.606-.015 2.898-.015 3.293 0 .32.216.694.825.576C20.565 21.796 24 17.297 24 12c0-6.63-5.37-12-12-12z" /></svg>
+              <div ref={googleButtonRef} className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl" title="Continue with Google" />
+              <button
+                type="button"
+                onClick={() => handleSocialAuth('github', 'signup', (msg) => setSocialMsg(msg))}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl border transition hover:scale-105 ${isDark ? 'border-white/10 bg-slate-800/80 text-white' : 'border-slate-200 bg-white text-slate-900'}`}
+                title="Continue with GitHub"
+                aria-label="Sign up with GitHub"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.26.82-.577 0-.285-.01-1.04-.016-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.238 1.84 1.238 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.76-1.605-2.665-.303-5.467-1.333-5.467-5.93 0-1.31.468-2.382 1.236-3.222-.124-.303-.536-1.523.117-3.176 0 0 1.008-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.29-1.552 3.297-1.23 3.297-1.23.655 1.653.243 2.873.12 3.176.77.84 1.235 1.912 1.235 3.222 0 4.61-2.807 5.624-5.48 5.92.43.37.814 1.102.814 2.222 0 1.606-.015 2.898-.015 3.293 0 .32.216.694.825.576C20.565 21.796 24 17.297 24 12c0-6.63-5.37-12-12-12z" /></svg>
               </button>
-              <button type="button" className={`flex h-11 w-11 items-center justify-center rounded-xl border text-sm font-bold text-[#0A66C2] ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`}>in</button>
-              <button type="button" className={`flex h-11 w-11 items-center justify-center rounded-xl border ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`}><Mail className="h-4 w-4 text-slate-500" /></button>
+              <button
+                type="button"
+                onClick={() => handleSocialAuth('linkedin', 'signup', (msg) => setSocialMsg(msg))}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl border text-sm font-bold text-[#0A66C2] transition hover:scale-105 ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`}
+                title="Continue with LinkedIn"
+                aria-label="Sign up with LinkedIn"
+              >
+                in
+              </button>
+              <button
+                type="button"
+                onClick={() => document.querySelector<HTMLInputElement>('input[type="email"]')?.focus()}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl border transition hover:scale-105 ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`}
+                title="Sign up with email"
+                aria-label="Sign up with email"
+              >
+                <Mail className="h-4 w-4 text-slate-500" />
+              </button>
             </div>
             {googleError && <p className="mt-3 text-center text-xs text-amber-500">{googleError}</p>}
+            {socialMsg && <p className="mt-3 text-center text-xs text-amber-500">{socialMsg}</p>}
 
             <p className={`mt-6 text-center text-sm ${muted}`}>
               Already have an account?{' '}

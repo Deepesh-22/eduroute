@@ -18,7 +18,7 @@ import {
 import { COURSES } from '../data/mockData';
 import { Course } from '../types';
 import { getCurrentUser, getDisplayFirstName } from '../utils/userProfile';
-import { readOnboarding } from '../utils/onboardingStore';
+import { getNextStepPlan, readOnboarding } from '../utils/onboardingStore';
 import {
   readApplications,
   statusBadgeClass,
@@ -31,7 +31,9 @@ export const Dashboard = () => {
   const enrolledCourses = COURSES.filter((c) => currentUser.enrolledCourses.includes(c.id)).slice(0, 2);
   const recommendedCourses = COURSES.filter((c) => !currentUser.enrolledCourses.includes(c.id)).slice(0, 4);
   const onboarding = readOnboarding();
-  const gapCount = onboarding.missingSkills?.length || 0;
+  const nextPlan = getNextStepPlan(onboarding);
+  const gapCount =
+    nextPlan.kind === 'gaps' ? nextPlan.gapCount : onboarding.missingSkills?.length || 0;
   const hasSkillProfile = Boolean(onboarding.completedAt);
   const [applications, setApplications] = useState<InternshipApplication[]>(() => readApplications());
 
@@ -96,14 +98,8 @@ export const Dashboard = () => {
           }}
           aria-hidden
         />
-        <div
-          className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/45 to-transparent dark:from-slate-950/92 dark:via-slate-950/70 dark:to-slate-950/35"
-          aria-hidden
-        />
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-white/30 dark:from-slate-950/40 dark:via-transparent dark:to-slate-950/50"
-          aria-hidden
-        />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/45 to-transparent dark:from-slate-950/92 dark:via-slate-950/70 dark:to-slate-950/35" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-white/30 dark:from-slate-950/40 dark:via-transparent dark:to-slate-950/50" aria-hidden />
         <div className="relative z-10 flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
           <div className="max-w-xl">
             <p className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -136,14 +132,6 @@ export const Dashboard = () => {
             </Link>
           </div>
         </div>
-
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-20 dark:opacity-15" aria-hidden>
-          <svg className="h-full w-full" viewBox="0 0 400 200" preserveAspectRatio="xMaxYMid slice" fill="none">
-            <path d="M0 200 L80 120 L140 160 L220 60 L280 110 L340 40 L400 90 L400 200 Z" className="fill-indigo-200/60 dark:fill-indigo-900/40" />
-            <path d="M0 200 L60 150 L120 180 L200 90 L260 130 L320 70 L400 120 L400 200 Z" className="fill-indigo-300/50 dark:fill-indigo-800/30" />
-            <circle cx="340" cy="48" r="18" className="fill-violet-400/30 dark:fill-violet-500/20" />
-          </svg>
-        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -170,6 +158,127 @@ export const Dashboard = () => {
       </section>
 
       <section>
+        {nextPlan.kind === 'quiz' ? (
+          <Link
+            to="/onboarding"
+            className="er-card er-card-hover group flex flex-col gap-4 border-violet-200/80 bg-gradient-to-r from-violet-50 to-indigo-50 p-5 transition-all dark:border-violet-500/30 dark:from-violet-950/40 dark:to-indigo-950/30 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md shadow-violet-600/25">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">Next step</p>
+                <h2 className="text-base font-bold text-[var(--text-primary)]">Finish your skill quiz</h2>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  Pick interests and answer a short Yes/No quiz to unlock match scores and a personal path.
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-600 px-4 py-2 text-sm font-bold text-white">
+              Start quiz <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
+        ) : nextPlan.kind === 'gaps' ? (
+          <div className="er-card border-amber-200/80 bg-gradient-to-r from-amber-50 to-orange-50 p-5 dark:border-amber-500/30 dark:from-amber-950/30 dark:to-orange-950/20">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md">
+                  <Target className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Next step</p>
+                  <h2 className="text-base font-bold text-[var(--text-primary)]">
+                    Close {nextPlan.gapCount} skill gap{nextPlan.gapCount === 1 ? '' : 's'}
+                  </h2>
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                    For <span className="font-semibold text-[var(--text-primary)]">{nextPlan.trackLabel}</span>
+                    {' · '}start with{' '}
+                    <span className="font-semibold text-[var(--text-primary)]">{nextPlan.primary.skill}</span>
+                    {' → '}{nextPlan.primary.courseTitle}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {nextPlan.skills.slice(0, 6).map((skill) => (
+                      <span
+                        key={skill}
+                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                          skill === nextPlan.primary.skill
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-white/80 text-amber-900 dark:bg-slate-900/60 dark:text-amber-200'
+                        }`}
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                    {nextPlan.skills.length > 6 && (
+                      <span className="rounded-full bg-white/60 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-slate-900/40 dark:text-amber-300">
+                        +{nextPlan.skills.length - 6} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                <Link
+                  to={nextPlan.primary.to}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-amber-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-amber-600"
+                >
+                  Start: {nextPlan.primary.courseTitle}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/skill-profile"
+                  className="text-center text-xs font-semibold text-amber-800 hover:underline dark:text-amber-300"
+                >
+                  View full gap analysis
+                </Link>
+              </div>
+            </div>
+            {nextPlan.alternatives.length > 0 && (
+              <div className="mt-4 border-t border-amber-200/60 pt-3 dark:border-amber-500/20">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-400/80">
+                  Also recommended
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {nextPlan.alternatives.map((alt) => (
+                    <Link
+                      key={alt.to + alt.skill}
+                      to={alt.to}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/80 bg-white/70 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:border-amber-400 hover:bg-white dark:border-amber-500/30 dark:bg-slate-900/50 dark:text-amber-100 dark:hover:border-amber-400"
+                    >
+                      {alt.courseTitle}
+                      <ArrowRight className="h-3 w-3 opacity-60" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Link
+            to="/internships"
+            className="er-card er-card-hover group flex flex-col gap-4 border-emerald-200/80 bg-gradient-to-r from-emerald-50 to-teal-50 p-5 transition-all dark:border-emerald-500/30 dark:from-emerald-950/30 dark:to-teal-950/20 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-md">
+                <Briefcase className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Next step</p>
+                <h2 className="text-base font-bold text-[var(--text-primary)]">Apply with skill match</h2>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  Your profile for {nextPlan.trackLabel} is ready. Browse internships ranked by how well you match.
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-2 text-sm font-bold text-white">
+              View internships <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
+        )}
+      </section>
+
+      <section>
         <Link
           to="/skill-profile"
           className="er-card er-card-hover group flex flex-col gap-4 p-5 transition-all sm:flex-row sm:items-center sm:justify-between"
@@ -179,9 +288,7 @@ export const Dashboard = () => {
               <Target className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-[var(--text-primary)] group-hover:text-[var(--accent)]">
-                Student Skill Profile
-              </h2>
+              <h2 className="text-base font-bold text-[var(--text-primary)] group-hover:text-[var(--accent)]">Student Skill Profile</h2>
               <p className="mt-1 text-sm text-[var(--text-secondary)]">
                 {hasSkillProfile
                   ? gapCount > 0
@@ -200,10 +307,7 @@ export const Dashboard = () => {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--text-primary)]">Continue Learning</h2>
-          <Link
-            to="/courses"
-            className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
-          >
+          <Link to="/courses" className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1">
             View all <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -213,9 +317,7 @@ export const Dashboard = () => {
           ) : (
             <div className="er-card col-span-full p-8 text-center text-[var(--text-secondary)]">
               No enrolled courses yet.{' '}
-              <Link to="/browse" className="font-semibold text-[var(--accent)]">
-                Browse courses
-              </Link>
+              <Link to="/browse" className="font-semibold text-[var(--accent)]">Browse courses</Link>
             </div>
           )}
         </div>
@@ -224,13 +326,9 @@ export const Dashboard = () => {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
-            <Sparkles className="h-5 w-5 text-[var(--accent)]" />
-            Recommended for You
+            <Sparkles className="h-5 w-5 text-[var(--accent)]" /> Recommended for You
           </h2>
-          <Link
-            to="/browse"
-            className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
-          >
+          <Link to="/browse" className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1">
             Explore all <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -266,31 +364,20 @@ export const Dashboard = () => {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
-              <Briefcase className="h-5 w-5 text-[var(--accent)]" />
-              My Applications
+              <Briefcase className="h-5 w-5 text-[var(--accent)]" /> My Applications
             </h2>
-            <Link
-              to="/internships"
-              className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
-            >
+            <Link to="/internships" className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1">
               View internships <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           <div className="er-card divide-y divide-[var(--border-default)] overflow-hidden p-0">
             {applications.slice(0, 5).map((app) => (
-              <div
-                key={app.internshipId}
-                className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-              >
+              <div key={app.internshipId} className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <div className="truncate font-semibold text-[var(--text-primary)]">{app.role}</div>
-                  <div className="text-xs text-[var(--text-secondary)]">
-                    {app.company} · {app.stipend}
-                  </div>
+                  <div className="text-xs text-[var(--text-secondary)]">{app.company} · {app.stipend}</div>
                 </div>
-                <span
-                  className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold sm:self-center ${statusBadgeClass(app.status)}`}
-                >
+                <span className={`shrink-0 self-start rounded-full px-3 py-1 text-[11px] font-bold sm:self-center ${statusBadgeClass(app.status)}`}>
                   {app.status}
                 </span>
               </div>
@@ -307,9 +394,7 @@ function ContinueCard({ course, progress }: { course: Course; progress: number }
     <Link to={`/course/${course.id}`} className="er-card er-card-hover group flex gap-4 overflow-hidden p-4 transition-all">
       <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--bg-secondary)]">
         <img src={course.thumbnail} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-        <span className="absolute left-2 top-2 rounded-md bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
-          In Progress
-        </span>
+        <span className="absolute left-2 top-2 rounded-md bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">In Progress</span>
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-violet-600 opacity-0 shadow transition group-hover:opacity-100">
             <Play className="h-4 w-4 fill-current" />
@@ -317,9 +402,7 @@ function ContinueCard({ course, progress }: { course: Course; progress: number }
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-          {course.category} · {progress}% DONE
-        </div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{course.category} · {progress}% DONE</div>
         <h3 className="mt-1 line-clamp-1 text-base font-semibold text-[var(--text-primary)]">{course.title}</h3>
         <p className="mt-1 line-clamp-2 text-xs text-[var(--text-secondary)]">{course.description}</p>
         <div className="mt-auto pt-3">
@@ -342,15 +425,11 @@ function DsaSheetCard() {
           alt="DSA practice"
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        <span className="er-badge absolute left-3 top-3 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
-          FREE
-        </span>
+        <span className="er-badge absolute left-3 top-3 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">FREE</span>
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" /> 4 HOURS
-          </span>
+          <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> 4 HOURS</span>
           <span className="inline-flex items-center gap-1 font-semibold text-amber-500">
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> 4.9
           </span>
@@ -392,12 +471,8 @@ function RecommendCard({ course, badgeIndex }: { course: Course; badgeIndex: num
         <h3 className="line-clamp-1 text-sm font-semibold text-[var(--text-primary)]">{course.title}</h3>
         <p className="mt-1 line-clamp-2 text-xs text-[var(--text-secondary)]">{course.description}</p>
         <div className="mt-auto flex items-center justify-between pt-4 text-[11px] text-[var(--text-muted)]">
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" /> {weeks}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <BarChart2 className="h-3.5 w-3.5" /> {course.level}
-          </span>
+          <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {weeks}</span>
+          <span className="inline-flex items-center gap-1"><BarChart2 className="h-3.5 w-3.5" /> {course.level}</span>
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)] transition group-hover:bg-[var(--accent)] group-hover:text-white">
             <ArrowRight className="h-3.5 w-3.5" />
           </span>
