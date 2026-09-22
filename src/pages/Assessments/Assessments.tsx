@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { StarfieldBackground } from '../../components/StarfieldBackground';
 import {
@@ -20,58 +20,6 @@ const formatTime = (seconds: number) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
-/** Soft spotlight that follows the pointer (Total Points & stat cards). */
-function CursorGlowCard({
-  children,
-  className = '',
-  glowColor = 'rgba(255,255,255,0.35)',
-  darkGlow = 'rgba(129,140,248,0.25)',
-}: {
-  children: ReactNode;
-  className?: string;
-  glowColor?: string;
-  darkGlow?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [spot, setSpot] = useState({ x: 50, y: 50, active: false });
-
-  const onMove = (e: ReactMouseEvent<HTMLDivElement>) => {
-    const el = ref.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * 100;
-    const y = ((e.clientY - r.top) / r.height) * 100;
-    setSpot({ x, y, active: true });
-  };
-
-  const onLeave = () => setSpot((s) => ({ ...s, active: false }));
-
-  return (
-    <div
-      ref={ref}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-      className={`relative overflow-hidden ${className}`}
-    >
-      <div
-        className="pointer-events-none absolute inset-0 transition-opacity duration-300 dark:hidden"
-        style={{
-          opacity: spot.active ? 1 : 0.45,
-          background: `radial-gradient(circle 140px at ${spot.x}% ${spot.y}%, ${glowColor}, transparent 70%)`,
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0 hidden transition-opacity duration-300 dark:block"
-        style={{
-          opacity: spot.active ? 1 : 0.35,
-          background: `radial-gradient(circle 140px at ${spot.x}% ${spot.y}%, ${darkGlow}, transparent 70%)`,
-        }}
-      />
-      <div className="relative z-10">{children}</div>
-    </div>
-  );
-}
-
 const buildQuestionSet = (
   availableQuestions: Array<{ id: string; question: string; options: string[]; correctAnswer: string }>,
   requestedCount: number
@@ -90,6 +38,7 @@ export const Assessments = () => {
   >([]);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ASSESSMENTS[0].timeSeconds);
+  const [activeStat, setActiveStat] = useState<'points' | 'accuracy' | 'tests'>('points');
   const { playAchievement } = useUISound();
 
   const activeAssessment = ASSESSMENTS.find((test) => test.id === selectedAssessmentId) ?? ASSESSMENTS[0];
@@ -151,6 +100,30 @@ export const Assessments = () => {
     return () => clearInterval(timer);
   }, [view]);
 
+  const stats = [
+    {
+      id: 'points' as const,
+      value: '1,250',
+      label: 'Total Points',
+      Icon: Trophy,
+      idleIcon: 'text-indigo-600 dark:text-indigo-300',
+    },
+    {
+      id: 'accuracy' as const,
+      value: '84%',
+      label: 'Avg. Accuracy',
+      Icon: BarChart2,
+      idleIcon: 'text-emerald-500',
+    },
+    {
+      id: 'tests' as const,
+      value: '12',
+      label: 'Tests Completed',
+      Icon: Clock,
+      idleIcon: 'text-amber-500',
+    },
+  ];
+
   return (
     <div className="relative flex-1 overflow-hidden">
       <StarfieldBackground />
@@ -166,39 +139,52 @@ export const Assessments = () => {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              <CursorGlowCard
-                className="rounded-[40px] bg-indigo-600 p-8 text-white shadow-xl shadow-indigo-500/20 dark:shadow-indigo-900/40"
-                glowColor="rgba(255,255,255,0.4)"
-                darkGlow="rgba(199,210,254,0.35)"
-              >
-                <Trophy className="mb-6 h-10 w-10 opacity-80" />
-                <div className="text-4xl font-black">1,250</div>
-                <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">
-                  Total Points
-                </div>
-              </CursorGlowCard>
-              <CursorGlowCard
-                className="rounded-[40px] border border-slate-100 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-                glowColor="rgba(16,185,129,0.2)"
-                darkGlow="rgba(16,185,129,0.22)"
-              >
-                <BarChart2 className="mb-6 h-10 w-10 text-emerald-500" />
-                <div className="text-4xl font-black text-slate-900 dark:text-white">84%</div>
-                <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-200">
-                  Avg. Accuracy
-                </div>
-              </CursorGlowCard>
-              <CursorGlowCard
-                className="rounded-[40px] border border-slate-100 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-                glowColor="rgba(245,158,11,0.22)"
-                darkGlow="rgba(245,158,11,0.2)"
-              >
-                <Clock className="mb-6 h-10 w-10 text-amber-500" />
-                <div className="text-4xl font-black text-slate-900 dark:text-white">12</div>
-                <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-200">
-                  Tests Completed
-                </div>
-              </CursorGlowCard>
+              {stats.map((stat) => {
+                const active = activeStat === stat.id;
+                return (
+                  <button
+                    key={stat.id}
+                    type="button"
+                    onClick={() => setActiveStat(stat.id)}
+                    className={`group relative overflow-hidden rounded-[40px] p-8 text-left transition-all duration-300 ${
+                      active
+                        ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/25 dark:shadow-indigo-900/50'
+                        : 'border border-slate-100 bg-white shadow-sm hover:border-indigo-200 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-500/40'
+                    }`}
+                  >
+                    <div
+                      className={`pointer-events-none absolute -right-4 -top-4 h-28 w-28 rounded-full blur-2xl transition-all duration-300 ${
+                        active
+                          ? 'bg-white/20'
+                          : 'bg-indigo-400/0 group-hover:bg-indigo-400/15 dark:group-hover:bg-indigo-500/20'
+                      }`}
+                    />
+                    <div
+                      className={`mb-6 flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 ${
+                        active
+                          ? 'bg-white/20 text-white'
+                          : `bg-slate-50 ${stat.idleIcon} group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6 dark:bg-slate-800`
+                      }`}
+                    >
+                      <stat.Icon className="h-6 w-6" />
+                    </div>
+                    <div
+                      className={`text-4xl font-black ${
+                        active ? 'text-white' : 'text-slate-900 dark:text-white'
+                      }`}
+                    >
+                      {stat.value}
+                    </div>
+                    <div
+                      className={`mt-2 text-[10px] font-black uppercase tracking-[0.2em] ${
+                        active ? 'text-indigo-100' : 'text-slate-400 dark:text-slate-200'
+                      }`}
+                    >
+                      {stat.label}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="space-y-6">
