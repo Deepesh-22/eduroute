@@ -75,13 +75,12 @@ export const Login = () => {
     setError(null);
     setLoading(true);
     try {
-      // Demo credentials for industry / faculty / college
       if (role === 'industry') {
         const ok =
           formData.email.trim().toLowerCase() === INDUSTRY_DEMO_CREDENTIALS.email.toLowerCase() &&
           formData.password === INDUSTRY_DEMO_CREDENTIALS.password;
         if (!ok) {
-          setError('Use industry demo credentials (see INDUSTRY_DEMO_CREDENTIALS).');
+          setError('Use industry demo credentials.');
           return;
         }
         saveAuthSession(`demo-industry-${Date.now()}`, {
@@ -133,7 +132,7 @@ export const Login = () => {
       }
 
       if (role === 'admin') {
-        if (validateAdminPassword(formData.password) && formData.email.includes('admin')) {
+        if ((await validateAdminPassword(formData.password)) && formData.email.includes('admin')) {
           setAdminSession(true);
           try {
             const demo = localDemoLogin({
@@ -235,7 +234,7 @@ export const Login = () => {
       </div>
 
       <div className="absolute right-6 top-6 z-20">
-        <ThemeToggle />
+        <ThemeToggle className={isDark ? '!border-white/20' : '!border-slate-300'} />
       </div>
 
       <div className="relative z-10 flex w-full max-w-5xl items-center justify-center gap-12">
