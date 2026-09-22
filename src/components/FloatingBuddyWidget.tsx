@@ -1,7 +1,6 @@
 /**
- * Global floating “How can I help you?” AI assistant.
- * Frontend-only UI refresh (screenshot + animated popup).
- * Uses existing sendBuddyMessage — does not modify Buddy page or backend.
+ * Floating “How can I help you?” — UI matches design mock (robot + 6 cards).
+ * Frontend only. Uses existing sendBuddyMessage (no backend / Buddy AI changes).
  */
 import {
   FormEvent,
@@ -19,6 +18,7 @@ import {
   Compass,
   FileText,
   GraduationCap,
+  MessageSquare,
   Send,
   Sparkles,
   Trophy,
@@ -35,6 +35,7 @@ import {
 import { buildBuddyOnboardingContext } from '../utils/onboardingStore';
 
 type ChatMsg = { id: number; role: 'user' | 'ai'; text: string };
+type PanelView = 'home' | 'chat';
 
 function toChatMsg(m: BuddyMessage): ChatMsg {
   return { id: m.id, role: m.role, text: m.text };
@@ -52,9 +53,7 @@ function toBuddyMsg(m: ChatMsg): BuddyMessage {
 function loadSharedMessages(userId: string): ChatMsg[] {
   try {
     const active = getActiveConversation(userId);
-    if (active.messages?.length) {
-      return active.messages.map(toChatMsg);
-    }
+    if (active.messages?.length) return active.messages.map(toChatMsg);
   } catch {
     /* ignore */
   }
@@ -72,49 +71,48 @@ function persistSharedMessages(userId: string, msgs: ChatMsg[]) {
 
 const POS_KEY = 'eduroute:floating-buddy-pos';
 
-/** Matches the “How can I help you?” screenshot cards */
 const QUICK = [
   {
     label: 'Find a Career Path',
     sub: 'Explore your options',
     path: '/roadmaps',
     icon: Compass,
-    tone: 'bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300',
+    tone: 'bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-300',
   },
   {
     label: 'Check Skill Gaps',
     sub: 'Know what to improve',
     path: '/skill-profile',
     icon: GraduationCap,
-    tone: 'bg-violet-100 text-violet-600 dark:bg-violet-950/60 dark:text-violet-300',
+    tone: 'bg-violet-100 text-violet-600 dark:bg-violet-900/50 dark:text-violet-300',
   },
   {
     label: 'Suggest Courses',
     sub: 'Personalized learning',
     path: '/browse',
     icon: BookOpen,
-    tone: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300',
+    tone: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300',
   },
   {
     label: 'Find Internships',
     sub: 'Get real opportunities',
     path: '/internships',
     icon: Briefcase,
-    tone: 'bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-300',
+    tone: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
   },
   {
     label: 'Hackathons & Events',
     sub: 'Compete and grow',
     path: '/events',
     icon: Trophy,
-    tone: 'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300',
+    tone: 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300',
   },
   {
     label: 'Build My CV',
     sub: 'Stand out to recruiters',
     path: '/cv-builder',
     icon: FileText,
-    tone: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300',
+    tone: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300',
   },
 ] as const;
 
@@ -138,40 +136,35 @@ function savePos(x: number, y: number) {
   }
 }
 
-function defaultPos() {
-  if (typeof window === 'undefined') return { x: 24, y: 24 };
-  return { x: 24, y: 24 };
-}
-
 export function FloatingBuddyWidget() {
   const location = useLocation();
   const navigate = useNavigate();
   const user = getAuthUser();
-  const userName = user?.name?.split(' ')[0] || 'there';
   const userId = user?.id || 'demo-student-101';
   const hideOnBuddy = location.pathname.startsWith('/buddy');
 
   const [open, setOpen] = useState(false);
+  const [view, setView] = useState<PanelView>('home');
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMsg[]>(() => loadSharedMessages(userId));
   const [typing, setTyping] = useState(false);
   const [error, setError] = useState('');
   const [hintVisible, setHintVisible] = useState(true);
 
-  const [pos, setPos] = useState(() => loadPos() || defaultPos());
+  const [pos, setPos] = useState(() => loadPos() || { x: 24, y: 24 });
   const dragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const moved = useRef(false);
   const fabRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
       setMessages(loadSharedMessages(userId));
+      setView('home');
       setHintVisible(false);
-      setTimeout(() => inputRef.current?.focus(), 80);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open, userId]);
 
@@ -188,28 +181,22 @@ export function FloatingBuddyWidget() {
   }, [open, userId]);
 
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && view === 'chat') {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, typing, open]);
+  }, [messages, typing, open, view]);
 
   useEffect(() => {
     if (open || hideOnBuddy) return;
-    const t = window.setInterval(() => {
-      setHintVisible(true);
-    }, 12000);
+    const t = window.setInterval(() => setHintVisible(true), 12000);
     return () => window.clearInterval(t);
   }, [open, hideOnBuddy]);
 
   const clampPos = useCallback((x: number, y: number) => {
     const pad = 8;
-    const w = 64;
-    const h = 64;
-    const maxX = Math.max(pad, window.innerWidth - w - pad);
-    const maxY = Math.max(pad, window.innerHeight - h - pad);
-    const right = Math.min(maxX, Math.max(pad, x));
-    const bottom = Math.min(maxY, Math.max(pad, y));
-    return { x: right, y: bottom };
+    const maxX = Math.max(pad, window.innerWidth - 64 - pad);
+    const maxY = Math.max(pad, window.innerHeight - 64 - pad);
+    return { x: Math.min(maxX, Math.max(pad, x)), y: Math.min(maxY, Math.max(pad, y)) };
   }, []);
 
   const onPointerDown = (e: ReactPointerEvent) => {
@@ -219,10 +206,7 @@ export function FloatingBuddyWidget() {
     const el = fabRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    dragOffset.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     el.setPointerCapture(e.pointerId);
   };
 
@@ -231,9 +215,7 @@ export function FloatingBuddyWidget() {
     moved.current = true;
     const left = e.clientX - dragOffset.current.x;
     const top = e.clientY - dragOffset.current.y;
-    const right = window.innerWidth - left - 56;
-    const bottom = window.innerHeight - top - 56;
-    setPos(clampPos(right, bottom));
+    setPos(clampPos(window.innerWidth - left - 56, window.innerHeight - top - 56));
   };
 
   const onPointerUp = (e: ReactPointerEvent) => {
@@ -245,14 +227,13 @@ export function FloatingBuddyWidget() {
       /* ignore */
     }
     savePos(pos.x, pos.y);
-    if (!moved.current) {
-      setOpen((v) => !v);
-    }
+    if (!moved.current) setOpen((v) => !v);
   };
 
   const send = async (text: string) => {
     const q = text.trim();
     if (!q || typing) return;
+    setView('chat');
     setInput('');
     setError('');
     const userMsg: ChatMsg = { id: Date.now(), role: 'user', text: q };
@@ -271,9 +252,7 @@ export function FloatingBuddyWidget() {
         userId,
         message: messageWithContext,
         language: 'english',
-        context: {
-          missingSkills: onboard.missingSkills,
-        },
+        context: { missingSkills: onboard.missingSkills },
       });
       const aiMsg: ChatMsg = {
         id: Date.now() + 1,
@@ -302,15 +281,11 @@ export function FloatingBuddyWidget() {
     navigate(item.path);
   };
 
-  const fabStyle: CSSProperties = {
-    right: pos.x,
-    bottom: pos.y,
-  };
-
+  const fabStyle: CSSProperties = { right: pos.x, bottom: pos.y };
   const panelStyle: CSSProperties = {
     right:
       typeof window !== 'undefined'
-        ? Math.min(pos.x, Math.max(8, window.innerWidth - 400))
+        ? Math.min(pos.x, Math.max(8, window.innerWidth - 420))
         : pos.x,
     bottom: pos.y + 72,
   };
@@ -321,39 +296,59 @@ export function FloatingBuddyWidget() {
     <>
       {open && (
         <div
-          ref={panelRef}
           style={panelStyle}
-          className="fixed z-[90] flex w-[min(400px,calc(100vw-20px))] max-h-[min(640px,calc(100vh-100px))] flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white via-slate-50 to-indigo-50/40 shadow-[0_24px_60px_rgba(15,23,42,0.2)] dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/50 dark:shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
+          className="fixed z-[90] flex w-[min(420px,calc(100vw-16px))] max-h-[min(680px,calc(100vh-96px))] flex-col overflow-hidden rounded-[28px] border border-slate-200/70 bg-[#f4f7ff] shadow-[0_25px_60px_rgba(79,70,229,0.18)] dark:border-slate-700/80 dark:bg-slate-950 dark:shadow-[0_25px_60px_rgba(0,0,0,0.55)]"
           role="dialog"
           aria-label="How can I help you?"
         >
-          <div className="relative shrink-0 overflow-hidden px-4 pb-3 pt-4">
-            <div className="absolute -right-6 -top-8 h-28 w-28 rounded-full bg-violet-400/20 blur-2xl dark:bg-violet-500/20" />
-            <div className="relative flex items-start gap-3">
-              <div className="relative shrink-0">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 via-indigo-500 to-sky-500 text-3xl shadow-lg shadow-violet-300/50 dark:shadow-violet-900/50">
-                  🤖
-                </div>
-                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[10px] text-white ring-2 ring-white dark:ring-slate-900">
-                  ✓
-                </span>
+          <div className="pointer-events-none absolute -left-10 top-8 h-32 w-32 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-500/10" />
+          <div className="pointer-events-none absolute -right-8 top-0 h-40 w-40 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-600/15" />
+
+          <div className="relative z-10 flex shrink-0 items-start gap-3 px-4 pb-2 pt-4">
+            <div className="relative shrink-0">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-indigo-500 to-sky-400 text-[28px] shadow-lg shadow-violet-400/40 ring-4 ring-white/80 dark:ring-slate-900/80">
+                🤖
               </div>
-              <div className="min-w-0 flex-1 pt-0.5">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-300">
-                  Your AI Buddy
-                </p>
-                <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-500 px-3.5 py-1.5 text-sm font-bold text-white shadow-md shadow-violet-400/30 dark:shadow-violet-900/40">
-                  How can I help you?
-                  <Sparkles className="h-3.5 w-3.5 opacity-90" />
-                </div>
-                <p className="mt-1.5 text-[11px] italic text-slate-500 dark:text-slate-400">
-                  Your goals, my guidance — always ♥
-                </p>
+              <span className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-950">
+                ✓
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-600 dark:text-violet-300">
+                Your AI Buddy
+              </p>
+              <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-500 px-3.5 py-1.5 text-[13px] font-bold text-white shadow-md shadow-violet-400/35">
+                How can I help you?
+                <Sparkles className="h-3.5 w-3.5" />
               </div>
+              <p className="mt-1.5 text-[11px] italic text-slate-500 dark:text-slate-400">
+                Your goals, my guidance — always ♥
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              {view === 'chat' && (
+                <button
+                  type="button"
+                  onClick={() => setView('home')}
+                  className="rounded-lg px-2 py-1 text-[10px] font-semibold text-violet-600 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-950/40"
+                >
+                  Shortcuts
+                </button>
+              )}
+              {view === 'home' && messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setView('chat')}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  Chat
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                className="rounded-xl p-1.5 text-slate-400 hover:bg-white/80 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -361,22 +356,19 @@ export function FloatingBuddyWidget() {
             </div>
           </div>
 
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
-            {messages.length === 0 && !typing && (
-              <>
-                <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Hi {userName}! Pick a shortcut or ask anything below.
-                </p>
+          <div ref={scrollRef} className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-2">
+            {view === 'home' && (
+              <div className="rounded-2xl border border-white/70 bg-white/70 p-3 shadow-sm backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-900/70">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {QUICK.map((item) => (
                     <button
                       key={item.label}
                       type="button"
                       onClick={() => onQuick(item)}
-                      className="group flex items-center gap-2.5 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5 text-left shadow-sm transition hover:border-violet-200 hover:shadow-md dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-violet-500/40"
+                      className="group flex items-center gap-2.5 rounded-2xl border border-slate-100/90 bg-white px-3 py-2.5 text-left shadow-sm transition hover:border-violet-200 hover:shadow-md dark:border-slate-700 dark:bg-slate-800/90 dark:hover:border-violet-500/40"
                     >
                       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${item.tone}`}>
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className="h-4 w-4" strokeWidth={2} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -386,64 +378,69 @@ export function FloatingBuddyWidget() {
                           {item.sub}
                         </span>
                       </span>
-                      <span className="text-slate-300 transition group-hover:text-violet-500 dark:text-slate-600">→</span>
+                      <span className="text-slate-300 group-hover:text-violet-500 dark:text-slate-600">→</span>
                     </button>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {view === 'chat' && (
+              <>
+                {messages.length === 0 && !typing && (
+                  <p className="mb-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Ask anything below to start chatting.
+                  </p>
+                )}
+                {messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`mb-2.5 flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[92%] rounded-2xl px-3 py-2 text-sm leading-6 ${
+                        m.role === 'user'
+                          ? 'rounded-br-md bg-violet-600 text-white'
+                          : 'rounded-bl-md border border-slate-100 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+                      }`}
+                    >
+                      {m.role === 'ai' ? <BuddyMarkdown text={m.text} /> : m.text}
+                    </div>
+                  </div>
+                ))}
+                {typing && (
+                  <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <Sparkles className="h-3.5 w-3.5 animate-pulse text-violet-500" />
+                    Buddy is thinking…
+                  </div>
+                )}
+                {error && (
+                  <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-300">
+                    {error}
+                  </p>
+                )}
               </>
-            )}
-
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`mb-2.5 flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-6 ${
-                    m.role === 'user'
-                      ? 'rounded-br-md bg-violet-600 text-white'
-                      : 'rounded-bl-md border border-slate-100 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
-                  }`}
-                >
-                  {m.role === 'ai' ? <BuddyMarkdown text={m.text} /> : m.text}
-                </div>
-              </div>
-            ))}
-
-            {typing && (
-              <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-300">
-                  <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-                </span>
-                Buddy is thinking…
-              </div>
-            )}
-
-            {error && (
-              <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-300">
-                {error}
-              </p>
             )}
           </div>
 
           <form
             onSubmit={onSubmit}
-            className="shrink-0 border-t border-slate-100/80 bg-white/60 px-3 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80"
+            className="relative z-10 shrink-0 border-t border-slate-200/60 bg-white/50 px-3 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80"
           >
-            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 shadow-sm focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-500/15 dark:border-slate-700 dark:bg-slate-800 dark:focus-within:border-violet-500/60">
+            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 shadow-sm focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-500/20 dark:border-slate-700 dark:bg-slate-800 dark:focus-within:border-violet-500/50">
               <Sparkles className="ml-1.5 h-4 w-4 shrink-0 text-violet-400" />
               <input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask me anything… e.g. suggest a career in tech"
+                placeholder="Ask me anything… e.g. suggest a career in tech for me"
                 className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || typing}
                 aria-label="Send"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-sm transition hover:from-violet-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 dark:disabled:from-slate-700 dark:disabled:to-slate-700 dark:disabled:text-slate-500"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-sm transition hover:from-violet-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 dark:disabled:from-slate-700 dark:disabled:to-slate-700"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -458,15 +455,12 @@ export function FloatingBuddyWidget() {
       {!open && hintVisible && (
         <button
           type="button"
-          style={{
-            right: pos.x + 4,
-            bottom: pos.y + 68,
-          }}
+          style={{ right: pos.x + 4, bottom: pos.y + 68 }}
           onClick={() => {
             setOpen(true);
             setHintVisible(false);
           }}
-          className="buddy-help-float fixed z-[92] flex max-w-[min(240px,calc(100vw-48px))] items-center gap-2 rounded-full border border-violet-200/80 bg-white/95 px-3 py-2 text-left shadow-lg shadow-violet-200/40 backdrop-blur dark:border-violet-500/30 dark:bg-slate-900/95 dark:shadow-violet-900/40"
+          className="buddy-help-float fixed z-[92] flex max-w-[min(240px,calc(100vw-48px))] items-center gap-2 rounded-full border border-violet-200/80 bg-white/95 px-3 py-2 text-left shadow-lg shadow-violet-200/50 backdrop-blur dark:border-violet-500/30 dark:bg-slate-900/95 dark:shadow-violet-900/40"
           aria-label="Open How can I help you?"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-sm text-white">
@@ -492,7 +486,7 @@ export function FloatingBuddyWidget() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        className="buddy-fab-pulse fixed z-[91] flex h-14 touch-none select-none items-center gap-2 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 px-1.5 pr-4 text-white shadow-lg shadow-violet-300/50 transition hover:shadow-xl hover:shadow-violet-400/50 active:cursor-grabbing dark:shadow-violet-900/50 sm:h-12"
+        className="buddy-fab-pulse fixed z-[91] flex h-14 touch-none select-none items-center gap-2 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 px-1.5 pr-4 text-white shadow-lg shadow-violet-300/50 transition hover:shadow-xl active:cursor-grabbing dark:shadow-violet-900/50 sm:h-12"
         aria-label="How can I help you? AI assistant"
         title="Drag to move · Click to open"
       >
@@ -512,17 +506,10 @@ export function FloatingBuddyWidget() {
           0%, 100% { box-shadow: 0 10px 25px rgba(139, 92, 246, 0.35); }
           50% { box-shadow: 0 12px 32px rgba(99, 102, 241, 0.55); }
         }
-        .buddy-help-float {
-          animation: buddy-help-bob 2.2s ease-in-out infinite;
-        }
-        .buddy-fab-pulse {
-          animation: buddy-fab-glow 2.8s ease-in-out infinite;
-        }
+        .buddy-help-float { animation: buddy-help-bob 2.2s ease-in-out infinite; }
+        .buddy-fab-pulse { animation: buddy-fab-glow 2.8s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .buddy-help-float,
-          .buddy-fab-pulse {
-            animation: none;
-          }
+          .buddy-help-float, .buddy-fab-pulse { animation: none; }
         }
       `}</style>
     </>
