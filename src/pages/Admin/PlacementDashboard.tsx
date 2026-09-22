@@ -4,16 +4,14 @@ import {
   Briefcase,
   Calendar,
   ChevronDown,
-  GraduationCap,
   TrendingUp,
   Users,
   Target,
   Sparkles,
 } from 'lucide-react';
 import { getPlacementDashboardData } from '../../utils/placementDashboard';
-import { ThemeToggle } from '../../components/ThemeToggle';
-import { clearAuthSession, getAuthUser } from '../../utils/rbacAuth';
-import { Link, useNavigate } from 'react-router-dom';
+import { getAuthUser } from '../../utils/rbacAuth';
+import { Link } from 'react-router-dom';
 
 function funnelPct(part: number, total: number) {
   if (!total) return 0;
@@ -43,7 +41,6 @@ function TrendChart({ data }: { data: { month: string; applied: number; shortlis
 }
 
 export const PlacementDashboard = () => {
-  const navigate = useNavigate();
   const user = getAuthUser();
   const data = useMemo(
     () =>
@@ -71,35 +68,8 @@ export const PlacementDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <header className="sticky top-0 z-20 border-b border-[var(--border-default)] bg-[var(--bg-sidebar)]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
-              <GraduationCap className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-sm font-black">College placement</div>
-              <div className="text-xs text-[var(--text-muted)]">{data.institutionName}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <button
-              type="button"
-              onClick={() => {
-                clearAuthSession();
-                navigate('/login', { replace: true });
-              }}
-              className="rounded-xl px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+    <div className="text-[var(--text-primary)]">
+      <div className="space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Institution analytics</p>
@@ -271,7 +241,7 @@ export const PlacementDashboard = () => {
           </Link>{' '}
           · College demo · localStorage metrics
         </p>
-      </main>
+      </div>
     </div>
   );
 };
