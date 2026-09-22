@@ -1,34 +1,40 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Lock,
+  Mail,
+  ArrowRight,
+  GraduationCap,
+  Building2,
+  BookOpen,
+  UserCog,
+  Briefcase,
+  Eye,
+  EyeOff,
+  ChevronDown,
+} from 'lucide-react';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { useTheme } from '../../contexts/ThemeContext';
-import {
-  loginStudent,
-  loginStaff,
-  type AuthApiUser,
-} from '../../utils/authApi';
+import { loginStaff, loginStudent } from '../../utils/authApi';
 import { saveAuthSession, type UserRole } from '../../utils/rbacAuth';
-import { saveUserProfile } from '../../utils/userProfile';
 import { isAuthDbConfigError, localDemoLogin } from '../../utils/localDemoAuth';
 import { handleSocialAuth } from '../../utils/socialAuth';
 
-const mapRole = (user: AuthApiUser): UserRole => {
-  if (user.role === 'admin') return 'admin';
-  if (user.role === 'industry') return 'industry';
-  if (user.role === 'college') return 'college';
-  if (user.role === 'faculty') return 'faculty';
-  return 'student';
+type RoleOption = {
+  value: UserRole;
+  label: string;
+  description: string;
+  Icon: typeof GraduationCap;
 };
 
-const roleHome = (role: UserRole): string => {
-  if (role === 'admin') return '/admin';
-  if (role === 'industry') return '/industry';
-  if (role === 'college') return '/college/placements';
-  if (role === 'faculty') return '/faculty';
-  return '/dashboard';
-};
+const ROLE_OPTIONS: RoleOption[] = [
+  { value: 'student', label: 'Student', description: 'Learn, internships & placement prep', Icon: GraduationCap },
+  { value: 'faculty', label: 'Faculty', description: 'Opportunities & official portals', Icon: BookOpen },
+  { value: 'industry', label: 'Industry', description: 'Post roles & review applicants', Icon: Briefcase },
+  { value: 'college', label: 'College', description: 'Institution placement dashboard', Icon: Building2 },
+  { value: 'admin', label: 'Admin', description: 'Platform administration', Icon: UserCog },
+];
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -36,36 +42,53 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<UserRole>('student');
+  const [roleOpen, setRoleOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [socialMsg, setSocialMsg] = useState<string | null>(null);
-  const [roleTab, setRoleTab] = useState<'student' | 'staff'>('student');
+  const roleMenuRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (roleMenuRef.current && !roleMenuRef.current.contains(e.target as Node)) {
+        setRoleOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const selected = ROLE_OPTIONS.find((r) => r.value === role) || ROLE_OPTIONS[0];
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
       const result =
-        roleTab === 'student'
-          ? await loginStudent(email.trim(), password)
-          : await loginStaff(email.trim(), password);
+        role === 'admin' || role === 'faculty' || role === 'industry' || role === 'college'
+          ? await loginStaff(email.trim(), password)
+          : await loginStudent(email.trim(), password);
 
       if (!result.success || !result.token || !result.user) {
         if (isAuthDbConfigError(result.error)) {
-          const demo = localDemoLogin(email.trim(), password);
+          const demo = localDemoLogin(email.trim(), password, role);
           if (demo.ok && demo.token && demo.user) {
-            saveUserProfile({ name: demo.user.name, email: demo.user.email });
-            const role = mapRole(demo.user as AuthApiUser);
             saveAuthSession(demo.token, {
               id: demo.user.id,
               name: demo.user.name,
               email: demo.user.email,
-              role,
+              role: (demo.user.role as UserRole) || role,
               verificationStatus: demo.user.verificationStatus || 'verified',
               institutionName: (demo.user as { institutionName?: string }).institutionName,
             });
-            navigate(roleHome(role), { replace: true });
+            const r = (demo.user.role as UserRole) || role;
+            if (r === 'admin') navigate('/admin', { replace: true });
+            else if (r === 'industry') navigate('/industry', { replace: true });
+            else if (r === 'college') navigate('/college/placements', { replace: true });
+            else if (r === 'faculty') navigate('/faculty', { replace: true });
+            else navigate('/dashboard', { replace: true });
             return;
           }
         }
@@ -73,22 +96,22 @@ export const Login = () => {
         return;
       }
 
-      saveUserProfile({
-        name: result.user.name,
-        email: result.user.email,
-        avatar: result.user.avatar,
-      });
-      const role = mapRole(result.user);
+      const userRole = (result.user.role as UserRole) || role;
       saveAuthSession(result.token, {
         id: result.user.id,
         name: result.user.name,
         email: result.user.email,
         avatar: result.user.avatar,
-        role,
+        role: userRole,
         verificationStatus: result.user.verificationStatus || 'verified',
         institutionName: (result.user as { institutionName?: string }).institutionName,
       });
-      navigate(roleHome(role), { replace: true });
+
+      if (userRole === 'admin') navigate('/admin', { replace: true });
+      else if (userRole === 'industry') navigate('/industry', { replace: true });
+      else if (userRole === 'college') navigate('/college/placements', { replace: true });
+      else if (userRole === 'faculty') navigate('/faculty', { replace: true });
+      else navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -137,47 +160,69 @@ export const Login = () => {
             </div>
           </div>
 
-          <div className="mb-5 flex rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-1">
-            <button
-              type="button"
-              onClick={() => setRoleTab('student')}
-              className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                roleTab === 'student'
-                  ? 'bg-violet-600 text-white shadow'
-                  : muted
-              }`}
-            >
-              Student
-            </button>
-            <button
-              type="button"
-              onClick={() => setRoleTab('staff')}
-              className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                roleTab === 'staff'
-                  ? 'bg-violet-600 text-white shadow'
-                  : muted
-              }`}
-            >
-              Staff / Admin
-            </button>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div ref={roleMenuRef} className="relative">
+              <label className={`mb-1.5 block text-xs font-semibold ${muted}`}>I am a</label>
+              <button
+                type="button"
+                onClick={() => setRoleOpen((v) => !v)}
+                className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left text-sm outline-none transition focus:ring-2 focus:ring-violet-500/30 ${inputCls}`}
+              >
+                <span className="flex items-center gap-2">
+                  <selected.Icon className="h-4 w-4 text-violet-500" />
+                  <span className="font-semibold">{selected.label}</span>
+                </span>
+                <ChevronDown className={`h-4 w-4 transition ${roleOpen ? 'rotate-180' : ''} ${muted}`} />
+              </button>
+              {roleOpen && (
+                <div
+                  className={`absolute z-30 mt-1 w-full overflow-hidden rounded-xl border shadow-xl ${
+                    isDark ? 'border-white/10 bg-slate-900' : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  {ROLE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setRole(opt.value);
+                        setRoleOpen(false);
+                      }}
+                      className={`flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm transition hover:bg-violet-500/10 ${
+                        role === opt.value ? 'bg-violet-500/15' : ''
+                      }`}
+                    >
+                      <opt.Icon className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+                      <span>
+                        <span className="block font-semibold">{opt.label}</span>
+                        <span className={`block text-xs ${muted}`}>{opt.description}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div>
               <label className={`mb-1.5 block text-xs font-semibold ${muted}`}>Email</label>
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@college.edu"
-                className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-violet-500/30 ${inputCls}`}
-              />
+              <div className="relative">
+                <Mail className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${muted}`} />
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@college.edu"
+                  className={`w-full rounded-xl border py-2.5 pl-10 pr-3.5 text-sm outline-none transition focus:ring-2 focus:ring-violet-500/30 ${inputCls}`}
+                />
+              </div>
             </div>
+
             <div>
               <label className={`mb-1.5 block text-xs font-semibold ${muted}`}>Password</label>
               <div className="relative">
+                <Lock className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${muted}`} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -185,7 +230,7 @@ export const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full rounded-xl border px-3.5 py-2.5 pr-10 text-sm outline-none transition focus:ring-2 focus:ring-violet-500/30 ${inputCls}`}
+                  className={`w-full rounded-xl border py-2.5 pl-10 pr-10 text-sm outline-none transition focus:ring-2 focus:ring-violet-500/30 ${inputCls}`}
                 />
                 <button
                   type="button"
@@ -209,8 +254,8 @@ export const Login = () => {
               disabled={loading}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/25 transition hover:from-violet-500 hover:to-indigo-500 disabled:opacity-60"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {loading ? 'Signing in…' : 'Sign in'}
+              {!loading && <ArrowRight className="h-4 w-4" />}
             </button>
           </form>
 
@@ -276,7 +321,7 @@ export const Login = () => {
           {socialMsg && <p className="mt-3 text-center text-xs text-amber-500">{socialMsg}</p>}
 
           <p className={`mt-6 text-center text-sm ${muted}`}>
-            Don&apos;t have an account?{' '}
+            Don't have an account?{' '}
             <Link to="/signup" className="font-semibold text-violet-500 hover:text-violet-400">
               Sign up
             </Link>
