@@ -1,6 +1,6 @@
 /**
- * Floating “How can I help you?” — UI matches design mock (logo + 6 cards).
- * Frontend only. Uses existing sendBuddyMessage (no backend / Buddy AI API changes).
+ * Floating Buddy AI — logo FAB + “How can I help you?” text that floats above
+ * (visible before and after open). Frontend only; no backend/API changes.
  */
 import {
   FormEvent,
@@ -197,7 +197,7 @@ export function FloatingBuddyWidget() {
     if (open) {
       setMessages(loadSharedMessages(userId));
       setView('home');
-      setHintVisible(false);
+      setHintVisible(true);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open, userId]);
@@ -221,10 +221,11 @@ export function FloatingBuddyWidget() {
   }, [messages, typing, open, view]);
 
   useEffect(() => {
-    if (open || hideOnBuddy) return;
-    const t = window.setInterval(() => setHintVisible(true), 12000);
+    if (hideOnBuddy) return;
+    setHintVisible(true);
+    const t = window.setInterval(() => setHintVisible(true), 10000);
     return () => window.clearInterval(t);
-  }, [open, hideOnBuddy]);
+  }, [hideOnBuddy]);
 
   const clampPos = useCallback((x: number, y: number) => {
     const pad = 8;
@@ -351,7 +352,7 @@ export function FloatingBuddyWidget() {
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-600 dark:text-violet-300">
                 Your AI Buddy
               </p>
-              <div className="buddy-help-text-float mt-1 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-500 px-3.5 py-1.5 text-[13px] font-bold text-white shadow-md shadow-violet-400/35">
+              <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-500 px-3.5 py-1.5 text-[13px] font-bold text-white shadow-md shadow-violet-400/35">
                 How can I help you?
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
@@ -472,30 +473,20 @@ export function FloatingBuddyWidget() {
         </div>
       )}
 
-      {!open && hintVisible && (
-        <button
-          type="button"
-          style={{ right: pos.x + 4, bottom: pos.y + 68 }}
-          onClick={() => {
-            setOpen(true);
-            setHintVisible(false);
-          }}
-          className="buddy-help-float fixed z-[92] flex max-w-[min(240px,calc(100vw-48px))] items-center gap-2 rounded-full border border-violet-200/80 bg-white/95 px-3 py-2 text-left shadow-lg shadow-violet-200/50 backdrop-blur dark:border-violet-500/30 dark:bg-slate-900/95 dark:shadow-violet-900/40"
-          aria-label="Open How can I help you?"
+      {/* Floating label — visible before and after click (above logo only) */}
+      {hintVisible && (
+        <div
+          style={{ right: pos.x - 40, bottom: pos.y + 62 }}
+          className="buddy-help-float fixed z-[92] pointer-events-none select-none"
+          aria-hidden
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-500/15 to-indigo-600/15 ring-2 ring-violet-200/60 dark:ring-violet-500/30">
-            <BuddyLogo size={32} />
+          <span className="buddy-help-text-float inline-block whitespace-nowrap rounded-full border border-violet-200/80 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-violet-700 shadow-lg shadow-violet-200/40 backdrop-blur dark:border-violet-500/40 dark:bg-slate-900/95 dark:text-violet-200 dark:shadow-violet-900/40">
+            How can I help you?
           </span>
-          <span className="min-w-0">
-            <span className="buddy-help-text-float block truncate text-xs font-bold text-slate-800 dark:text-slate-100">
-              How can I help you?
-            </span>
-            <span className="block truncate text-[10px] text-slate-500 dark:text-slate-400">Tap to chat with Buddy</span>
-          </span>
-          <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-        </button>
+        </div>
       )}
 
+      {/* Logo-only FAB — no “Buddy” text */}
       <button
         ref={fabRef}
         type="button"
@@ -504,15 +495,13 @@ export function FloatingBuddyWidget() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        className="buddy-fab-pulse fixed z-[91] flex h-14 touch-none select-none items-center gap-2 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 px-1.5 pr-4 text-white shadow-lg shadow-violet-300/50 transition hover:shadow-xl active:cursor-grabbing dark:shadow-violet-900/50 sm:h-12"
+        className="buddy-fab-pulse fixed z-[91] flex h-14 w-14 touch-none select-none items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 p-0 text-white shadow-lg shadow-violet-300/50 transition hover:shadow-xl active:cursor-grabbing dark:shadow-violet-900/50 sm:h-12 sm:w-12"
         aria-label="How can I help you? AI assistant"
         title="Drag to move · Click to open"
       >
-        <span className="buddy-logo-bob flex h-11 w-11 items-center justify-center rounded-full bg-white/15 sm:h-9 sm:w-9">
-          <BuddyLogo size={36} />
+        <span className="buddy-logo-bob flex h-full w-full items-center justify-center">
+          <BuddyLogo size={40} />
         </span>
-        <span className="hidden text-sm font-semibold sm:inline">Buddy</span>
-        <Sparkles className="hidden h-3.5 w-3.5 opacity-80 sm:inline" />
       </button>
 
       <style>{`
