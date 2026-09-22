@@ -85,6 +85,9 @@ const CourseDetails = lazy(() => import('./pages/CourseDetails').then((module) =
 const Pathways = lazy(() => import('./pages/Pathways').then((module) => ({ default: module.Pathways })));
 const MainLayout = lazy(() => import('./layouts/MainLayout').then((module) => ({ default: module.MainLayout })));
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
+const AuthCallback = lazy(() =>
+  import('./pages/Auth/AuthCallback').then((module) => ({ default: module.AuthCallback ?? module.default })),
+);
 const Signup = lazy(() => import('./pages/Auth/Signup').then((module) => ({ default: module.Signup })));
 const Login = lazy(() => import('./pages/Auth/Login').then((module) => ({ default: module.Login })));
 const VerifyOTP = lazy(() => import('./pages/Auth/VerifyOTP').then((module) => ({ default: module.VerifyOTP })));
@@ -169,6 +172,7 @@ const AUTH_HIDE_GLOBAL_TOGGLE = [
   '/verify-college',
   '/onboarding',
   '/admin-login',
+  '/auth/callback',
 ];
 
 const GlobalThemeButton = () => {
@@ -194,6 +198,7 @@ export function App() {
           <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
           <Route path="/sign-up" element={<Navigate to="/signup" replace />} />
           <Route path="/register" element={<Navigate to="/signup" replace />} />
+          <Route path="/auth/callback/:provider" element={<AuthCallback />} />
           <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
           <Route path="/signin" element={<Navigate to="/login" replace />} />
           <Route path="/sign-in" element={<Navigate to="/login" replace />} />
