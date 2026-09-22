@@ -122,7 +122,7 @@ export function LivingLearningPath({ nodes = DEFAULT_NODES }: { nodes?: PathNode
   };
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)] md:p-8">
+    <section className="relative overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)] md:p-6">
       <div className="pointer-events-none absolute -left-16 top-0 h-40 w-40 rounded-full bg-violet-400/15 blur-3xl dark:bg-violet-600/10" />
       <div className="pointer-events-none absolute -right-10 bottom-0 h-36 w-36 rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/10" />
 
@@ -150,12 +150,12 @@ export function LivingLearningPath({ nodes = DEFAULT_NODES }: { nodes?: PathNode
         </div>
       </div>
 
-      <div className="relative z-10 mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
-        <div className="overflow-x-auto pb-2">
-          <div className="relative mx-auto flex min-w-[640px] items-start justify-between gap-2 px-2 pt-4">
-            <div className="absolute left-8 right-8 top-[36px] h-[3px] rounded-full bg-[var(--border-default)]" />
+      <div className="relative z-10 mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start">
+        <div className="overflow-x-auto pb-1 self-start">
+          <div className="relative mx-auto flex min-w-[560px] items-start justify-between gap-1 px-1 pt-2">
+            <div className="absolute left-8 right-8 top-[30px] h-[3px] rounded-full bg-[var(--border-default)]" />
             <motion.div
-              className="absolute left-8 top-[36px] h-[3px] rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-400"
+              className="absolute left-8 top-[30px] h-[3px] rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-400"
               initial={{ width: 0 }}
               animate={{
                 width: `calc(${(Math.max(completed - 0.5, 0) / Math.max(nodes.length - 1, 1)) * 100}% )`,
@@ -167,14 +167,14 @@ export function LivingLearningPath({ nodes = DEFAULT_NODES }: { nodes?: PathNode
             {nodes.map((node) => {
               const isSel = selectedId === node.id;
               return (
-                <div key={node.id} className="relative z-10 flex w-[100px] flex-col items-center">
+                <div key={node.id} className="relative z-10 flex w-[90px] flex-col items-center">
                   <motion.button
                     type="button"
                     onClick={() => setSelectedId(node.id)}
                     onContextMenu={(e) => onContext(e, node)}
                     whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`relative flex h-14 w-14 items-center justify-center rounded-full border-2 transition-shadow ${
+                    className={`relative flex h-12 w-12 items-center justify-center rounded-full border-2 transition-shadow ${
                       node.status === 'completed'
                         ? 'border-indigo-500 bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
                         : node.status === 'current'
@@ -193,8 +193,8 @@ export function LivingLearningPath({ nodes = DEFAULT_NODES }: { nodes?: PathNode
                     )}
                     {node.status === 'locked' && <Lock className="h-5 w-5" />}
                   </motion.button>
-                  <p className="mt-3 text-center text-[11px] font-bold leading-tight text-[var(--text-primary)]">
-                    {node.title}
+                  <p className="mt-2 text-center text-[10px] font-bold leading-tight text-[var(--text-primary)]">
+                    {node.short}
                   </p>
                   <p
                     className={`mt-1 text-[10px] font-semibold ${
@@ -215,7 +215,7 @@ export function LivingLearningPath({ nodes = DEFAULT_NODES }: { nodes?: PathNode
               );
             })}
           </div>
-          <p className="mt-4 text-center text-[10px] text-[var(--text-muted)]">
+          <p className="mt-2 text-center text-[10px] text-[var(--text-muted)]">
             Tip: click a node for details · right-click for quick actions
           </p>
         </div>
@@ -228,7 +228,7 @@ export function LivingLearningPath({ nodes = DEFAULT_NODES }: { nodes?: PathNode
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 12 }}
               transition={{ duration: 0.25 }}
-              className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-5"
+              className="self-start rounded-2xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4"
             >
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
