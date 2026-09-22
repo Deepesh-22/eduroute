@@ -38,7 +38,6 @@ export const Assessments = () => {
   >([]);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ASSESSMENTS[0].timeSeconds);
-  const [activeStat, setActiveStat] = useState<'points' | 'accuracy' | 'tests'>('points');
   const { playAchievement } = useUISound();
 
   const activeAssessment = ASSESSMENTS.find((test) => test.id === selectedAssessmentId) ?? ASSESSMENTS[0];
@@ -100,29 +99,30 @@ export const Assessments = () => {
     return () => clearInterval(timer);
   }, [view]);
 
+  /** All cards start neutral. Blue background only while hovered (moves with pointer). */
   const stats = [
     {
-      id: 'points' as const,
+      id: 'points',
       value: '1,250',
       label: 'Total Points',
       Icon: Trophy,
       idleIcon: 'text-indigo-600 dark:text-indigo-300',
     },
     {
-      id: 'accuracy' as const,
+      id: 'accuracy',
       value: '84%',
       label: 'Avg. Accuracy',
       Icon: BarChart2,
       idleIcon: 'text-emerald-500',
     },
     {
-      id: 'tests' as const,
+      id: 'tests',
       value: '12',
       label: 'Tests Completed',
       Icon: Clock,
       idleIcon: 'text-amber-500',
     },
-  ];
+  ] as const;
 
   return (
     <div className="relative flex-1 overflow-hidden">
@@ -139,52 +139,25 @@ export const Assessments = () => {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              {stats.map((stat) => {
-                const active = activeStat === stat.id;
-                return (
-                  <button
-                    key={stat.id}
-                    type="button"
-                    onClick={() => setActiveStat(stat.id)}
-                    className={`group relative overflow-hidden rounded-[40px] p-8 text-left transition-all duration-300 ${
-                      active
-                        ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/25 dark:shadow-indigo-900/50'
-                        : 'border border-slate-100 bg-white shadow-sm hover:border-indigo-200 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-500/40'
-                    }`}
+              {stats.map((stat) => (
+                <div
+                  key={stat.id}
+                  className="group relative overflow-hidden rounded-[40px] border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:border-transparent hover:bg-indigo-600 hover:text-white hover:shadow-xl hover:shadow-indigo-500/25 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-indigo-600 dark:hover:shadow-indigo-900/50"
+                >
+                  <div className="pointer-events-none absolute -right-4 -top-4 h-28 w-28 rounded-full bg-indigo-400/0 blur-2xl transition-all duration-300 group-hover:bg-white/20" />
+                  <div
+                    className={`mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 transition-all duration-300 group-hover:rotate-6 group-hover:bg-white/20 group-hover:text-white dark:bg-slate-800 ${stat.idleIcon}`}
                   >
-                    <div
-                      className={`pointer-events-none absolute -right-4 -top-4 h-28 w-28 rounded-full blur-2xl transition-all duration-300 ${
-                        active
-                          ? 'bg-white/20'
-                          : 'bg-indigo-400/0 group-hover:bg-indigo-400/15 dark:group-hover:bg-indigo-500/20'
-                      }`}
-                    />
-                    <div
-                      className={`mb-6 flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 ${
-                        active
-                          ? 'bg-white/20 text-white'
-                          : `bg-slate-50 ${stat.idleIcon} group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6 dark:bg-slate-800`
-                      }`}
-                    >
-                      <stat.Icon className="h-6 w-6" />
-                    </div>
-                    <div
-                      className={`text-4xl font-black ${
-                        active ? 'text-white' : 'text-slate-900 dark:text-white'
-                      }`}
-                    >
-                      {stat.value}
-                    </div>
-                    <div
-                      className={`mt-2 text-[10px] font-black uppercase tracking-[0.2em] ${
-                        active ? 'text-indigo-100' : 'text-slate-400 dark:text-slate-200'
-                      }`}
-                    >
-                      {stat.label}
-                    </div>
-                  </button>
-                );
-              })}
+                    <stat.Icon className="h-6 w-6" />
+                  </div>
+                  <div className="text-4xl font-black text-slate-900 transition-colors duration-300 group-hover:text-white dark:text-white">
+                    {stat.value}
+                  </div>
+                  <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors duration-300 group-hover:text-indigo-100 dark:text-slate-200">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="space-y-6">
