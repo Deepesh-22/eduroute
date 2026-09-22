@@ -10,7 +10,8 @@
 [![Category](https://img.shields.io/badge/Category-Software-blue)]()
 [![Theme](https://img.shields.io/badge/Theme-Smart%20Education%20%2F%20Automation-purple)]()
 
-**Live preview (PR):** https://deploy-preview-67--eduroutee.netlify.app
+**Live site (production):** https://eduroutee.netlify.app/  
+**PR #68 deploy preview:** https://deploy-preview-68--eduroutee.netlify.app/
 
 ---
 
@@ -64,147 +65,77 @@ flowchart LR
 | Application & tracking | Apply → Applied → Shortlisted → Interview → Hired |
 | Industry collaboration | Industry workspace (`/industry`) |
 | Institution visibility | College placement dashboard (`/college/placements`) |
-| Learning support (value-add) | Roadmaps (animated Career Paths), DSA Sheet, Assessments, Buddy AI mentor |
+| Learning support (value-add) | Roadmaps, DSA Sheet, Assessments, Buddy AI mentor, Living Learning Path |
 | Student portfolio | Digital portfolio (skills, certs, projects, achievements) |
-| Faculty collaboration | Faculty opportunities with official portal links (FDP / internship portals) |
+| Faculty collaboration | Faculty opportunities with official portal links |
 
 ---
 
-## 4. Three-sided product
-
-```mermaid
-flowchart TB
-  subgraph Roles
-    S[Student]
-    I[Industry / Recruiter]
-    C[College / Placement Cell]
-  end
-  S -->|Skill Profile, Apply, Learn| P[EDUROUTE Portal]
-  I -->|Post, Shortlist| P
-  C -->|Funnel Analytics| P
-```
-
-| Role | Key screens |
-|------|-------------|
-| **Student** | Dashboard, Skill Profile, Internships, My Applications, Roadmaps (animated), Portfolio, DSA, Buddy AI |
-| **Industry** | Post opening, applicant list, shortlist with match % |
-| **College** | Placement counts, status funnel, cohort skill-gap snapshot |
-
----
-
-## 5. Core user flow (demo path for jury)
-
-```mermaid
-sequenceDiagram
-  participant St as Student
-  participant ER as EDUROUTE
-  participant In as Industry
-  participant Co as College
-
-  St->>ER: Signup + onboarding (interests + skill gaps)
-  ER->>St: Skill Profile + recommendations
-  St->>ER: Browse matched internships
-  St->>ER: Apply
-  In->>ER: Post job / view applicants
-  In->>ER: Shortlist candidate
-  Co->>ER: View placement funnel and skill gaps
-```
-
-**3-minute live demo order**
-
-1. Student onboarding → **Skill Profile**  
-2. **Internships** → Recommended + match % → **Apply**  
-3. **My Applications** (status)  
-4. **Industry** → post / shortlist  
-5. **College placements** dashboard  
-
----
-
-## 6. Feature map
+## 4. Feature map
 
 ```text
 EDUROUTE
 ├── Student
-│   ├── Auth + College ID verify (optional)
+│   ├── Auth (email + GitHub / LinkedIn OAuth)
 │   ├── AI onboarding (track + gap quiz)
 │   ├── Skill Profile (scores, gaps, next steps)
-│   ├── Dashboard (progress, applications shortcut)
-│   ├── Internships
-│   │   ├── Discrete match % (per-role scoring)
-│   │   ├── Recommended for you
-│   │   ├── Hero network constellation background
-│   │   ├── Scroll + card entrance animations
-│   │   └── Light / dark theme cards
-│   ├── My Applications (status pipeline)
+│   ├── Profile dashboard
+│   │   ├── Total Solved / Rank / XP / Badges
+│   │   └── Living Learning Path (nodes + side panel + right-click)
+│   ├── Internships (match %, apply pipeline)
 │   ├── Roadmaps / Career Paths
-│   │   ├── Dual-side animated sine waves (upper hero)
-│   │   ├── Continuous up–down wave oscillation
-│   │   ├── Scroll-linked water drift
-│   │   └── Staggered role cards (light / dark)
-│   ├── Digital Portfolio (skills, certs, projects, internships)
-│   ├── DSA Sheet (100 beginner problems)
-│   ├── Assessments, Leaderboard, Rewards
-│   └── Buddy AI + floating assistant
+│   ├── DSA Sheet, Assessments, Leaderboard, Rewards
+│   ├── Community feed
+│   ├── CV Builder
+│   ├── Portfolio
+│   └── Buddy AI + floating “How can I help you?” assistant
 ├── Faculty
-│   ├── Faculty workspace & opportunities
-│   └── Official portal links (AICTE ATAL, Internship, etc.)
+│   └── Opportunities + official portal links
 ├── Industry
-│   ├── Workspace login
-│   ├── Post internship / job (skills, stipend, location)
+│   ├── Post internship / job
 │   └── Applicants + shortlist
-└── College / Admin
-    ├── Placement dashboard (funnel metrics)
-    └── Admin panel (approvals, courses)
+└── College
+    └── Placement funnel dashboard
 ```
 
 ---
 
-## 6.1 PR #67 highlights (this branch)
+## 5. PR #68 highlights
 
-Features implemented and polished on **PR #67** (`feature/onboarding-interest-gap`):
+Branch: `fix/auth-social-login-signin`
 
-| Area | What judges will see |
-|------|----------------------|
-| **Career Paths / Roadmaps** | Animated dual-side sine waves in the upper hero; continuous **up–down oscillation** with clear intensity; waves also **drift while scrolling** (water-like flow); light & dark stroke colors; no arrow glyph |
-| **Internships** | Hero-only network constellation background; card scroll / entrance animations; **discrete match scores** (not the same % on every card); recommended list; full light / dark theme support on cards |
-| **Faculty opportunities** | Demo opportunities with **real official portal links** (e.g. AICTE ATAL Academy, AICTE Internship) for live jury walkthroughs |
-| **Student portfolio** | Digital portfolio page (skills, certifications, projects, internships, achievements) linked from the sidebar |
-| **Onboarding / skill gap** | Interest tracks + gap questions feeding Skill Profile and match recommendations |
-| **Themes** | Roadmap waves and internship cards work in **light and dark** mode |
+| Area | What was added / polished |
+|------|---------------------------|
+| **Auth** | GitHub & LinkedIn social login (Netlify functions + MySQL upsert where configured) |
+| **Floating Buddy** | “How can I help you?” home with 6 shortcut cards; chat after ask; animated tip pill; light/dark |
+| **Community** | Community page under Compete → below Rewards; seeded posts; Discord link |
+| **Skill Assessments** | Stat cards turn blue on **hover** (no permanent blue on one card) |
+| **Profile · Living Learning Path** | Path under Solved / Rank / XP / Badges: completed / in-progress / locked nodes, progress %, detail panel, **right-click** menu, light/dark |
+| **Sidebar** | Admin Panel link removed from student dashboard nav |
+| **Themes** | Light and dark supported across new UI |
 
-**Live preview:** https://deploy-preview-67--eduroutee.netlify.app  
+**Production:** https://eduroutee.netlify.app/  
+**This PR preview:** https://deploy-preview-68--eduroutee.netlify.app/
 
-**Suggested jury path on this preview**
+**Suggested walkthrough on preview**
 
-1. Open **Roadmaps** → watch continuous wave motion and scroll the page  
-2. Open **Internships** → check varied match %, recommended cards, theme toggle  
-3. Faculty login → open an opportunity → **Official portal** link  
-4. **Portfolio** from sidebar → skills / projects summary  
-
----
-
-## 10. Why this approach wins for SIH
-
-| Jury lens | How EDUROUTE responds |
-|-----------|------------------------|
-| **Problem clarity** | Directly addresses academia–industry skill gap |
-| **Completeness** | Student + Industry + College in one product |
-| **Working demo** | Full apply → shortlist → placement path |
-| **Innovation** | Skill gap onboarding + match scoring + AI mentor |
-| **Feasibility** | Built on standard web stack; deployable today |
-| **Impact** | Employability, internship quality, college visibility |
+1. **Profile** → scroll to **Your Learning Path** → click nodes → right-click a node  
+2. Open **floating Buddy** → see 6 cards → ask a question  
+3. **Assessments** → hover the three top stats (blue follows hover)  
+4. **Community** (Compete section)  
+5. Theme toggle light / dark  
 
 ---
 
-## 7. Architecture (high level)
+## 6. Architecture (high level)
 
 ```mermaid
 flowchart TB
   UI[React + Vite + Tailwind Frontend]
   NF[Netlify Functions]
   DB[(MySQL / Railway)]
-  AI[AI Provider Groq / OpenAI / Gemini]
-  LS[Browser localStorage - industry posts, applications, skill cache]
+  AI[AI Provider Groq]
+  LS[Browser localStorage]
 
   UI --> NF
   UI --> LS
@@ -217,60 +148,24 @@ flowchart TB
 | Frontend | React, TypeScript, Vite, Tailwind CSS, Framer Motion |
 | Hosting | Netlify (static + serverless functions) |
 | Auth / data | MySQL (Railway) via Netlify functions where configured |
-| AI mentor | Buddy chat API + web-search fallback |
-| Demo persistence | localStorage for industry posts, applications, DSA progress |
+| AI mentor | Buddy chat (Groq Llama) + floating widget |
+| Demo persistence | localStorage for applications, DSA, path UI state |
 
 ---
 
-## 8. Tech stack
+## 7. Tech stack
 
 ```text
-Frontend     React 18 · TypeScript · Vite · Tailwind · Lucide
+Frontend     React 18 · TypeScript · Vite · Tailwind · Lucide · Framer Motion
 Routing      React Router
-AI           Netlify Functions · Groq / OpenAI / Gemini adapters
+AI           Netlify Functions · Groq
 Database     MySQL (Railway) for auth & buddy progress
 Deploy       Netlify continuous deploy from GitHub
 ```
 
 ---
 
-## 9. Project structure (simplified)
-
-```text
-eduroute_/
-├── src/
-│   ├── pages/
-│   │   ├── Dashboard.tsx          # Student home
-│   │   ├── SkillProfile.tsx       # Skill scores & gaps
-│   │   ├── Career/Internships.tsx # Match % + apply
-│   │   ├── Industry/              # Recruiter workspace
-│   │   ├── Admin/PlacementDashboard.tsx
-│   │   ├── Buddy/BuddyChat.tsx
-│   │   ├── DSASheet.tsx
-│   │   ├── Roadmaps/
-│   │   └── Auth/
-│   ├── utils/
-│   │   ├── onboardingStore.ts
-│   │   ├── industryStore.ts
-│   │   └── internshipApplications.ts
-│   └── components/
-├── netlify/functions/             # Auth, buddy, proxies
-└── package.json
-```
-
----
-
-## 11. Future scope
-
-- NSQF / NOS formal competency taxonomy  
-- Faculty FDP & industrial training modules  
-- Server-synced applications (shared live DB for all roles)  
-- Verifiable digital credentials on portfolio  
-- Deeper adaptive skill assessments  
-
----
-
-## 12. Quick start (developers)
+## 8. Quick start (developers)
 
 ```bash
 git clone https://github.com/laxmikhandelwal690-svg/eduroute_.git
@@ -279,16 +174,38 @@ npm install
 npm run dev
 ```
 
-Configure Netlify env (when using cloud auth / Buddy):
+Optional Netlify env (cloud auth / Buddy):
 
 - `MYSQL_URL` or Railway MySQL vars  
 - `JWT_SECRET`  
-- `GROQ_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` (optional)
+- `GROQ_API_KEY`  
+- OAuth client IDs/secrets for GitHub / LinkedIn when enabling social login  
 
 ---
 
-## 13. Team note
+## 9. Why this approach works for SIH
 
-Built as a **software** solution for **SIH26044**, focused on a usable three-sided portal rather than a single student learning app.
+| Jury lens | How EDUROUTE responds |
+|-----------|------------------------|
+| **Problem clarity** | Directly addresses academia–industry skill gap |
+| **Completeness** | Student + Industry + College in one product |
+| **Working demo** | Apply → shortlist → placement path + living skill path |
+| **Innovation** | Skill gap onboarding + match scoring + AI mentor + path UI |
+| **Feasibility** | Standard web stack; live on Netlify today |
+| **Impact** | Employability, internship quality, college visibility |
+
+---
+
+## 10. Future scope
+
+- NSQF / NOS formal competency taxonomy  
+- Faculty FDP modules  
+- Server-synced applications for all roles  
+- Verifiable digital credentials on portfolio  
+- Adaptive skill assessments tied to path nodes  
+
+---
 
 **EDUROUTE — Learn · Map skills · Match · Get hired**
+
+Live: https://eduroutee.netlify.app/
