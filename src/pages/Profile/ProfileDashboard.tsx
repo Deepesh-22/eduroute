@@ -18,6 +18,7 @@ import { getStoredUserProfile, saveUserProfile } from '../../utils/userProfile';
 import { readOnboarding } from '../../utils/onboardingStore';
 import { readCompletions } from '../../utils/internshipApplications';
 import { BuildCvCta } from '../../components/BuildCvCta';
+import { LivingLearningPath } from '../../components/LivingLearningPath';
 
 const difficultyColors = {
   easy: '#22c55e',
@@ -277,6 +278,8 @@ export const ProfileDashboard = () => {
             );
           })}
         </section>
+
+        <LivingLearningPath />
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
           <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)] xl:col-span-1">
