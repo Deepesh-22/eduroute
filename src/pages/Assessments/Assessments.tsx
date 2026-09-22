@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { StarfieldBackground } from '../../components/StarfieldBackground';
 import {
@@ -19,6 +19,58 @@ const formatTime = (seconds: number) => {
   const secs = seconds % 60;
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
+
+/** Soft spotlight that follows the pointer (Total Points & stat cards). */
+function CursorGlowCard({
+  children,
+  className = '',
+  glowColor = 'rgba(255,255,255,0.35)',
+  darkGlow = 'rgba(129,140,248,0.25)',
+}: {
+  children: ReactNode;
+  className?: string;
+  glowColor?: string;
+  darkGlow?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [spot, setSpot] = useState({ x: 50, y: 50, active: false });
+
+  const onMove = (e: ReactMouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+    setSpot({ x, y, active: true });
+  };
+
+  const onLeave = () => setSpot((s) => ({ ...s, active: false }));
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      className={`relative overflow-hidden ${className}`}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 transition-opacity duration-300 dark:hidden"
+        style={{
+          opacity: spot.active ? 1 : 0.45,
+          background: `radial-gradient(circle 140px at ${spot.x}% ${spot.y}%, ${glowColor}, transparent 70%)`,
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 hidden transition-opacity duration-300 dark:block"
+        style={{
+          opacity: spot.active ? 1 : 0.35,
+          background: `radial-gradient(circle 140px at ${spot.x}% ${spot.y}%, ${darkGlow}, transparent 70%)`,
+        }}
+      />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
 
 const buildQuestionSet = (
   availableQuestions: Array<{ id: string; question: string; options: string[]; correctAnswer: string }>,
@@ -114,22 +166,39 @@ export const Assessments = () => {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              <div className="bg-indigo-600 rounded-[40px] p-8 text-white shadow-xl shadow-indigo-50 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all" />
-                <Trophy className="h-10 w-10 mb-6 opacity-80" />
+              <CursorGlowCard
+                className="rounded-[40px] bg-indigo-600 p-8 text-white shadow-xl shadow-indigo-500/20 dark:shadow-indigo-900/40"
+                glowColor="rgba(255,255,255,0.4)"
+                darkGlow="rgba(199,210,254,0.35)"
+              >
+                <Trophy className="mb-6 h-10 w-10 opacity-80" />
                 <div className="text-4xl font-black">1,250</div>
-                <div className="text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Total Points</div>
-              </div>
-              <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-                <BarChart2 className="h-10 w-10 mb-6 text-emerald-500" />
+                <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">
+                  Total Points
+                </div>
+              </CursorGlowCard>
+              <CursorGlowCard
+                className="rounded-[40px] border border-slate-100 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                glowColor="rgba(16,185,129,0.2)"
+                darkGlow="rgba(16,185,129,0.22)"
+              >
+                <BarChart2 className="mb-6 h-10 w-10 text-emerald-500" />
                 <div className="text-4xl font-black text-slate-900 dark:text-white">84%</div>
-                <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 dark:text-slate-200">Avg. Accuracy</div>
-              </div>
-              <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-                <Clock className="h-10 w-10 mb-6 text-amber-500" />
+                <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-200">
+                  Avg. Accuracy
+                </div>
+              </CursorGlowCard>
+              <CursorGlowCard
+                className="rounded-[40px] border border-slate-100 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                glowColor="rgba(245,158,11,0.22)"
+                darkGlow="rgba(245,158,11,0.2)"
+              >
+                <Clock className="mb-6 h-10 w-10 text-amber-500" />
                 <div className="text-4xl font-black text-slate-900 dark:text-white">12</div>
-                <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 dark:text-slate-200">Tests Completed</div>
-              </div>
+                <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-200">
+                  Tests Completed
+                </div>
+              </CursorGlowCard>
             </div>
 
             <div className="space-y-6">
