@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="EDUROUTE">
+  <rect width="512" height="512" rx="96" fill="#0B204A"/>
+  <!-- open book pages -->
+  <path fill="#3B82F6" d="M72 300c0-8 6-14 14-14h150c8 0 14 6 14 14v92c0 10-8 18-18 18H90c-10 0-18-8-18-18v-92z"/>
+  <path fill="#60A5FA" d="M262 286c0-8 6-14 14-14h150c8 0 14 6 14 14v106c0 10-8 18-18 18H280c-10 0-18-8-18-18V286z"/>
+  <path fill="#93C5FD" d="M86 278h148c6 0 12 4 14 10l8 28H64l8-28c2-6 8-10 14-10z"/>
+  <path fill="#BFDBFE" d="M264 264h148c6 0 12 4 14 10l8 28H242l8-28c2-6 8-10 14-10z"/>
+  <!-- white book top / path base -->
+  <path fill="#FFFFFF" d="M96 250c40-36 90-58 150-58s110 22 150 58c-28 18-70 28-150 28S124 268 96 250z"/>
+  <path fill="#E0E7FF" d="M120 238c32-24 72-38 126-38s94 14 126 38c-24 12-58 20-126 20s-102-8-126-20z"/>
+  <!-- winding path -->
+  <path fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" d="M256 292 C240 250 220 210 256 170 C292 130 300 100 256 78"/>
+  <path fill="none" stroke="#DBEAFE" stroke-width="14" stroke-linecap="round" d="M256 286 C242 248 228 214 256 178 C284 142 292 112 256 88"/>
+  <!-- destination marker -->
+  <path fill="#F59E0B" d="M256 36 L292 96 L220 96 Z"/>
+  <circle cx="256" cy="108" r="10" fill="#FBBF24"/>
+</svg>
