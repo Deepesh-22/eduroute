@@ -19,7 +19,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   FolderOpen,
-  Code2,
   FileText,
   type LucideIcon,
 } from 'lucide-react';
@@ -37,7 +36,6 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
       { name: 'Roadmaps', path: '/roadmaps', icon: Map },
-      { name: 'DSA Sheet', path: '/dsa-sheet', icon: Code2 },
       { name: 'Assessments', path: '/assessments', icon: ClipboardCheck },
       { name: 'AI Buddy', path: '/buddy', icon: MessageSquare },
     ],
