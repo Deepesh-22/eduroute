@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Trophy,
   Gift,
+  Users,
   Briefcase,
   Award,
   TrendingUp,
@@ -56,6 +57,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { name: 'Leaderboard', path: '/leaderboard', icon: Trophy },
       { name: 'Rewards', path: '/rewards', icon: Gift },
+      { name: 'Community', path: '/community', icon: Users },
     ],
   },
 ];
