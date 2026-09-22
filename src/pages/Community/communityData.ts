@@ -55,7 +55,8 @@ export type FeaturedDiscussion = {
   color: string;
 };
 
-export const DISCORD_INVITE_URL = 'https://discord.com/';
+/** Live EduRoute Discord invite */
+export const DISCORD_INVITE_URL = 'https://discord.gg/nfUr66FZT';
 
 export const CATEGORY_TABS: { id: CommunityCategory; label: string }[] = [
   { id: 'all', label: 'All' },
