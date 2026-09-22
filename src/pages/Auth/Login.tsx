@@ -14,46 +14,43 @@ import {
   EyeOff,
   ChevronDown,
 } from 'lucide-react';
-import { ThemeToggle } from '../../components/ThemeToggle';
-import { useTheme } from '../../contexts/ThemeContext';
-import { loginStaff, loginStudent } from '../../utils/authApi';
+
+import { apiRoleLogin } from '../../utils/authApi';
 import { saveAuthSession, type UserRole } from '../../utils/rbacAuth';
+import { setAdminSession, validateAdminPassword } from '../../utils/adminSession';
 import { isAuthDbConfigError, localDemoLogin } from '../../utils/localDemoAuth';
 import { handleSocialAuth } from '../../utils/socialAuth';
+import { INDUSTRY_DEMO_CREDENTIALS } from '../../utils/industryStore';
+import { FACULTY_DEMO_CREDENTIALS } from '../../utils/facultyStore';
+import { COLLEGE_DEMO_CREDENTIALS } from '../../utils/placementDashboard';
+import { ThemeToggle } from '../../components/ThemeToggle';
+import { useTheme } from '../../contexts/ThemeContext';
 
-type RoleOption = {
-  value: UserRole;
-  label: string;
-  description: string;
-  Icon: typeof GraduationCap;
-};
+type LoginRole = UserRole;
 
-const ROLE_OPTIONS: RoleOption[] = [
-  { value: 'student', label: 'Student', description: 'Learn, internships & placement prep', Icon: GraduationCap },
-  { value: 'faculty', label: 'Faculty', description: 'Opportunities & official portals', Icon: BookOpen },
-  { value: 'industry', label: 'Industry', description: 'Post roles & review applicants', Icon: Briefcase },
-  { value: 'college', label: 'College', description: 'Institution placement dashboard', Icon: Building2 },
-  { value: 'admin', label: 'Admin', description: 'Platform administration', Icon: UserCog },
+const ROLE_OPTIONS: { value: LoginRole; label: string; Icon: typeof GraduationCap }[] = [
+  { value: 'student', label: 'Student', Icon: GraduationCap },
+  { value: 'faculty', label: 'Faculty', Icon: BookOpen },
+  { value: 'industry', label: 'Industry', Icon: Briefcase },
+  { value: 'college', label: 'College', Icon: Building2 },
+  { value: 'admin', label: 'Admin', Icon: UserCog },
 ];
 
 export const Login = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<UserRole>('student');
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [role, setRole] = useState<LoginRole>('student');
   const [roleOpen, setRoleOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [socialMsg, setSocialMsg] = useState<string | null>(null);
-  const roleMenuRef = useRef<HTMLDivElement>(null);
+  const roleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (roleMenuRef.current && !roleMenuRef.current.contains(e.target as Node)) {
-        setRoleOpen(false);
-      }
+      if (roleRef.current && !roleRef.current.contains(e.target as Node)) setRoleOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
@@ -61,59 +58,156 @@ export const Login = () => {
 
   const selected = ROLE_OPTIONS.find((r) => r.value === role) || ROLE_OPTIONS[0];
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const goHome = (userRole: LoginRole) => {
+    if (userRole === 'admin') navigate('/admin', { replace: true });
+    else if (userRole === 'industry') navigate('/industry', { replace: true });
+    else if (userRole === 'college') navigate('/college/placements', { replace: true });
+    else if (userRole === 'faculty') navigate('/faculty', { replace: true });
+    else navigate('/dashboard', { replace: true });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const result =
-        role === 'admin' || role === 'faculty' || role === 'industry' || role === 'college'
-          ? await loginStaff(email.trim(), password)
-          : await loginStudent(email.trim(), password);
+      // Demo credentials for industry / faculty / college
+      if (role === 'industry') {
+        const ok =
+          formData.email.trim().toLowerCase() === INDUSTRY_DEMO_CREDENTIALS.email.toLowerCase() &&
+          formData.password === INDUSTRY_DEMO_CREDENTIALS.password;
+        if (!ok) {
+          setError('Use industry demo credentials (see INDUSTRY_DEMO_CREDENTIALS).');
+          return;
+        }
+        saveAuthSession(`demo-industry-${Date.now()}`, {
+          id: 'industry-demo',
+          name: 'Industry Partner',
+          email: formData.email.trim(),
+          role: 'industry',
+          verificationStatus: 'verified',
+        });
+        goHome('industry');
+        return;
+      }
+      if (role === 'faculty') {
+        const ok =
+          formData.email.trim().toLowerCase() === FACULTY_DEMO_CREDENTIALS.email.toLowerCase() &&
+          formData.password === FACULTY_DEMO_CREDENTIALS.password;
+        if (!ok) {
+          setError('Use faculty demo credentials.');
+          return;
+        }
+        saveAuthSession(`demo-faculty-${Date.now()}`, {
+          id: 'faculty-demo',
+          name: 'Faculty Member',
+          email: formData.email.trim(),
+          role: 'faculty',
+          verificationStatus: 'verified',
+        });
+        goHome('faculty');
+        return;
+      }
+      if (role === 'college') {
+        const ok =
+          formData.email.trim().toLowerCase() === COLLEGE_DEMO_CREDENTIALS.email.toLowerCase() &&
+          formData.password === COLLEGE_DEMO_CREDENTIALS.password;
+        if (!ok) {
+          setError('Use college demo credentials.');
+          return;
+        }
+        saveAuthSession(`demo-college-${Date.now()}`, {
+          id: 'college-demo',
+          name: 'College Admin',
+          email: formData.email.trim(),
+          role: 'college',
+          verificationStatus: 'verified',
+          institutionName: 'Modi Institute of Technology',
+        });
+        goHome('college');
+        return;
+      }
 
-      if (!result.success || !result.token || !result.user) {
-        if (isAuthDbConfigError(result.error)) {
-          const demo = localDemoLogin(email.trim(), password, role);
-          if (demo.ok && demo.token && demo.user) {
-            saveAuthSession(demo.token, {
-              id: demo.user.id,
-              name: demo.user.name,
-              email: demo.user.email,
-              role: (demo.user.role as UserRole) || role,
-              verificationStatus: demo.user.verificationStatus || 'verified',
-              institutionName: (demo.user as { institutionName?: string }).institutionName,
+      if (role === 'admin') {
+        if (validateAdminPassword(formData.password) && formData.email.includes('admin')) {
+          setAdminSession(true);
+          try {
+            const demo = localDemoLogin({
+              email: formData.email,
+              password: formData.password,
+              role: 'admin',
             });
-            const r = (demo.user.role as UserRole) || role;
-            if (r === 'admin') navigate('/admin', { replace: true });
-            else if (r === 'industry') navigate('/industry', { replace: true });
-            else if (r === 'college') navigate('/college/placements', { replace: true });
-            else if (r === 'faculty') navigate('/faculty', { replace: true });
-            else navigate('/dashboard', { replace: true });
+            saveAuthSession(demo.token, demo.user);
+          } catch {
+            saveAuthSession(`admin-local-${Date.now()}`, {
+              id: 'admin-1',
+              name: 'EduRoute Admin',
+              email: formData.email,
+              role: 'admin',
+              verificationStatus: 'verified',
+            });
+          }
+          goHome('admin');
+          return;
+        }
+      }
+
+      try {
+        const result = await apiRoleLogin({
+          email: formData.email.trim(),
+          password: formData.password,
+          role: role === 'admin' ? 'admin' : 'student',
+        });
+        if (result.success && result.token && result.user) {
+          saveAuthSession(result.token, {
+            id: result.user.id,
+            name: result.user.name,
+            email: result.user.email,
+            avatar: result.user.avatar,
+            role: (result.user.role as UserRole) || role,
+            verificationStatus: result.user.verificationStatus || 'verified',
+          });
+          goHome((result.user.role as UserRole) || role);
+          return;
+        }
+        if (isAuthDbConfigError(result.error)) {
+          try {
+            const demo = localDemoLogin({
+              email: formData.email,
+              password: formData.password,
+              role: role === 'admin' ? 'admin' : 'student',
+            });
+            saveAuthSession(demo.token, demo.user);
+            goHome(demo.user.role as UserRole);
+            return;
+          } catch (demoErr) {
+            setError(demoErr instanceof Error ? demoErr.message : 'Login failed');
             return;
           }
         }
         setError(result.error || 'Login failed');
-        return;
+      } catch (err) {
+        if (isAuthDbConfigError(err instanceof Error ? err.message : '')) {
+          try {
+            const demo = localDemoLogin({
+              email: formData.email,
+              password: formData.password,
+              role: role === 'admin' ? 'admin' : 'student',
+            });
+            saveAuthSession(demo.token, demo.user);
+            goHome(demo.user.role as UserRole);
+            return;
+          } catch (demoErr) {
+            setError(demoErr instanceof Error ? demoErr.message : 'Login failed');
+            return;
+          }
+        }
+        setError(err instanceof Error ? err.message : 'Login failed');
       }
-
-      const userRole = (result.user.role as UserRole) || role;
-      saveAuthSession(result.token, {
-        id: result.user.id,
-        name: result.user.name,
-        email: result.user.email,
-        avatar: result.user.avatar,
-        role: userRole,
-        verificationStatus: result.user.verificationStatus || 'verified',
-        institutionName: (result.user as { institutionName?: string }).institutionName,
-      });
-
-      if (userRole === 'admin') navigate('/admin', { replace: true });
-      else if (userRole === 'industry') navigate('/industry', { replace: true });
-      else if (userRole === 'college') navigate('/college/placements', { replace: true });
-      else if (userRole === 'faculty') navigate('/faculty', { replace: true });
-      else navigate('/dashboard', { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -129,7 +223,7 @@ export const Login = () => {
 
   return (
     <div
-      className={`relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10 ${
+      className={`relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 ${
         isDark
           ? 'bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-white'
           : 'bg-gradient-to-br from-slate-100 via-violet-50 to-indigo-100 text-slate-900'
@@ -144,11 +238,22 @@ export const Login = () => {
         <ThemeToggle />
       </div>
 
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 flex w-full max-w-5xl items-center justify-center gap-12">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, x: -24 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="hidden max-w-lg flex-1 lg:block"
+        >
+          <h1 className="text-4xl font-black tracking-tight">Welcome back</h1>
+          <p className={`mt-3 text-base ${muted}`}>
+            Sign in to continue your skill journey, internships, and placement path on EDUROUTE.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-3xl border p-6 sm:p-8 ${cardCls}`}
+          className={`w-full max-w-md rounded-3xl border p-6 sm:p-8 ${cardCls}`}
         >
           <div className="mb-6 flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-sm font-black text-white">
@@ -161,7 +266,7 @@ export const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div ref={roleMenuRef} className="relative">
+            <div ref={roleRef} className="relative">
               <label className={`mb-1.5 block text-xs font-semibold ${muted}`}>I am a</label>
               <button
                 type="button"
@@ -188,15 +293,12 @@ export const Login = () => {
                         setRole(opt.value);
                         setRoleOpen(false);
                       }}
-                      className={`flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm transition hover:bg-violet-500/10 ${
+                      className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition hover:bg-violet-500/10 ${
                         role === opt.value ? 'bg-violet-500/15' : ''
                       }`}
                     >
-                      <opt.Icon className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
-                      <span>
-                        <span className="block font-semibold">{opt.label}</span>
-                        <span className={`block text-xs ${muted}`}>{opt.description}</span>
-                      </span>
+                      <opt.Icon className="h-4 w-4 text-violet-500" />
+                      <span className="font-semibold">{opt.label}</span>
                     </button>
                   ))}
                 </div>
@@ -208,11 +310,12 @@ export const Login = () => {
               <div className="relative">
                 <Mail className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${muted}`} />
                 <input
+                  name="email"
                   type="email"
                   required
                   autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="you@college.edu"
                   className={`w-full rounded-xl border py-2.5 pl-10 pr-3.5 text-sm outline-none transition focus:ring-2 focus:ring-violet-500/30 ${inputCls}`}
                 />
@@ -224,11 +327,12 @@ export const Login = () => {
               <div className="relative">
                 <Lock className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${muted}`} />
                 <input
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="••••••••"
                   className={`w-full rounded-xl border py-2.5 pl-10 pr-10 text-sm outline-none transition focus:ring-2 focus:ring-violet-500/30 ${inputCls}`}
                 />
@@ -321,7 +425,7 @@ export const Login = () => {
           {socialMsg && <p className="mt-3 text-center text-xs text-amber-500">{socialMsg}</p>}
 
           <p className={`mt-6 text-center text-sm ${muted}`}>
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link to="/signup" className="font-semibold text-violet-500 hover:text-violet-400">
               Sign up
             </Link>
