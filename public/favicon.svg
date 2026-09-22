@@ -1,17 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="EDUROUTE">
-  <rect width="512" height="512" rx="96" fill="#0B204A"/>
-  <!-- open book pages -->
-  <path fill="#3B82F6" d="M72 300c0-8 6-14 14-14h150c8 0 14 6 14 14v92c0 10-8 18-18 18H90c-10 0-18-8-18-18v-92z"/>
-  <path fill="#60A5FA" d="M262 286c0-8 6-14 14-14h150c8 0 14 6 14 14v106c0 10-8 18-18 18H280c-10 0-18-8-18-18V286z"/>
-  <path fill="#93C5FD" d="M86 278h148c6 0 12 4 14 10l8 28H64l8-28c2-6 8-10 14-10z"/>
-  <path fill="#BFDBFE" d="M264 264h148c6 0 12 4 14 10l8 28H242l8-28c2-6 8-10 14-10z"/>
-  <!-- white book top / path base -->
-  <path fill="#FFFFFF" d="M96 250c40-36 90-58 150-58s110 22 150 58c-28 18-70 28-150 28S124 268 96 250z"/>
-  <path fill="#E0E7FF" d="M120 238c32-24 72-38 126-38s94 14 126 38c-24 12-58 20-126 20s-102-8-126-20z"/>
-  <!-- winding path -->
-  <path fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" d="M256 292 C240 250 220 210 256 170 C292 130 300 100 256 78"/>
-  <path fill="none" stroke="#DBEAFE" stroke-width="14" stroke-linecap="round" d="M256 286 C242 248 228 214 256 178 C284 142 292 112 256 88"/>
-  <!-- destination marker -->
-  <path fill="#F59E0B" d="M256 36 L292 96 L220 96 Z"/>
-  <circle cx="256" cy="108" r="10" fill="#FBBF24"/>
+  <defs>
+    <linearGradient id="pageL" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="pageR" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#93C5FD"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+  <!-- rounded app tile -->
+  <rect width="512" height="512" rx="108" fill="#0B204A"/>
+  <!-- open book (bottom) -->
+  <path fill="url(#pageL)" d="M64 318c0-10 8-18 18-18h148c10 0 18 8 18 18v108c0 12-10 22-22 22H86c-12 0-22-10-22-22V318z"/>
+  <path fill="url(#pageR)" d="M264 300c0-10 8-18 18-18h148c10 0 18 8 18 18v126c0 12-10 22-22 22H286c-12 0-22-10-22-22V300z"/>
+  <!-- book top surfaces -->
+  <path fill="#DBEAFE" d="M78 300h160l12 36H66l12-36z"/>
+  <path fill="#EFF6FF" d="M274 282h160l12 36H262l12-36z"/>
+  <!-- soft white ridge of open pages -->
+  <path fill="#FFFFFF" d="M90 268c36-32 86-52 166-52s130 20 166 52c-30 16-78 28-166 28S120 284 90 268z" opacity="0.95"/>
+  <!-- winding learning path -->
+  <path d="M256 300 C248 268 230 236 248 200 C266 164 292 140 268 108 C250 84 256 70 256 70" fill="none" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M256 296 C250 266 236 238 252 204 C268 170 288 148 268 116" fill="none" stroke="#BFDBFE" stroke-width="10" stroke-linecap="round" opacity="0.7"/>
+  <!-- destination pin / triangle -->
+  <path fill="#F59E0B" d="M256 42 L300 118 L212 118 Z"/>
+  <circle cx="256" cy="128" r="9" fill="#FBBF24"/>
 </svg>
