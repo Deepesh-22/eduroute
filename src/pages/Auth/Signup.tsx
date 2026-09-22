@@ -257,12 +257,7 @@ export const Signup = () => {
               <div ref={googleButtonRef} className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl" title="Continue with Google" />
               <button
                 type="button"
-                onClick={() =>
-                  handleSocialAuth('github', 'signup', (msg) => {
-                    setSocialMsg(msg);
-                    goToCollegeIdUpload();
-                  })
-                }
+                onClick={() => handleSocialAuth('github', 'signup', (msg) => setSocialMsg(msg))}
                 className={`flex h-11 w-11 items-center justify-center rounded-xl border transition hover:scale-105 ${isDark ? 'border-white/10 bg-slate-800/80 text-white' : 'border-slate-200 bg-white text-slate-900'}`}
                 title="Continue with GitHub"
                 aria-label="Sign up with GitHub"
@@ -271,12 +266,7 @@ export const Signup = () => {
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  handleSocialAuth('linkedin', 'signup', (msg) => {
-                    setSocialMsg(msg);
-                    goToCollegeIdUpload();
-                  })
-                }
+                onClick={() => handleSocialAuth('linkedin', 'signup', (msg) => setSocialMsg(msg))}
                 className={`flex h-11 w-11 items-center justify-center rounded-xl border text-sm font-bold text-[#0A66C2] transition hover:scale-105 ${isDark ? 'border-white/10 bg-slate-800/80' : 'border-slate-200 bg-white'}`}
                 title="Continue with LinkedIn"
                 aria-label="Sign up with LinkedIn"
