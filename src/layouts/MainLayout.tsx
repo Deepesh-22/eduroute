@@ -14,30 +14,54 @@ import {
   LogOut,
   Menu,
   X,
-  Bell,
   Shield,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
   FolderOpen,
+  Code2,
+  FileText,
+  type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { FloatingBuddyWidget } from '../components/FloatingBuddyWidget';
 import { GlobalSearch } from '../components/GlobalSearch';
 
-const NAVIGATION = [
-  { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Roadmaps', path: '/roadmaps', icon: Map },
-  { name: 'Assessments', path: '/assessments', icon: ClipboardCheck },
-  { name: 'AI Buddy', path: '/buddy', icon: MessageSquare },
-  { name: 'Leaderboard', path: '/leaderboard', icon: Trophy },
-  { name: 'Rewards', path: '/rewards', icon: Gift },
-  { name: 'Internships', path: '/internships', icon: Briefcase },
-  { name: 'Certifications', path: '/certifications', icon: Award },
-  { name: 'Portfolio', path: '/portfolio', icon: FolderOpen },
-  { name: 'Growth', path: '/events', icon: TrendingUp },
+type NavItem = { name: string; path: string; icon: LucideIcon };
+type NavGroup = { label: string; items: NavItem[] };
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Learn',
+    items: [
+      { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+      { name: 'Roadmaps', path: '/roadmaps', icon: Map },
+      { name: 'DSA Sheet', path: '/dsa-sheet', icon: Code2 },
+      { name: 'Assessments', path: '/assessments', icon: ClipboardCheck },
+      { name: 'AI Buddy', path: '/buddy', icon: MessageSquare },
+    ],
+  },
+  {
+    label: 'Career',
+    items: [
+      { name: 'Internships', path: '/internships', icon: Briefcase },
+      { name: 'Certifications', path: '/certifications', icon: Award },
+      { name: 'CV Builder', path: '/cv-builder', icon: FileText },
+      { name: 'Portfolio', path: '/portfolio', icon: FolderOpen },
+      { name: 'Events', path: '/events', icon: TrendingUp },
+    ],
+  },
+  {
+    label: 'Compete',
+    items: [
+      { name: 'Leaderboard', path: '/leaderboard', icon: Trophy },
+      { name: 'Rewards', path: '/rewards', icon: Gift },
+    ],
+  },
 ];
+
+const FLAT_NAV = NAV_GROUPS.flatMap((g) => g.items);
 
 const SIDEBAR_KEY = 'eduroute-sidebar-collapsed';
 
@@ -96,6 +120,22 @@ export const MainLayout = () => {
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/');
 
+  const renderNavLink = (item: NavItem, onClick?: () => void) => {
+    const active = isActive(item.path);
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        title={item.name}
+        onClick={onClick}
+        className={`er-nav-item ${active ? 'active' : ''} ${collapsed ? '!justify-center !px-0' : ''}`}
+      >
+        <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={active ? 2.25 : 1.75} />
+        {!collapsed && item.name}
+      </Link>
+    );
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
       <aside
@@ -138,21 +178,17 @@ export const MainLayout = () => {
           )}
         </div>
 
-        <nav className={`flex-1 overflow-y-auto py-2 space-y-0.5 ${collapsed ? 'px-2' : 'px-3'}`}>
-          {NAVIGATION.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                title={item.name}
-                className={`er-nav-item ${active ? 'active' : ''} ${collapsed ? '!justify-center !px-0' : ''}`}
-              >
-                <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={active ? 2.25 : 1.75} />
-                {!collapsed && item.name}
-              </Link>
-            );
-          })}
+        <nav className={`flex-1 overflow-y-auto py-2 ${collapsed ? 'px-2 space-y-0.5' : 'px-3 space-y-3'}`}>
+          {collapsed
+            ? FLAT_NAV.map((item) => renderNavLink(item))
+            : NAV_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <div className="mb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                    {group.label}
+                  </div>
+                  <div className="space-y-0.5">{group.items.map((item) => renderNavLink(item))}</div>
+                </div>
+              ))}
         </nav>
 
         <div className={`mt-auto border-t border-[var(--border-default)] space-y-1 ${collapsed ? 'p-2' : 'p-3'}`}>
@@ -220,14 +256,6 @@ export const MainLayout = () => {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <button
-              type="button"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full hover:bg-[var(--accent-soft)] text-[var(--text-secondary)]"
-              aria-label="Notifications"
-            >
-              <Bell className="h-[18px] w-[18px]" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[var(--bg-sidebar)]" />
-            </button>
             <ThemeToggle />
             <Link to="/profile" className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-[var(--accent-soft)]">
               <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-xs font-bold text-white">
@@ -270,17 +298,26 @@ export const MainLayout = () => {
             <div className="px-3 pb-2">
               <GlobalSearch variant="full" />
             </div>
-            <nav className="flex-1 overflow-y-auto px-3 space-y-0.5">
-              {NAVIGATION.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`er-nav-item ${isActive(item.path) ? 'active' : ''}`}
-                >
-                  <item.icon className="h-[18px] w-[18px]" />
-                  {item.name}
-                </Link>
+            <nav className="flex-1 overflow-y-auto px-3 space-y-3">
+              {NAV_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <div className="mb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                    {group.label}
+                  </div>
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`er-nav-item ${isActive(item.path) ? 'active' : ''}`}
+                      >
+                        <item.icon className="h-[18px] w-[18px]" />
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
             </nav>
             <div className="border-t border-[var(--border-default)] p-3 space-y-1 er-safe-pb">
