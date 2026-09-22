@@ -27,6 +27,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { FloatingBuddyWidget } from '../components/FloatingBuddyWidget';
 import { GlobalSearch } from '../components/GlobalSearch';
+import { EduRouteLogo } from '../components/EduRouteLogo';
 
 type NavItem = { name: string; path: string; icon: LucideIcon };
 type NavGroup = { label: string; items: NavItem[] };
@@ -207,13 +208,7 @@ export const MainLayout = () => {
             className="flex items-center gap-2.5 rounded-xl hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white shadow-md">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
+            <EduRouteLogo size={36} className="shadow-md" />
             {!collapsed && (
               <span className="text-lg font-bold tracking-tight text-[var(--text-primary)]">
                 EDU<span className="text-[var(--accent)]">ROUTE</span>
@@ -403,13 +398,7 @@ export const MainLayout = () => {
           <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(280px,85vw)] flex-col bg-[var(--bg-sidebar)] shadow-2xl er-safe-pt lg:hidden">
             <div className="flex items-center justify-between px-4 py-4">
               <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                    <path d="M2 17l10 5 10-5" />
-                    <path d="M2 12l10 5 10-5" />
-                  </svg>
-                </div>
+                <EduRouteLogo size={32} className="rounded-lg shadow-sm" />
                 <span className="font-bold">EDUROUTE</span>
               </Link>
               <button type="button" onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-xl hover:bg-[var(--accent-soft)]">
