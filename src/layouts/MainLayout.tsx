@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   X,
-  Shield,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
@@ -273,11 +272,6 @@ export const MainLayout = () => {
             )}
           </Link>
 
-          <Link to="/admin-login" title="Admin Panel" className={`er-nav-item ${collapsed ? '!justify-center !px-0' : ''}`}>
-            <Shield className="h-[18px] w-[18px]" strokeWidth={1.75} />
-            {!collapsed && 'Admin Panel'}
-          </Link>
-
           <button
             type="button"
             onClick={handleLogout}
@@ -453,10 +447,6 @@ export const MainLayout = () => {
                   {profileIdentity.initial}
                 </div>
                 <span className="truncate">{profileIdentity.name}</span>
-              </Link>
-              <Link to="/admin-login" onClick={() => setIsMobileMenuOpen(false)} className="er-nav-item">
-                <Shield className="h-[18px] w-[18px]" />
-                Admin Panel
               </Link>
               <button type="button" onClick={handleLogout} className="er-nav-item w-full text-left hover:!text-red-500">
                 <LogOut className="h-[18px] w-[18px]" />
