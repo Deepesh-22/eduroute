@@ -20,9 +20,10 @@ import {
   PanelLeftOpen,
   FolderOpen,
   FileText,
+  Bell,
   type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { FloatingBuddyWidget } from '../components/FloatingBuddyWidget';
 import { GlobalSearch } from '../components/GlobalSearch';
@@ -63,10 +64,42 @@ const FLAT_NAV = NAV_GROUPS.flatMap((g) => g.items);
 
 const SIDEBAR_KEY = 'eduroute-sidebar-collapsed';
 
+const SAMPLE_NOTIFICATIONS = [
+  {
+    id: '1',
+    title: 'Complete your skill quiz',
+    body: 'Unlock match scores and a personal learning path.',
+    time: 'Just now',
+    to: '/onboarding',
+    unread: true,
+  },
+  {
+    id: '2',
+    title: 'New internship matches',
+    body: 'Roles aligned with your track are open on the board.',
+    time: '2h ago',
+    to: '/internships',
+    unread: true,
+  },
+  {
+    id: '3',
+    title: 'Hall of Fame updated',
+    body: 'Check the leaderboard and climb the ranks.',
+    time: 'Yesterday',
+    to: '/leaderboard',
+    unread: false,
+  },
+];
+
 export const MainLayout = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState(SAMPLE_NOTIFICATIONS);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   useEffect(() => {
     try {
@@ -79,7 +112,26 @@ export const MainLayout = () => {
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setNotifOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNotifOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [notifOpen]);
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -100,6 +152,10 @@ export const MainLayout = () => {
     clearAuthSession();
     setIsMobileMenuOpen(false);
     window.location.href = '/login';
+  };
+
+  const markAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
   };
 
   const profileIdentity = useMemo(() => {
@@ -254,6 +310,77 @@ export const MainLayout = () => {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="relative" ref={notifRef}>
+              <button
+                type="button"
+                onClick={() => setNotifOpen((v) => !v)}
+                className="relative flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
+                aria-label="Notifications"
+                aria-expanded={notifOpen}
+                aria-haspopup="true"
+              >
+                <Bell className="h-[18px] w-[18px]" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex h-2 min-w-[8px] items-center justify-center rounded-full bg-red-500 ring-2 ring-[var(--bg-sidebar)]" />
+                )}
+              </button>
+
+              {notifOpen && (
+                <div
+                  className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-[min(100vw-1.5rem,22rem)] overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-[var(--shadow-elevated)]"
+                  role="menu"
+                >
+                  <div className="flex items-center justify-between border-b border-[var(--border-default)] px-4 py-3">
+                    <div>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">Notifications</p>
+                      <p className="text-[11px] text-[var(--text-muted)]">
+                        {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+                      </p>
+                    </div>
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={markAllRead}
+                        className="text-xs font-semibold text-[var(--accent)] hover:underline"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <ul className="max-h-[min(60vh,20rem)] overflow-y-auto">
+                    {notifications.map((n) => (
+                      <li key={n.id}>
+                        <Link
+                          to={n.to}
+                          onClick={() => {
+                            setNotifications((prev) =>
+                              prev.map((x) => (x.id === n.id ? { ...x, unread: false } : x)),
+                            );
+                            setNotifOpen(false);
+                          }}
+                          className={`block border-b border-[var(--border-default)] px-4 py-3 transition last:border-b-0 hover:bg-[var(--accent-soft)] ${
+                            n.unread ? 'bg-[var(--accent-soft)]/40' : ''
+                          }`}
+                          role="menuitem"
+                        >
+                          <div className="flex items-start gap-2">
+                            {n.unread && (
+                              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
+                            )}
+                            <div className={n.unread ? '' : 'pl-3.5'}>
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">{n.title}</p>
+                              <p className="mt-0.5 text-xs leading-5 text-[var(--text-secondary)]">{n.body}</p>
+                              <p className="mt-1 text-[10px] font-medium text-[var(--text-muted)]">{n.time}</p>
+                            </div>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
             <ThemeToggle />
             <Link to="/profile" className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-[var(--accent-soft)]">
               <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-xs font-bold text-white">
