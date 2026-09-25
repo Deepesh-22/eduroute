@@ -135,6 +135,9 @@ const CollegeLayout = lazy(() =>
 const PlacementDashboard = lazy(() =>
   import('./pages/Admin/PlacementDashboard').then((module) => ({ default: module.PlacementDashboard })),
 );
+const DemandIntelligence = lazy(() =>
+  import('./pages/Intelligence/DemandIntelligence').then((module) => ({ default: module.DemandIntelligence })),
+);
 
 const DASHBOARD_ROUTES = [
   '/dashboard',
@@ -161,6 +164,7 @@ const DASHBOARD_ROUTES = [
   '/industry',
   '/college',
   '/faculty',
+  '/demand-intelligence',
 ];
 
 const AUTH_HIDE_GLOBAL_TOGGLE = [
@@ -281,6 +285,7 @@ export function App() {
             <Route path="/profile" element={<RoleRoute role="student"><ProfileDashboard /></RoleRoute>} />
             <Route path="/skill-profile" element={<RoleRoute role="student"><SkillProfile /></RoleRoute>} />
             <Route path="/portfolio" element={<RoleRoute role="student"><DigitalPortfolio /></RoleRoute>} />
+            <Route path="/demand-intelligence" element={<RoleRoute role="student"><DemandIntelligence /></RoleRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
