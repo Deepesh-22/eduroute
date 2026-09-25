@@ -138,6 +138,9 @@ const PlacementDashboard = lazy(() =>
 const DemandIntelligence = lazy(() =>
   import('./pages/Intelligence/DemandIntelligence').then((module) => ({ default: module.DemandIntelligence })),
 );
+const CurriculumGapMapper = lazy(() =>
+  import('./pages/Admin/CurriculumGapMapper').then((module) => ({ default: module.CurriculumGapMapper })),
+);
 
 const DASHBOARD_ROUTES = [
   '/dashboard',
@@ -256,6 +259,7 @@ export function App() {
             <Route path="/admin/students" element={<PendingApprovals />} />
             <Route path="/admin/verified" element={<AdminDashboard />} />
             <Route path="/admin/courses" element={<CourseManager />} />
+            <Route path="/admin/curriculum-gaps" element={<CurriculumGapMapper />} />
             <Route path="/admin/partners" element={<AdminDashboard />} />
             <Route path="/admin/reports" element={<AdminDashboard />} />
             <Route path="/admin/settings" element={<AdminDashboard />} />
