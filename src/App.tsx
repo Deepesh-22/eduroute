@@ -24,7 +24,7 @@ const RoleRoute = ({
   }
   if (user.role !== role) {
     if (user.role === 'college') return <Navigate to="/college/placements" replace />;
-    if (user.role === 'admin') return <Navigate to="/admin/courses" replace />;
+    if (user.role === 'admin') return <Navigate to="/admin/students" replace />;
     if (user.role === 'industry') return <Navigate to="/industry" replace />;
     if (user.role === 'faculty') return <Navigate to="/faculty" replace />;
     return <Navigate to="/dashboard" replace />;
@@ -56,7 +56,7 @@ const PublicOnlyRoute = ({ children }: { children: ReactElement }) => {
   if (isAuthenticated()) {
     const user = getAuthUser();
     if (user?.role === 'college') return <Navigate to="/college/placements" replace />;
-    if (user?.role === 'admin') return <Navigate to="/admin/courses" replace />;
+    if (user?.role === 'admin') return <Navigate to="/admin/students" replace />;
     if (user?.role === 'industry') return <Navigate to="/industry" replace />;
     if (user?.role === 'faculty') return <Navigate to="/faculty" replace />;
     return <Navigate to="/dashboard" replace />;
@@ -111,6 +111,9 @@ const CvBuilder = lazy(() =>
 const CompanyDetail = lazy(() => import('./pages/Career/CompanyDetail').then((module) => ({ default: module.CompanyDetail })));
 const Events = lazy(() => import('./pages/Growth/Events').then((module) => ({ default: module.Events })));
 const SoftSkills = lazy(() => import('./pages/Growth/SoftSkills').then((module) => ({ default: module.SoftSkills })));
+const PendingApprovals = lazy(() =>
+  import('./pages/Admin/PendingApprovals').then((module) => ({ default: module.PendingApprovals })),
+);
 const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin').then((module) => ({ default: module.AdminLogin })));
 const CourseManager = lazy(() => import('./pages/Admin/CourseManager').then((module) => ({ default: module.CourseManager })));
 const ProfileDashboard = lazy(() =>
@@ -245,7 +248,8 @@ export function App() {
           />
 
           <Route element={<AdminAccessRoute><AdminLayout /></AdminAccessRoute>}>
-            <Route path="/admin" element={<Navigate to="/admin/courses" replace />} />
+            <Route path="/admin" element={<Navigate to="/admin/students" replace />} />
+            <Route path="/admin/students" element={<PendingApprovals />} />
             <Route path="/admin/courses" element={<CourseManager />} />
           </Route>
 

@@ -1,11 +1,15 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, LogOut, Bell, Search } from 'lucide-react';
+import { Users, BookOpen, LogOut, Bell, Search } from 'lucide-react';
 import { clearAuthSession, getAuthUser } from '../utils/rbacAuth';
 import { clearAdminSession, isAdminSessionActive } from '../utils/adminSession';
 import { ThemeToggle } from '../components/ThemeToggle';
 
-const NAV = [{ name: 'Courses', path: '/admin/courses', icon: BookOpen }];
+/** Only these admin features remain (Dashboard, Pending Approvals, Verified Students, Partners, Reports, Settings removed). */
+const NAV = [
+  { name: 'Student Management', path: '/admin/students', icon: Users },
+  { name: 'Courses', path: '/admin/courses', icon: BookOpen },
+];
 
 export const AdminLayout = () => {
   const location = useLocation();
@@ -93,7 +97,7 @@ export const AdminLayout = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
             <input
               type="search"
-              placeholder="Search courses..."
+              placeholder="Search students or courses..."
               className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-input)] pl-10 pr-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
             />
           </div>
