@@ -134,7 +134,7 @@ const DigitalPortfolio = lazy(() =>
   import('./pages/Portfolio/DigitalPortfolio').then((module) => ({ default: module.DigitalPortfolio ?? module.default })),
 );
 const IndustryWorkspace = lazy(() =>
-  import('./pages/Industry/IndustryWorkspace').then((module) => ({ default: module.IndustryWorkspace })),
+  import('./pages/Industry/IndustryShell').then((module) => ({ default: module.IndustryShell })),
 );
 const FacultyWorkspace = lazy(() =>
   import('./pages/Faculty/FacultyWorkspace').then((module) => ({ default: module.FacultyWorkspace })),
@@ -144,6 +144,15 @@ const CollegeLayout = lazy(() =>
 );
 const PlacementDashboard = lazy(() =>
   import('./pages/Admin/PlacementDashboard').then((module) => ({ default: module.PlacementDashboard })),
+);
+const DemandIntelligence = lazy(() =>
+  import('./pages/Intelligence/DemandIntelligence').then((module) => ({ default: module.DemandIntelligence })),
+);
+const TrendAnalyse = lazy(() =>
+  import('./pages/Intelligence/TrendAnalyse').then((module) => ({ default: module.TrendAnalyse })),
+);
+const AiCourseDesigner = lazy(() =>
+  import('./pages/CourseDesigner/AiCourseDesigner').then((module) => ({ default: module.AiCourseDesigner })),
 );
 
 const DASHBOARD_ROUTES = [
@@ -171,6 +180,9 @@ const DASHBOARD_ROUTES = [
   '/industry',
   '/college',
   '/faculty',
+  '/demand-intelligence',
+  '/trend-analyse',
+  '/ai-course-designer',
 ];
 
 const AUTH_HIDE_GLOBAL_TOGGLE = [
@@ -256,6 +268,7 @@ export function App() {
             }
           />
 
+          {/* Slim admin: Student Management · Courses · Curriculum Gaps · District Plans · Market Trends */}
           <Route element={<AdminAccessRoute><AdminLayout /></AdminAccessRoute>}>
             <Route path="/admin" element={<Navigate to="/admin/students" replace />} />
             <Route path="/admin/students" element={<PendingApprovals />} />
@@ -289,6 +302,9 @@ export function App() {
             <Route path="/profile" element={<RoleRoute role="student"><ProfileDashboard /></RoleRoute>} />
             <Route path="/skill-profile" element={<RoleRoute role="student"><SkillProfile /></RoleRoute>} />
             <Route path="/portfolio" element={<RoleRoute role="student"><DigitalPortfolio /></RoleRoute>} />
+            <Route path="/demand-intelligence" element={<RoleRoute role="student"><DemandIntelligence /></RoleRoute>} />
+            <Route path="/trend-analyse" element={<RoleRoute role="student"><TrendAnalyse /></RoleRoute>} />
+            <Route path="/ai-course-designer" element={<RoleRoute role="student"><AiCourseDesigner /></RoleRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
