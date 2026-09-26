@@ -63,12 +63,12 @@ export const Login = () => {
     if (!emailOk || !passOk) return false;
     saveAuthSession(`local-admin-${Date.now()}`, LOCAL_STAFF.user);
     setAdminSession(true);
-    navigate('/admin/pending-approvals', { replace: true });
+    navigate('/admin/courses', { replace: true });
     return true;
   };
 
   const goHome = (userRole: UserRole) => {
-    if (userRole === 'admin') navigate('/admin/pending-approvals', { replace: true });
+    if (userRole === 'admin') navigate('/admin/courses', { replace: true });
     else if (userRole === 'industry') navigate('/industry', { replace: true });
     else if (userRole === 'college') navigate('/college/placements', { replace: true });
     else if (userRole === 'faculty') navigate('/faculty', { replace: true });
@@ -424,7 +424,7 @@ export const Login = () => {
             {socialMsg && <p className="mt-3 text-center text-xs text-amber-500">{socialMsg}</p>}
 
             <p className={`mt-6 text-center text-sm ${muted}`}>
-              Don&apos;t have an account?{' '}
+              Don't have an account?{' '}
               <Link to="/signup" className="font-semibold text-violet-500 hover:text-violet-400">Sign up</Link>
             </p>
           </div>
