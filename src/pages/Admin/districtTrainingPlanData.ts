@@ -1,27 +1,16 @@
-/** SIH26134 — District training plan generator */
+/** SIH26134 — District-level training plan generator (reuses Demand Intel + Curriculum Gaps) */
 
-import { COURSES, type CourseFlag } from './curriculumGapData';
-
-export type DistrictKey =
-  | 'Pune'
-  | 'Mumbai'
-  | 'Nagpur'
-  | 'Nashik'
-  | 'Thane'
-  | 'Kolhapur'
-  | 'Aurangabad'
-  | 'Solapur';
-
-export const DISTRICTS: DistrictKey[] = [
-  'Pune',
-  'Mumbai',
-  'Nagpur',
-  'Nashik',
-  'Thane',
-  'Kolhapur',
-  'Aurangabad',
-  'Solapur',
-];
+import {
+  COURSES,
+  type CourseCurriculum,
+  type CourseFlag,
+} from './curriculumGapData';
+import {
+  DISTRICTS,
+  JOB_SIGNALS,
+  type DistrictKey,
+  type JobSignal,
+} from '../Intelligence/demandIntelligenceData';
 
 export type PlanActionType = 'expand' | 'reduce' | 'add_module' | 'new_course';
 
@@ -33,155 +22,299 @@ export type PlanAction = {
   seatDelta: string;
   priority: 'high' | 'medium' | 'low';
   courseId?: string;
+  sector?: string;
+  trainersHint?: string;
 };
 
-const DEMAND: Record<
-  string,
-  { openings: number; skills: { skill: string; demand: number; openings: number; trend: string }[] }
-> = {
-  Pune: {
-    openings: 420,
-    skills: [
-      { skill: 'React', demand: 88, openings: 90, trend: 'rising' },
-      { skill: 'TypeScript', demand: 75, openings: 70, trend: 'rising' },
-      { skill: 'Node.js', demand: 82, openings: 65, trend: 'stable' },
-    ],
-  },
-  Mumbai: {
-    openings: 510,
-    skills: [
-      { skill: 'Python', demand: 90, openings: 100, trend: 'rising' },
-      { skill: 'SQL', demand: 85, openings: 80, trend: 'stable' },
-      { skill: 'Power BI', demand: 70, openings: 45, trend: 'rising' },
-    ],
-  },
-  Nagpur: {
-    openings: 180,
-    skills: [
-      { skill: 'AWS', demand: 80, openings: 40, trend: 'rising' },
-      { skill: 'Docker', demand: 70, openings: 30, trend: 'rising' },
-    ],
-  },
-  Nashik: {
-    openings: 120,
-    skills: [{ skill: 'Networking', demand: 70, openings: 25, trend: 'stable' }],
-  },
-  Thane: {
-    openings: 95,
-    skills: [{ skill: 'MS Office', demand: 40, openings: 15, trend: 'declining' }],
-  },
-  Kolhapur: {
-    openings: 70,
-    skills: [{ skill: 'Core banking', demand: 70, openings: 20, trend: 'rising' }],
-  },
-  Aurangabad: { openings: 60, skills: [{ skill: 'PLC', demand: 55, openings: 12, trend: 'stable' }] },
-  Solapur: { openings: 45, skills: [{ skill: 'QA testing', demand: 50, openings: 10, trend: 'stable' }] },
+export type DistrictSkillDemand = {
+  skill: string;
+  openings: number;
+  demand: number;
+  trend: 'rising' | 'stable' | 'declining';
 };
 
-export function coursesForDistrict(district: DistrictKey) {
+export type DistrictPlanSummary = {
+  district: DistrictKey;
+  totalOpenings: number;
+  uniqueRoles: number;
+  courseCount: number;
+  expandCount: number;
+  reduceCount: number;
+  newCourseCount: number;
+  trainerShortfall: number;
+  readinessNote: string;
+};
+
+export { DISTRICTS };
+export type { DistrictKey };
+
+export function signalsForDistrict(district: DistrictKey): JobSignal[] {
+  return JOB_SIGNALS.filter((s) => s.district === district);
+}
+
+export function coursesForDistrict(district: DistrictKey): CourseCurriculum[] {
   return COURSES.filter((c) => c.district === district);
 }
 
-export function topSkillsForDistrict(district: DistrictKey) {
-  return DEMAND[district]?.skills ?? [];
+/** Nearby districts for "no local course" recommendations */
+const NEARBY: Partial<Record<DistrictKey, DistrictKey[]>> = {
+  Pune: ['Mumbai', 'Nashik', 'Solapur'],
+  Mumbai: ['Thane', 'Pune'],
+  Thane: ['Mumbai', 'Pune'],
+  Nagpur: ['Aurangabad'],
+  Nashik: ['Pune', 'Aurangabad'],
+  Aurangabad: ['Nashik', 'Nagpur'],
+  Kolhapur: ['Solapur', 'Pune'],
+  Solapur: ['Pune', 'Kolhapur'],
+};
+
+export function topSkillsForDistrict(district: DistrictKey): DistrictSkillDemand[] {
+  const signals = signalsForDistrict(district);
+  const map = new Map<string, { openings: number; rising: number; declining: number }>();
+  for (const s of signals) {
+    for (const skill of s.skills) {
+      const cur = map.get(skill) || { openings: 0, rising: 0, declining: 0 };
+      cur.openings += s.openings;
+      if (s.trend === 'rising') cur.rising += 1;
+      if (s.trend === 'declining') cur.declining += 1;
+      map.set(skill, cur);
+    }
+  }
+  return [...map.entries()]
+    .map(([skill, v]) => {
+      let trend: DistrictSkillDemand['trend'] = 'stable';
+      if (v.rising > v.declining) trend = 'rising';
+      else if (v.declining > v.rising) trend = 'declining';
+      return {
+        skill,
+        openings: v.openings,
+        demand: Math.min(99, 35 + Math.round(v.openings / 2)),
+        trend,
+      };
+    })
+    .sort((a, b) => b.openings - a.openings)
+    .slice(0, 10);
+}
+
+function seatDeltaForExpand(course: CourseCurriculum, openings: number): string {
+  const pressure = Math.max(0, openings - Math.floor(course.seats * 0.4));
+  const add = Math.min(80, Math.max(15, Math.round(pressure / 2) || 25));
+  return `+${add} seats`;
+}
+
+function seatDeltaForReduce(course: CourseCurriculum): string {
+  const cut = Math.min(Math.floor(course.seats * 0.35), Math.max(20, Math.round(course.seats * 0.25)));
+  return `−${cut} seats`;
+}
+
+function trainersForSeats(seats: number): number {
+  return Math.max(1, Math.ceil(seats / 30));
 }
 
 export function generateDistrictPlan(district: DistrictKey): PlanAction[] {
+  const signals = signalsForDistrict(district);
   const courses = coursesForDistrict(district);
   const actions: PlanAction[] = [];
-  let i = 0;
+  let n = 0;
+  const id = () => `plan-${district}-${++n}`;
 
-  for (const c of courses) {
-    if (c.flag === 'critical_gap' || c.placementRate >= 55) {
+  const openingsBySector = new Map<string, number>();
+  for (const s of signals) {
+    openingsBySector.set(s.sector, (openingsBySector.get(s.sector) || 0) + s.openings);
+  }
+
+  for (const course of courses) {
+    const sectorOpenings = openingsBySector.get(course.sector) || 0;
+    const localSignals = signals.filter((s) => s.sector === course.sector);
+    const risingOpenings = localSignals
+      .filter((s) => s.trend === 'rising')
+      .reduce((a, s) => a + s.openings, 0);
+
+    if (course.flag === 'critical_gap' || (course.demandIndex >= 85 && course.seats < 80)) {
       actions.push({
-        id: `a-${++i}`,
+        id: id(),
         action: 'expand',
-        courseOrRole: c.name,
-        why: `High demand / ${c.flag === 'critical_gap' ? 'critical skill gaps' : 'solid placement'} in ${district}`,
-        seatDelta: `+${Math.max(15, Math.round(c.seats * 0.2))}`,
+        courseOrRole: course.name,
+        why: `High demand (index ${course.demandIndex}) · ${sectorOpenings} openings in ${district} · only ${course.seats} seats`,
+        seatDelta: seatDeltaForExpand(course, sectorOpenings + risingOpenings),
         priority: 'high',
-        courseId: c.id,
+        courseId: course.id,
+        sector: course.sector,
+        trainersHint: `~${trainersForSeats(course.seats + 30)} trainers needed after expand`,
       });
     }
-    if (c.flag === 'oversupplied' || c.flag === 'obsolete') {
+
+    if (course.flag === 'obsolete' || course.flag === 'oversupplied' || course.placementRate12m < 35) {
       actions.push({
-        id: `a-${++i}`,
+        id: id(),
         action: 'reduce',
-        courseOrRole: c.name,
-        why: `${c.flag} programme — ${c.placementRate}% placement`,
-        seatDelta: `-${Math.max(20, Math.round(c.seats * 0.25))}`,
-        priority: 'high',
-        courseId: c.id,
+        courseOrRole: course.name,
+        why:
+          course.flag === 'obsolete'
+            ? `Obsolete / declining local demand · placement ${course.placementRate12m}%`
+            : `Oversupplied or weak placement (${course.placementRate12m}%) · ${course.seats} seats`,
+        seatDelta: seatDeltaForReduce(course),
+        priority: course.flag === 'obsolete' ? 'high' : 'medium',
+        courseId: course.id,
+        sector: course.sector,
+        trainersHint: 'Redeploy trainers to high-demand programmes',
       });
     }
-    for (const r of c.recommendations.filter((x) => x.type === 'add').slice(0, 1)) {
+
+    const gapSkills = course.skills
+      .filter((sk) => sk.demandPct - sk.taughtPct >= 25)
+      .sort((a, b) => b.demandPct - a.demandPct - (a.taughtPct - b.taughtPct))
+      .slice(0, 2);
+    for (const sk of gapSkills) {
       actions.push({
-        id: `a-${++i}`,
+        id: id(),
         action: 'add_module',
-        courseOrRole: `${c.name}: ${r.title}`,
-        why: r.detail,
-        seatDelta: '—',
-        priority: r.priority,
-        courseId: c.id,
+        courseOrRole: `${sk.skill} → ${course.name}`,
+        why: `Taught ${sk.taughtPct}% · district/industry demand ${sk.demandPct}% (${sk.level})`,
+        seatDelta: 'Update syllabus',
+        priority: sk.demandPct - sk.taughtPct >= 40 ? 'high' : 'medium',
+        courseId: course.id,
+        sector: course.sector,
       });
     }
   }
 
-  if (!courses.some((c) => c.sector === 'Software') && district === 'Pune') {
+  // Emerging demand with no local course
+  const coveredSectors = new Set(courses.map((c) => c.sector));
+  const emergingByTitle = new Map<string, { openings: number; sector: string; skills: string[] }>();
+  for (const s of signals) {
+    if (s.trend !== 'rising' && !(s.emerging && s.emerging.length)) continue;
+    if (coveredSectors.has(s.sector) && courses.some((c) => c.sector === s.sector && c.demandIndex > 50)) {
+      // sector has a course — skip new course unless very high openings and no critical course
+      const hasCritical = courses.some((c) => c.sector === s.sector && c.flag === 'critical_gap');
+      if (hasCritical || s.openings < 20) continue;
+    }
+    const cur = emergingByTitle.get(s.title) || { openings: 0, sector: s.sector, skills: [] };
+    cur.openings += s.openings;
+    cur.skills = [...new Set([...cur.skills, ...s.skills])];
+    emergingByTitle.set(s.title, cur);
+  }
+
+  for (const [title, v] of emergingByTitle) {
+    const hasSimilar = courses.some(
+      (c) =>
+        c.name.toLowerCase().includes(title.split(' ')[0].toLowerCase()) ||
+        c.skills.some((sk) => v.skills.includes(sk.skill)),
+    );
+    if (hasSimilar && v.openings < 25) continue;
+    if (v.openings < 12) continue;
     actions.push({
-      id: `a-${++i}`,
+      id: id(),
       action: 'new_course',
-      courseOrRole: 'AI / ML Associate (pilot)',
-      why: 'Rising role with no local programme match',
-      seatDelta: '+40 (new)',
-      priority: 'medium',
+      courseOrRole: title,
+      why: `Rising demand in ${district} · ${v.openings} openings · skills: ${v.skills.slice(0, 3).join(', ')} · no matching local programme`,
+      seatDelta: 'Pilot 25 seats',
+      priority: v.openings >= 30 ? 'high' : 'medium',
+      sector: v.sector,
+      trainersHint: '~2 trainers for pilot cohort',
     });
   }
 
-  if (actions.length === 0) {
-    actions.push({
-      id: 'a-fallback',
-      action: 'expand',
-      courseOrRole: 'Digital literacy bridge',
-      why: `Limited mapped courses in ${district} — seed capacity for employability`,
-      seatDelta: '+30',
-      priority: 'medium',
-    });
+  // If district has zero courses but has demand
+  if (courses.length === 0 && signals.length > 0) {
+    const top = [...openingsBySector.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (top) {
+      const nearby = NEARBY[district] || [];
+      actions.push({
+        id: id(),
+        action: 'new_course',
+        courseOrRole: `${top[0]} foundation programme`,
+        why: `No skill courses listed in ${district}; ${top[1]} openings in ${top[0]}${
+          nearby.length ? ` · consider partnering with ${nearby[0]}` : ''
+        }`,
+        seatDelta: 'Pilot 30 seats',
+        priority: 'high',
+        sector: top[0],
+        trainersHint: '~2–3 trainers + shared lab',
+      });
+    }
   }
 
-  return actions;
+  const priorityRank = { high: 0, medium: 1, low: 2 };
+  const actionRank = { expand: 0, new_course: 1, add_module: 2, reduce: 3 };
+  return actions.sort(
+    (a, b) =>
+      priorityRank[a.priority] - priorityRank[b.priority] ||
+      actionRank[a.action] - actionRank[b.action],
+  );
 }
 
-export function summarizePlan(district: DistrictKey, actions: PlanAction[]) {
+export function summarizePlan(district: DistrictKey, actions: PlanAction[]): DistrictPlanSummary {
+  const signals = signalsForDistrict(district);
   const courses = coursesForDistrict(district);
+  const totalOpenings = signals.reduce((a, s) => a + s.openings, 0);
+  const uniqueRoles = new Set(signals.map((s) => s.title)).size;
+  const expandCount = actions.filter((a) => a.action === 'expand').length;
+  const reduceCount = actions.filter((a) => a.action === 'reduce').length;
+  const newCourseCount = actions.filter((a) => a.action === 'new_course').length;
+
+  let trainerShortfall = 0;
+  for (const a of actions) {
+    if (a.action === 'expand' || a.action === 'new_course') trainerShortfall += 1;
+  }
+
+  let readinessNote = 'Balanced — monitor quarterly';
+  if (expandCount + newCourseCount >= 3) readinessNote = 'Capacity build needed — prioritise expands & pilots';
+  else if (reduceCount >= 2) readinessNote = 'Rationalise low-placement programmes first';
+  else if (totalOpenings === 0) readinessNote = 'Sparse signals — validate with employer survey';
+
   return {
-    totalOpenings: DEMAND[district]?.openings ?? 0,
+    district,
+    totalOpenings,
+    uniqueRoles,
     courseCount: courses.length,
-    expandCount: actions.filter((a) => a.action === 'expand').length,
-    reduceCount: actions.filter((a) => a.action === 'reduce').length,
-    newCourseCount: actions.filter((a) => a.action === 'new_course').length,
-    trainerShortfall: actions.filter((a) => a.action === 'expand' || a.action === 'new_course').length * 2,
-    uniqueRoles: topSkillsForDistrict(district).length,
-    readinessNote:
-      actions.filter((a) => a.action === 'reduce').length > 0
-        ? 'Some programmes should shrink; reallocate seats to gap areas.'
-        : 'Capacity broadly aligned — focus on skill modules.',
+    expandCount,
+    reduceCount,
+    newCourseCount,
+    trainerShortfall,
+    readinessNote,
   };
 }
 
-export function actionLabel(a: PlanActionType): string {
-  return { expand: 'Expand', reduce: 'Reduce', add_module: 'Add module', new_course: 'New course' }[a];
+export function actionTone(action: PlanActionType) {
+  switch (action) {
+    case 'expand':
+      return 'bg-emerald-500/15 text-emerald-700 ring-emerald-300/50 dark:text-emerald-300';
+    case 'reduce':
+      return 'bg-rose-500/15 text-rose-700 ring-rose-300/50 dark:text-rose-300';
+    case 'add_module':
+      return 'bg-violet-500/15 text-violet-700 ring-violet-300/50 dark:text-violet-300';
+    case 'new_course':
+      return 'bg-sky-500/15 text-sky-700 ring-sky-300/50 dark:text-sky-300';
+    default:
+      return 'bg-slate-500/10 text-[var(--text-muted)]';
+  }
 }
 
-export function actionTone(a: PlanActionType): string {
-  return {
-    expand: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-    reduce: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
-    add_module: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
-    new_course: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
-  }[a];
+export function actionLabel(action: PlanActionType) {
+  switch (action) {
+    case 'expand':
+      return 'Expand';
+    case 'reduce':
+      return 'Reduce';
+    case 'add_module':
+      return 'Add module';
+    case 'new_course':
+      return 'New course';
+    default:
+      return action;
+  }
 }
 
-export function flagToneLocal(flag: CourseFlag): string {
-  return flag;
+export function flagToneLocal(flag: CourseFlag) {
+  switch (flag) {
+    case 'obsolete':
+      return 'bg-rose-500/15 text-rose-700 dark:text-rose-300';
+    case 'oversupplied':
+      return 'bg-amber-500/15 text-amber-800 dark:text-amber-200';
+    case 'critical_gap':
+      return 'bg-violet-500/15 text-violet-700 dark:text-violet-300';
+    default:
+      return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
+  }
 }
