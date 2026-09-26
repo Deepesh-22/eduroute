@@ -116,6 +116,15 @@ const PendingApprovals = lazy(() =>
 );
 const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin').then((module) => ({ default: module.AdminLogin })));
 const CourseManager = lazy(() => import('./pages/Admin/CourseManager').then((module) => ({ default: module.CourseManager })));
+const CurriculumGapMapper = lazy(() =>
+  import('./pages/Admin/CurriculumGapMapper').then((module) => ({ default: module.CurriculumGapMapper })),
+);
+const DistrictTrainingPlan = lazy(() =>
+  import('./pages/Admin/DistrictTrainingPlan').then((module) => ({ default: module.DistrictTrainingPlan })),
+);
+const AdminMarketTrends = lazy(() =>
+  import('./pages/Admin/AdminMarketTrends').then((module) => ({ default: module.AdminMarketTrends })),
+);
 const ProfileDashboard = lazy(() =>
   import('./pages/Profile/ProfileDashboard').then((module) => ({ default: module.ProfileDashboard ?? module.default })),
 );
@@ -251,6 +260,9 @@ export function App() {
             <Route path="/admin" element={<Navigate to="/admin/students" replace />} />
             <Route path="/admin/students" element={<PendingApprovals />} />
             <Route path="/admin/courses" element={<CourseManager />} />
+            <Route path="/admin/curriculum-gaps" element={<CurriculumGapMapper />} />
+            <Route path="/admin/district-plans" element={<DistrictTrainingPlan />} />
+            <Route path="/admin/market-trends" element={<AdminMarketTrends />} />
           </Route>
 
           <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
