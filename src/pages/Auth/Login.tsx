@@ -63,12 +63,12 @@ export const Login = () => {
     if (!emailOk || !passOk) return false;
     saveAuthSession(`local-admin-${Date.now()}`, LOCAL_STAFF.user);
     setAdminSession(true);
-    navigate('/admin/courses', { replace: true });
+    navigate('/admin/students', { replace: true });
     return true;
   };
 
   const goHome = (userRole: UserRole) => {
-    if (userRole === 'admin') navigate('/admin/courses', { replace: true });
+    if (userRole === 'admin') navigate('/admin/students', { replace: true });
     else if (userRole === 'industry') navigate('/industry', { replace: true });
     else if (userRole === 'college') navigate('/college/placements', { replace: true });
     else if (userRole === 'faculty') navigate('/faculty', { replace: true });
