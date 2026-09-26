@@ -11,7 +11,7 @@ export const AdminLogin = () => {
 
   useEffect(() => {
     if (isAdminSessionActive()) {
-      navigate('/admin/pending-approvals', { replace: true });
+      navigate('/admin/courses', { replace: true });
     }
   }, [navigate]);
 
@@ -31,7 +31,7 @@ export const AdminLogin = () => {
 
     setAdminSession(true);
     setIsSubmitting(false);
-    navigate('/admin/pending-approvals', { replace: true });
+    navigate('/admin/courses', { replace: true });
   };
 
   return (
@@ -42,7 +42,7 @@ export const AdminLogin = () => {
         </div>
         <h1 className="text-3xl font-black text-center">Admin Access</h1>
         <p className="text-slate-400 text-sm text-center mt-2 mb-8">
-          Enter password to open the Admin Panel (Pending Approvals).
+          Enter password to open the Admin Panel (Course Manager).
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
