@@ -1,64 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, RefreshCw, TrendingUp, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
-
-type MarketSkill = { skill: string; demandScore: number; trend: string; note?: string };
-type MarketSnapshot = {
-  updatedAt: string;
-  region?: string;
-  summary?: string;
-  risingSkills?: MarketSkill[];
-  decliningSkills?: MarketSkill[];
-  topRoles?: { role: string; openingsIndex: number; avgSalaryLpa?: number }[];
-  isSeed?: boolean;
-};
-
-const SEED: MarketSnapshot = {
-  updatedAt: new Date().toISOString(),
-  region: 'India / Maharashtra',
-  summary: 'Seed labour-market snapshot (refresh when Gemini API is configured on Netlify).',
-  isSeed: true,
-  risingSkills: [
-    { skill: 'React', demandScore: 88, trend: 'rising' },
-    { skill: 'Python', demandScore: 90, trend: 'rising' },
-    { skill: 'Cloud (AWS)', demandScore: 82, trend: 'rising' },
-    { skill: 'TypeScript', demandScore: 78, trend: 'rising' },
-    { skill: 'Data analytics', demandScore: 80, trend: 'rising' },
-  ],
-  decliningSkills: [
-    { skill: 'Legacy desktop support', demandScore: 25, trend: 'declining' },
-    { skill: 'Manual ledger accounting', demandScore: 18, trend: 'declining' },
-  ],
-  topRoles: [
-    { role: 'Full Stack Developer', openingsIndex: 92, avgSalaryLpa: 8.5 },
-    { role: 'Data Analyst', openingsIndex: 85, avgSalaryLpa: 7.2 },
-    { role: 'Cloud Associate', openingsIndex: 78, avgSalaryLpa: 9.0 },
-  ],
-};
-
-const KEY = 'eduroute:market-trends-v1';
-
-function readMarket(): MarketSnapshot {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as MarketSnapshot;
-  } catch {
-    /* ignore */
-  }
-  return SEED;
-}
-
-function writeMarket(m: MarketSnapshot) {
-  localStorage.setItem(KEY, JSON.stringify(m));
-  window.dispatchEvent(new Event('eduroute:market-trends-updated'));
-}
+import {
+  apiRefreshMarket,
+  monthDueForRefresh,
+  readMarketSnapshot,
+  type MarketSnapshot,
+} from '../../utils/marketTrendStore';
 
 export function AdminMarketTrends() {
-  const [market, setMarket] = useState<MarketSnapshot | null>(() => readMarket());
+  const [market, setMarket] = useState<MarketSnapshot | null>(() => readMarketSnapshot());
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
-  const reload = useCallback(() => setMarket(readMarket()), []);
+  const reload = useCallback(() => setMarket(readMarketSnapshot()), []);
 
   useEffect(() => {
     const onUp = () => reload();
@@ -66,135 +21,144 @@ export function AdminMarketTrends() {
     return () => window.removeEventListener('eduroute:market-trends-updated', onUp);
   }, [reload]);
 
+  const due = monthDueForRefresh(market?.updatedAt);
+
   const refresh = async () => {
     setBusy(true);
     setErr('');
     setMsg('');
     try {
-      const res = await fetch('/.netlify/functions/market-trends', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'refresh_market' }),
-      });
-      const data = await res.json();
-      if (data.ok && data.market) {
-        writeMarket(data.market);
-        setMarket(data.market);
-        setMsg('Market snapshot refreshed via Gemini.');
-      } else {
-        const next = { ...SEED, updatedAt: new Date().toISOString(), isSeed: true };
-        writeMarket(next);
-        setMarket(next);
-        setMsg(
-          data.error ||
-            'API unavailable — showing seed snapshot. Set GEMINI_API_KEY on Netlify for live data.',
-        );
+      const res = await apiRefreshMarket();
+      if (!res.ok) {
+        setErr(res.error || 'Refresh failed');
+        return;
       }
-    } catch {
-      const next = { ...SEED, updatedAt: new Date().toISOString(), isSeed: true };
-      writeMarket(next);
-      setMarket(next);
-      setMsg('Offline — seed snapshot updated locally.');
+      setMarket(res.market || readMarketSnapshot());
+      setMsg('Market trends refreshed via Gemini AI.');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Network error');
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="space-y-6 text-[var(--text-primary)]">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-5xl space-y-6 text-[var(--text-primary)]">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-            SIH26134 · Labour market intelligence
-          </p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight md:text-3xl">Market Trends</h1>
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">SIH26134 · Admin</p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight md:text-3xl">Market trends</h1>
           <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">
-            Rising / declining skills and top roles for Maharashtra training planners.
+            Refresh labour-market demand with <strong>Gemini AI</strong> anytime. Recommended at least once a month.
+            Students use this snapshot in Trend Analyse.
           </p>
         </div>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={refresh}
-          className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
-        >
+        <button type="button" disabled={busy} onClick={refresh} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg disabled:opacity-60">
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          Refresh market
+          {busy ? 'Calling Gemini…' : 'Refresh market trends'}
         </button>
       </div>
 
+      {due && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          Monthly refresh due (or no snapshot yet). Click refresh to update via Gemini.
+        </div>
+      )}
       {msg && (
-        <p className="flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-secondary)]">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500" /> {msg}
+        <p className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-800 dark:text-emerald-200">
+          <CheckCircle2 className="h-4 w-4" /> {msg}
         </p>
       )}
       {err && (
-        <p className="flex items-center gap-2 text-sm text-rose-500">
-          <AlertTriangle className="h-4 w-4" /> {err}
-        </p>
+        <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-700 dark:text-rose-300" role="alert">{err}</p>
       )}
 
-      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-indigo-500" />
-          <h2 className="font-bold">Summary</h2>
-          {market?.isSeed && (
-            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
-              Seed data
-            </span>
+      {!market ? (
+        <div className="rounded-2xl border border-dashed border-[var(--border-default)] bg-[var(--bg-card)] p-10 text-center">
+          <TrendingUp className="mx-auto mb-3 h-10 w-10 text-[var(--text-muted)]" />
+          <p className="font-bold">No market snapshot yet</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            Refresh once with Gemini. Requires <code className="text-xs">GEMINI_API_KEY</code> on Netlify.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase text-[var(--text-muted)]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-2 py-0.5 text-violet-700 dark:text-violet-300">
+                <Sparkles className="h-3 w-3" /> Gemini
+              </span>
+              <span>{market.region || 'India'}</span>
+              <span>· Updated {new Date(market.updatedAt).toLocaleString()}</span>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">{market.summary}</p>
+            {market.sourcesNote && <p className="mt-2 text-[11px] text-[var(--text-muted)]">{market.sourcesNote}</p>}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <SkillList title="Rising skills" items={market.risingSkills} tone="emerald" />
+            <SkillList title="Declining skills" items={market.decliningSkills} tone="rose" />
+          </div>
+
+          {market.topRoles && market.topRoles.length > 0 && (
+            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
+              <h2 className="mb-3 text-sm font-black uppercase tracking-wide text-[var(--text-muted)]">Top roles</h2>
+              <ul className="space-y-2">
+                {market.topRoles.map((r) => (
+                  <li key={r.role} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="font-semibold">{r.role}</span>
+                    <span className="text-[var(--text-muted)]">
+                      demand {r.openingsIndex}
+                      {r.avgSalaryLpa != null ? ` · ~${r.avgSalaryLpa} LPA` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {market.emergingTech && market.emergingTech.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {market.emergingTech.map((t) => (
+                <span key={t} className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300">{t}</span>
+              ))}
+            </div>
           )}
         </div>
-        <p className="text-sm text-[var(--text-secondary)]">{market?.summary}</p>
-        <p className="mt-2 text-xs text-[var(--text-muted)]">
-          {market?.region} · Updated{' '}
-          {market?.updatedAt ? new Date(market.updatedAt).toLocaleString() : '—'}
-        </p>
-      </div>
+      )}
+    </div>
+  );
+}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-bold">
-            <TrendingUp className="h-4 w-4 text-emerald-500" /> Rising skills
-          </h3>
-          <ul className="space-y-2">
-            {(market?.risingSkills ?? []).map((s) => (
-              <li key={s.skill} className="flex items-center justify-between text-sm">
-                <span className="font-semibold">{s.skill}</span>
-                <span className="text-[var(--text-muted)]">{s.demandScore}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
-          <h3 className="mb-3 text-sm font-bold text-rose-500">Declining skills</h3>
-          <ul className="space-y-2">
-            {(market?.decliningSkills ?? []).map((s) => (
-              <li key={s.skill} className="flex items-center justify-between text-sm">
-                <span className="font-semibold">{s.skill}</span>
-                <span className="text-[var(--text-muted)]">{s.demandScore}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
-        <h3 className="mb-3 text-sm font-bold">Top roles</h3>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {(market?.topRoles ?? []).map((r) => (
-            <div
-              key={r.role}
-              className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)]/50 p-3"
-            >
-              <p className="font-bold">{r.role}</p>
-              <p className="text-xs text-[var(--text-muted)]">
-                Index {r.openingsIndex}
-                {r.avgSalaryLpa != null ? ` · ~${r.avgSalaryLpa} LPA` : ''}
-              </p>
+function SkillList({
+  title,
+  items,
+  tone,
+}: {
+  title: string;
+  items?: { skill: string; demandScore: number; note?: string }[];
+  tone: 'emerald' | 'rose';
+}) {
+  if (!items?.length) return null;
+  const bar = tone === 'emerald' ? 'bg-emerald-500' : 'bg-rose-500';
+  return (
+    <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
+      <h2 className="mb-3 text-sm font-black uppercase tracking-wide text-[var(--text-muted)]">{title}</h2>
+      <ul className="space-y-3">
+        {items.slice(0, 10).map((s) => (
+          <li key={s.skill}>
+            <div className="mb-1 flex justify-between text-sm">
+              <span className="font-semibold">{s.skill}</span>
+              <span className="tabular-nums text-[var(--text-muted)]">{s.demandScore}</span>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--bg-elevated)]">
+              <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.min(100, s.demandScore)}%` }} />
+            </div>
+            {s.note && <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">{s.note}</p>}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
