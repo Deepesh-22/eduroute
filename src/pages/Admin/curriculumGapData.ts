@@ -25,211 +25,239 @@ export type CourseCurriculum = {
   sector: string;
   district: string;
   seats: number;
-  placementRate: number;
+  placementRate12m: number;
+  enrollments: number;
+  demandIndex: number;
   flag: CourseFlag;
+  flagLabel: string;
   skills: SkillGapRow[];
-  recommendations: CurriculumRecommendation[];
 };
 
 export const COURSES: CourseCurriculum[] = [
   {
-    id: 'c-fullstack-pune',
-    name: 'Full Stack Web Development',
-    provider: 'Govt ITI / Poly Pune',
-    sector: 'Software',
+    id: 'c-react',
+    name: 'Full Stack Web (React + Node)',
+    provider: 'MIT Skill Centre',
+    sector: 'IT / Software',
     district: 'Pune',
     seats: 120,
-    placementRate: 62,
+    placementRate12m: 68,
+    enrollments: 118,
+    demandIndex: 92,
     flag: 'critical_gap',
+    flagLabel: 'Critical skill gaps vs industry demand',
     skills: [
-      { skill: 'React', taughtPct: 45, demandPct: 88, level: 'Intermediate' },
-      { skill: 'Node.js', taughtPct: 40, demandPct: 82, level: 'Intermediate' },
-      { skill: 'TypeScript', taughtPct: 15, demandPct: 75, level: 'Beginner' },
-      { skill: 'SQL', taughtPct: 70, demandPct: 70, level: 'Intermediate' },
-      { skill: 'System Design', taughtPct: 10, demandPct: 65, level: 'Beginner' },
-    ],
-    recommendations: [
-      {
-        id: 'r1',
-        type: 'add',
-        title: 'Add TypeScript module',
-        detail: 'Demand 75% vs taught 15% — employers flag missing TS in junior hires.',
-        priority: 'high',
-        courseId: 'c-fullstack-pune',
-      },
-      {
-        id: 'r2',
-        type: 'update',
-        title: 'Deepen React project hours',
-        detail: 'Increase project weeks from 2 to 4; map to real product tickets.',
-        priority: 'high',
-        courseId: 'c-fullstack-pune',
-      },
+      { skill: 'React', taughtPct: 75, demandPct: 90, level: 'Intermediate' },
+      { skill: 'TypeScript', taughtPct: 40, demandPct: 85, level: 'Intermediate' },
+      { skill: 'Node.js', taughtPct: 70, demandPct: 80, level: 'Intermediate' },
+      { skill: 'System Design', taughtPct: 20, demandPct: 70, level: 'Advanced' },
+      { skill: 'Python advanced', taughtPct: 15, demandPct: 55, level: 'Advanced' },
     ],
   },
   {
-    id: 'c-data-mumbai',
-    name: 'Data Analytics Foundation',
-    provider: 'Mumbai Skill Hub',
-    sector: 'Analytics',
+    id: 'c-data',
+    name: 'Data Analytics Certificate',
+    provider: 'Mumbai Polytechnic',
+    sector: 'BFSI',
     district: 'Mumbai',
     seats: 80,
-    placementRate: 55,
+    placementRate12m: 54,
+    enrollments: 76,
+    demandIndex: 88,
     flag: 'critical_gap',
+    flagLabel: 'Low placement last 12 months',
     skills: [
-      { skill: 'Python', taughtPct: 60, demandPct: 90, level: 'Intermediate' },
-      { skill: 'SQL', taughtPct: 75, demandPct: 85, level: 'Intermediate' },
-      { skill: 'Power BI', taughtPct: 50, demandPct: 70, level: 'Beginner' },
-      { skill: 'Machine Learning basics', taughtPct: 20, demandPct: 60, level: 'Beginner' },
-    ],
-    recommendations: [
-      {
-        id: 'r3',
-        type: 'add',
-        title: 'Intro ML lab',
-        detail: 'Cover scikit-learn pipelines and evaluation metrics for analyst roles.',
-        priority: 'medium',
-        courseId: 'c-data-mumbai',
-      },
+      { skill: 'SQL', taughtPct: 80, demandPct: 92, level: 'Intermediate' },
+      { skill: 'Python', taughtPct: 55, demandPct: 90, level: 'Intermediate' },
+      { skill: 'Excel', taughtPct: 90, demandPct: 60, level: 'Beginner' },
+      { skill: 'Power BI', taughtPct: 30, demandPct: 78, level: 'Intermediate' },
+      { skill: 'Statistics', taughtPct: 45, demandPct: 72, level: 'Intermediate' },
     ],
   },
   {
-    id: 'c-cloud-nagpur',
-    name: 'Cloud & DevOps Associate',
-    provider: 'Nagpur Polytechnic',
-    sector: 'Cloud',
-    district: 'Nagpur',
-    seats: 60,
-    placementRate: 48,
-    flag: 'healthy',
-    skills: [
-      { skill: 'Linux', taughtPct: 70, demandPct: 75, level: 'Intermediate' },
-      { skill: 'AWS fundamentals', taughtPct: 55, demandPct: 80, level: 'Beginner' },
-      { skill: 'Docker', taughtPct: 40, demandPct: 70, level: 'Beginner' },
-      { skill: 'CI/CD', taughtPct: 30, demandPct: 65, level: 'Beginner' },
-    ],
-    recommendations: [
-      {
-        id: 'r4',
-        type: 'update',
-        title: 'Expand Docker + K8s labs',
-        detail: 'Add container networking and simple Helm charts.',
-        priority: 'medium',
-        courseId: 'c-cloud-nagpur',
-      },
-    ],
-  },
-  {
-    id: 'c-office-thane',
-    name: 'Office Automation',
-    provider: 'Thane Training Centre',
-    sector: 'Admin',
-    district: 'Thane',
-    seats: 150,
-    placementRate: 35,
-    flag: 'oversupplied',
-    skills: [
-      { skill: 'MS Office', taughtPct: 95, demandPct: 40, level: 'Beginner' },
-      { skill: 'Typing', taughtPct: 90, demandPct: 25, level: 'Beginner' },
-      { skill: 'Basic accounting', taughtPct: 50, demandPct: 45, level: 'Beginner' },
-    ],
-    recommendations: [
-      {
-        id: 'r5',
-        type: 'remove',
-        title: 'Reduce pure typing hours',
-        detail: 'Market demand far below seat capacity; reallocate to digital skills.',
-        priority: 'high',
-        courseId: 'c-office-thane',
-      },
-      {
-        id: 'r6',
-        type: 'add',
-        title: 'Add Google Workspace + data entry tools',
-        detail: 'Pivot toward modern workplace tooling employers list.',
-        priority: 'medium',
-        courseId: 'c-office-thane',
-      },
-    ],
-  },
-  {
-    id: 'c-banking-kolhapur',
-    name: 'Banking Operations',
-    provider: 'Kolhapur Vocational',
+    id: 'c-banking',
+    name: 'Banking Operations Diploma',
+    provider: 'Kolhapur ITI',
     sector: 'BFSI',
     district: 'Kolhapur',
-    seats: 90,
-    placementRate: 28,
+    seats: 100,
+    placementRate12m: 28,
+    enrollments: 95,
+    demandIndex: 35,
     flag: 'obsolete',
+    flagLabel: 'Obsolete vs declining local demand',
     skills: [
-      { skill: 'Ledger books', taughtPct: 85, demandPct: 15, level: 'Beginner' },
-      { skill: 'Core banking software', taughtPct: 25, demandPct: 70, level: 'Beginner' },
-      { skill: 'Customer service', taughtPct: 60, demandPct: 55, level: 'Beginner' },
-    ],
-    recommendations: [
-      {
-        id: 'r7',
-        type: 'remove',
-        title: 'Retire paper-ledger modules',
-        detail: 'Banks no longer hire for manual ledger skills at scale.',
-        priority: 'high',
-        courseId: 'c-banking-kolhapur',
-      },
-      {
-        id: 'r8',
-        type: 'add',
-        title: 'Core banking + digital payments',
-        detail: 'Align with fintech and bank branch digital roles.',
-        priority: 'high',
-        courseId: 'c-banking-kolhapur',
-      },
+      { skill: 'Banking Ops', taughtPct: 90, demandPct: 40, level: 'Beginner' },
+      { skill: 'Compliance', taughtPct: 70, demandPct: 45, level: 'Intermediate' },
+      { skill: 'Customer Service', taughtPct: 85, demandPct: 50, level: 'Beginner' },
+      { skill: 'Digital Banking', taughtPct: 25, demandPct: 75, level: 'Intermediate' },
     ],
   },
   {
-    id: 'c-cyber-nashik',
-    name: 'Cybersecurity Basics',
-    provider: 'Nashik IT Centre',
-    sector: 'Security',
-    district: 'Nashik',
-    seats: 40,
-    placementRate: 58,
+    id: 'c-cnc',
+    name: 'CNC & Quality Inspection',
+    provider: 'Aurangabad Industrial Training',
+    sector: 'Manufacturing',
+    district: 'Aurangabad',
+    seats: 60,
+    placementRate12m: 72,
+    enrollments: 58,
+    demandIndex: 65,
     flag: 'healthy',
+    flagLabel: 'Aligned with district manufacturing demand',
     skills: [
-      { skill: 'Networking', taughtPct: 65, demandPct: 70, level: 'Intermediate' },
-      { skill: 'Security fundamentals', taughtPct: 55, demandPct: 75, level: 'Beginner' },
-      { skill: 'SIEM awareness', taughtPct: 20, demandPct: 55, level: 'Beginner' },
+      { skill: 'CNC', taughtPct: 85, demandPct: 80, level: 'Intermediate' },
+      { skill: 'Blueprint Reading', taughtPct: 80, demandPct: 75, level: 'Intermediate' },
+      { skill: 'Quality Control', taughtPct: 70, demandPct: 78, level: 'Intermediate' },
+      { skill: 'Industrial IoT', taughtPct: 20, demandPct: 60, level: 'Advanced' },
     ],
-    recommendations: [
-      {
-        id: 'r9',
-        type: 'add',
-        title: 'SIEM lab intro',
-        detail: 'Basic Splunk/ELK exposure for SOC analyst pathway.',
-        priority: 'medium',
-        courseId: 'c-cyber-nashik',
-      },
+  },
+  {
+    id: 'c-ev',
+    name: 'EV Battery & Solar Basics',
+    provider: 'Pune Green Skills Hub',
+    sector: 'EV / Green',
+    district: 'Pune',
+    seats: 40,
+    placementRate12m: 61,
+    enrollments: 40,
+    demandIndex: 95,
+    flag: 'critical_gap',
+    flagLabel: 'High demand — expand seats & modules',
+    skills: [
+      { skill: 'Battery Systems', taughtPct: 50, demandPct: 88, level: 'Intermediate' },
+      { skill: 'Safety', taughtPct: 80, demandPct: 85, level: 'Beginner' },
+      { skill: 'Solar PV', taughtPct: 45, demandPct: 82, level: 'Beginner' },
+      { skill: 'Diagnostics', taughtPct: 30, demandPct: 70, level: 'Intermediate' },
+    ],
+  },
+  {
+    id: 'c-office',
+    name: 'Office Automation (MS Office)',
+    provider: 'Thane Community College',
+    sector: 'IT / Software',
+    district: 'Thane',
+    seats: 150,
+    placementRate12m: 22,
+    enrollments: 148,
+    demandIndex: 25,
+    flag: 'oversupplied',
+    flagLabel: 'Oversupplied in Thane / low placement',
+    skills: [
+      { skill: 'MS Word', taughtPct: 95, demandPct: 30, level: 'Beginner' },
+      { skill: 'Excel', taughtPct: 90, demandPct: 55, level: 'Beginner' },
+      { skill: 'PowerPoint', taughtPct: 90, demandPct: 25, level: 'Beginner' },
+    ],
+  },
+  {
+    id: 'c-cyber',
+    name: 'Cybersecurity Fundamentals',
+    provider: 'ShieldOps Academy',
+    sector: 'IT / Software',
+    district: 'Thane',
+    seats: 45,
+    placementRate12m: 58,
+    enrollments: 42,
+    demandIndex: 84,
+    flag: 'critical_gap',
+    flagLabel: 'Gaps in SIEM & cloud security depth',
+    skills: [
+      { skill: 'Linux', taughtPct: 65, demandPct: 85, level: 'Intermediate' },
+      { skill: 'Networking', taughtPct: 70, demandPct: 80, level: 'Intermediate' },
+      { skill: 'SIEM', taughtPct: 25, demandPct: 75, level: 'Advanced' },
+      { skill: 'Cloud Security', taughtPct: 15, demandPct: 70, level: 'Advanced' },
     ],
   },
 ];
 
-export function flagLabel(flag: CourseFlag): string {
-  const map: Record<CourseFlag, string> = {
-    obsolete: 'Obsolete',
-    oversupplied: 'Oversupplied',
-    low_placement: 'Low placement',
-    healthy: 'Healthy',
-    critical_gap: 'Critical gap',
-  };
-  return map[flag];
+export const RECOMMENDATIONS: CurriculumRecommendation[] = [
+  {
+    id: 'r1',
+    type: 'add',
+    title: 'Add TypeScript module (40 hrs)',
+    detail: 'Taught 40% · industry demand 85%. Pair with existing React track at MIT Skill Centre.',
+    priority: 'high',
+    courseId: 'c-react',
+  },
+  {
+    id: 'r2',
+    type: 'add',
+    title: 'Add Power BI lab + case studies',
+    detail: 'Close analytics gap for BFSI hiring in Mumbai (demand 78%).',
+    priority: 'high',
+    courseId: 'c-data',
+  },
+  {
+    id: 'r3',
+    type: 'remove',
+    title: 'Retire pure manual banking ops blocks',
+    detail: 'Demand falling; replace with Digital Banking & KYC tech modules.',
+    priority: 'high',
+    courseId: 'c-banking',
+  },
+  {
+    id: 'r4',
+    type: 'update',
+    title: 'Expand EV Battery seats + diagnostics',
+    detail: 'Pune EV demand index 95; current seats only 40.',
+    priority: 'high',
+    courseId: 'c-ev',
+  },
+  {
+    id: 'r5',
+    type: 'remove',
+    title: 'Downsize Office Automation intake',
+    detail: 'Oversupplied in Thane; placement 22% last 12 months.',
+    priority: 'medium',
+    courseId: 'c-office',
+  },
+  {
+    id: 'r6',
+    type: 'add',
+    title: 'Add SIEM tools workshop',
+    detail: 'Cyber course: SIEM taught 25% · demand 75%.',
+    priority: 'high',
+    courseId: 'c-cyber',
+  },
+  {
+    id: 'r7',
+    type: 'add',
+    title: 'Introduce Industrial IoT elective',
+    detail: 'CNC program healthy but IoT demand rising in Aurangabad manufacturing.',
+    priority: 'medium',
+    courseId: 'c-cnc',
+  },
+  {
+    id: 'r8',
+    type: 'update',
+    title: 'Reduce Excel-only hours; deepen Python',
+    detail: 'Data course: Excel over-taught vs Python under-taught for analyst roles.',
+    priority: 'medium',
+    courseId: 'c-data',
+  },
+];
+
+export function gapPct(taught: number, demand: number) {
+  return Math.max(0, demand - taught);
 }
 
-export function flagTone(flag: CourseFlag): string {
-  const map: Record<CourseFlag, string> = {
-    obsolete: 'bg-rose-500/15 text-rose-600 dark:text-rose-300',
-    oversupplied: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-    low_placement: 'bg-orange-500/15 text-orange-700 dark:text-orange-300',
-    healthy: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-    critical_gap: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
-  };
-  return map[flag];
+export function avgGap(course: CourseCurriculum) {
+  if (!course.skills.length) return 0;
+  const sum = course.skills.reduce((a, s) => a + gapPct(s.taughtPct, s.demandPct), 0);
+  return Math.round(sum / course.skills.length);
+}
+
+export function flagTone(flag: CourseFlag) {
+  switch (flag) {
+    case 'obsolete':
+      return 'bg-rose-500/15 text-rose-700 ring-rose-300/50 dark:text-rose-300';
+    case 'oversupplied':
+      return 'bg-amber-500/15 text-amber-800 ring-amber-300/50 dark:text-amber-200';
+    case 'low_placement':
+      return 'bg-orange-500/15 text-orange-800 ring-orange-300/50 dark:text-orange-200';
+    case 'critical_gap':
+      return 'bg-violet-500/15 text-violet-700 ring-violet-300/50 dark:text-violet-300';
+    default:
+      return 'bg-emerald-500/15 text-emerald-700 ring-emerald-300/50 dark:text-emerald-300';
+  }
 }
