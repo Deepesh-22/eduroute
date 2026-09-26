@@ -1,14 +1,26 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Users, BookOpen, LogOut, Bell, Search } from 'lucide-react';
+import {
+  Users,
+  BookOpen,
+  Target,
+  Map,
+  TrendingUp,
+  LogOut,
+  Bell,
+  Search,
+} from 'lucide-react';
 import { clearAuthSession, getAuthUser } from '../utils/rbacAuth';
 import { clearAdminSession, isAdminSessionActive } from '../utils/adminSession';
 import { ThemeToggle } from '../components/ThemeToggle';
 
-/** Only these admin features remain (Dashboard, Pending Approvals, Verified Students, Partners, Reports, Settings removed). */
+/** Slim admin nav: SIH features + core ops (no Dashboard / Pending / Partners / Reports / Settings). */
 const NAV = [
   { name: 'Student Management', path: '/admin/students', icon: Users },
   { name: 'Courses', path: '/admin/courses', icon: BookOpen },
+  { name: 'Curriculum Gaps', path: '/admin/curriculum-gaps', icon: Target },
+  { name: 'District Plans', path: '/admin/district-plans', icon: Map },
+  { name: 'Market Trends', path: '/admin/market-trends', icon: TrendingUp },
 ];
 
 export const AdminLayout = () => {
